@@ -14,8 +14,8 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm ci && npm run build
         env:
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
-          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+          VITE_API_URL: https://carrerrmap-522918119520.asia-northeast1.run.app
+          VITE_GOOGLE_CLIENT_ID: 522918119520-282u6g5hu32k2471m5asjr8oieg5d5b4.apps.googleusercontent.com
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
