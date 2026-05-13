@@ -225,6 +225,15 @@ button {
   opacity: 0.68;
 }
 
+.secondary-action {
+  height: 46px;
+  border: 1px solid #cec5b5;
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #18212f;
+  font-weight: 800;
+}
+
 .divider {
   display: flex;
   align-items: center;
@@ -261,6 +270,17 @@ button {
   border-radius: 8px;
   background: #fff0ea;
   color: #943719;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.success {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #a9d3c8;
+  border-radius: 8px;
+  background: #edf9f5;
+  color: #1f5c51;
   font-size: 0.92rem;
   line-height: 1.45;
 }
