@@ -1,9 +1,8 @@
 :root {
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  color: #1d2433;
-  background: #eef3f8;
+    "Aptos", "Segoe UI", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  color: #18212f;
+  background: #f3f0e8;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -20,97 +19,257 @@ body {
   min-height: 100vh;
 }
 
-button {
+button,
+input {
   font: inherit;
+}
+
+button {
+  cursor: pointer;
 }
 
 .app-shell {
   min-height: 100vh;
   display: grid;
-  place-items: center;
-  padding: 32px 20px;
+  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 460px);
+  gap: clamp(28px, 5vw, 74px);
+  align-items: center;
+  padding: clamp(24px, 5vw, 72px);
   background:
-    linear-gradient(135deg, rgba(12, 94, 132, 0.12), transparent 38%),
-    linear-gradient(315deg, rgba(24, 126, 91, 0.12), transparent 34%),
-    #eef3f8;
+    linear-gradient(90deg, rgba(243, 240, 232, 0.94), rgba(243, 240, 232, 0.76)),
+    url("https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1800&q=80");
+  background-size: cover;
+  background-position: center;
 }
 
-.auth-panel {
-  width: min(100%, 460px);
-  background: #ffffff;
-  border: 1px solid #dce5ee;
-  border-radius: 8px;
-  padding: 30px;
-  box-shadow: 0 22px 58px rgba(32, 48, 72, 0.12);
+.intro-panel {
+  max-width: 760px;
+}
+
+.brand-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: clamp(36px, 6vw, 76px);
+  color: #243244;
+  font-size: 0.98rem;
+  font-weight: 800;
 }
 
 .brand-mark {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
-  margin-bottom: 18px;
   border-radius: 8px;
-  background: #0f766e;
+  background: #1f5c51;
   color: #ffffff;
+  font-weight: 900;
+}
+
+.intro-panel h1 {
+  max-width: 720px;
+  margin: 0;
+  color: #17212f;
+  font-size: clamp(3rem, 7vw, 6.8rem);
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+
+.intro-panel p {
+  max-width: 560px;
+  margin: 28px 0 0;
+  color: #425064;
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  line-height: 1.65;
+}
+
+.signal-grid {
+  width: min(100%, 620px);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: clamp(34px, 5vw, 58px);
+}
+
+.signal-grid span {
+  min-height: 92px;
+  display: flex;
+  align-items: flex-end;
+  padding: 16px;
+  border: 1px solid rgba(31, 92, 81, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.52);
+  color: #1f5c51;
+  font-size: 0.86rem;
   font-weight: 800;
+  text-transform: uppercase;
+}
+
+.auth-panel {
+  width: 100%;
+  padding: clamp(24px, 4vw, 34px);
+  border: 1px solid rgba(36, 50, 68, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 30px 80px rgba(24, 33, 47, 0.2);
+  backdrop-filter: blur(18px);
+}
+
+.auth-header {
+  margin-bottom: 22px;
 }
 
 .eyebrow {
-  margin: 0 0 10px;
-  color: #0f766e;
-  font-size: 0.8rem;
-  font-weight: 800;
+  margin: 0 0 8px;
+  color: #b5562e;
+  font-size: 0.78rem;
+  font-weight: 900;
   letter-spacing: 0;
   text-transform: uppercase;
 }
 
-h1 {
+.auth-header h2 {
   margin: 0;
-  font-size: 2.25rem;
-  line-height: 1.1;
+  color: #18212f;
+  font-size: clamp(2rem, 4vw, 2.7rem);
+  line-height: 1;
+  letter-spacing: 0;
 }
 
-.description {
-  margin: 16px 0 26px;
-  color: #647184;
-  font-size: 1rem;
-  line-height: 1.55;
-}
-
-.login-area {
+.mode-switch {
   display: grid;
-  gap: 12px;
-  justify-items: start;
-  min-height: 52px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px;
+  margin-bottom: 22px;
+  border: 1px solid #d9d0bf;
+  border-radius: 8px;
+  background: #f3f0e8;
 }
 
-.helper {
-  margin: 0;
-  color: #647184;
-  font-size: 0.92rem;
+.mode-switch button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #5f6874;
+  font-weight: 800;
+}
+
+.mode-switch button.active {
+  background: #18212f;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(24, 33, 47, 0.18);
+}
+
+.auth-form {
+  display: grid;
+  gap: 15px;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.auth-form span {
+  color: #334155;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.auth-form input {
+  width: 100%;
+  height: 48px;
+  border: 1px solid #cec5b5;
+  border-radius: 8px;
+  padding: 0 14px;
+  background: #fffdf8;
+  color: #18212f;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.auth-form input:focus {
+  border-color: #1f5c51;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(31, 92, 81, 0.12);
+}
+
+.primary-action {
+  height: 50px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 8px;
+  background: #1f5c51;
+  color: #ffffff;
+  font-weight: 900;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.primary-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #174a41;
+  box-shadow: 0 16px 28px rgba(31, 92, 81, 0.24);
+}
+
+.primary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  color: #7b6f60;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: #d9d0bf;
+}
+
+.google-area {
+  min-height: 44px;
+  display: flex;
+  justify-content: center;
+}
+
+.google-area > div {
+  max-width: 100%;
 }
 
 .alert {
-  margin: 16px 0;
+  margin: 16px 0 0;
   padding: 12px 14px;
-  border: 1px solid #f4b9b9;
+  border: 1px solid #e7b3a0;
   border-radius: 8px;
-  background: #fff2f2;
-  color: #9f1d1d;
+  background: #fff0ea;
+  color: #943719;
   font-size: 0.92rem;
   line-height: 1.45;
 }
 
 .profile-card {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
-  gap: 12px;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 14px;
   align-items: center;
-  padding: 14px;
-  border: 1px solid #dce5ee;
-  border-radius: 8px;
-  background: #f8fbfd;
 }
 
 .profile-card strong,
@@ -121,25 +280,30 @@ h1 {
   white-space: nowrap;
 }
 
+.profile-card strong {
+  color: #18212f;
+  font-size: 1.04rem;
+}
+
 .profile-card span {
-  margin-top: 3px;
+  margin-top: 4px;
   color: #647184;
   font-size: 0.9rem;
 }
 
 .profile-card button {
-  height: 38px;
-  padding: 0 14px;
-  border: 1px solid #c8d3df;
+  grid-column: 1 / -1;
+  height: 44px;
+  border: 1px solid #cec5b5;
   border-radius: 8px;
-  background: #ffffff;
-  color: #1d2433;
-  cursor: pointer;
+  background: #fffdf8;
+  color: #18212f;
+  font-weight: 800;
 }
 
 .avatar {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -148,54 +312,43 @@ h1 {
   display: grid;
   place-items: center;
   background: #dcebe8;
-  color: #0f766e;
-  font-weight: 800;
+  color: #1f5c51;
+  font-weight: 900;
 }
 
-.config-list {
-  margin: 24px 0 0;
-  padding: 0;
-}
+@media (max-width: 880px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
 
-.config-list div {
-  display: grid;
-  gap: 6px;
-  padding: 12px 14px;
-  background: #f8fbfd;
-  border: 1px solid #e4ebf2;
-  border-radius: 8px;
-}
+  .intro-panel {
+    max-width: none;
+  }
 
-dt {
-  color: #647184;
-  font-size: 0.76rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
+  .brand-row {
+    margin-bottom: 34px;
+  }
 
-dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-  color: #1d2433;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 0.88rem;
-}
-
-@media (max-width: 520px) {
   .auth-panel {
-    padding: 24px;
+    max-width: 560px;
+  }
+}
+
+@media (max-width: 560px) {
+  .app-shell {
+    padding: 20px;
   }
 
-  h1 {
-    font-size: 1.9rem;
+  .intro-panel h1 {
+    font-size: 2.65rem;
   }
 
-  .profile-card {
-    grid-template-columns: 44px minmax(0, 1fr);
+  .signal-grid {
+    grid-template-columns: 1fr;
   }
 
-  .profile-card button {
-    grid-column: 1 / -1;
-    width: 100%;
+  .signal-grid span {
+    min-height: 64px;
   }
 }

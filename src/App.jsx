@@ -1,9 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, '');
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const storageKey = 'careermap.auth';
+const initialLoginForm = {
+  username: '',
+  password: '',
+};
+const initialRegisterForm = {
+  username: '',
+  email: '',
+  fullName: '',
+  password: '',
+};
 
 function getStoredSession() {
   try {
@@ -16,65 +26,129 @@ function getStoredSession() {
 
 export default function App() {
   const [session, setSession] = useState(getStoredSession);
+  const [mode, setMode] = useState('login');
+  const [loginForm, setLoginForm] = useState(initialLoginForm);
+  const [registerForm, setRegisterForm] = useState(initialRegisterForm);
   const [status, setStatus] = useState('idle');
   const [message, setMessage] = useState('');
 
-  const isConfigured = useMemo(
-    () => Boolean(apiUrl && googleClientId),
-    [],
+  const activeForm = mode === 'login' ? loginForm : registerForm;
+  const isGoogleConfigured = Boolean(apiUrl && googleClientId);
+  const submitLabel = useMemo(
+    () => {
+      if (status === 'loading') {
+        return mode === 'login' ? 'Đang đăng nhập...' : 'Đang tạo tài khoản...';
+      }
+
+      return mode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản';
+    },
+    [mode, status],
   );
 
   useEffect(() => {
-    if (!isConfigured || session) {
+    if (!isGoogleConfigured || session) {
       return;
     }
 
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
+    const renderGoogleButton = () => {
+      const container = document.getElementById('googleSignInButton');
+      if (!container || !window.google?.accounts?.id) {
+        return;
+      }
+
+      container.replaceChildren();
       window.google.accounts.id.initialize({
         client_id: googleClientId,
         callback: handleGoogleCredential,
       });
-
-      window.google.accounts.id.renderButton(
-        document.getElementById('googleSignInButton'),
-        {
-          theme: 'outline',
-          size: 'large',
-          width: 280,
-          text: 'signin_with',
-          shape: 'rectangular',
-        },
-      );
+      window.google.accounts.id.renderButton(container, {
+        theme: 'outline',
+        size: 'large',
+        width: 320,
+        text: 'signin_with',
+        shape: 'rectangular',
+      });
     };
 
-    document.body.appendChild(script);
+    if (window.google?.accounts?.id) {
+      renderGoogleButton();
+      return;
+    }
+
+    let script = document.getElementById('googleIdentityScript');
+    if (!script) {
+      script = document.createElement('script');
+      script.id = 'googleIdentityScript';
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    }
+
+    script.addEventListener('load', renderGoogleButton);
 
     return () => {
-      script.remove();
+      script.removeEventListener('load', renderGoogleButton);
     };
-  }, [isConfigured, session]);
+  }, [isGoogleConfigured, session]);
 
-  async function handleGoogleCredential(response) {
+  function updateLoginField(event) {
+    const { name, value } = event.target;
+    setLoginForm((current) => ({ ...current, [name]: value }));
+  }
+
+  function updateRegisterField(event) {
+    const { name, value } = event.target;
+    setRegisterForm((current) => ({ ...current, [name]: value }));
+  }
+
+  function switchMode(nextMode) {
+    setMode(nextMode);
+    setStatus('idle');
+    setMessage('');
+  }
+
+  async function submitAuth(event) {
+    event.preventDefault();
+
+    if (!apiUrl) {
+      setStatus('error');
+      setMessage('Thiếu cấu hình VITE_API_URL.');
+      return;
+    }
+
     setStatus('loading');
     setMessage('');
 
     try {
-      const result = await fetch(`${apiUrl}/api/auth/google`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ idToken: response.credential }),
-      });
+      const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+      const payload = await requestAuth(endpoint, activeForm);
 
-      const payload = await result.json();
-      if (!result.ok) {
-        throw new Error(payload.message || 'Google login failed.');
-      }
+      localStorage.setItem(storageKey, JSON.stringify(payload));
+      setSession(payload);
+      setStatus('success');
+      setLoginForm(initialLoginForm);
+      setRegisterForm(initialRegisterForm);
+    } catch (error) {
+      setStatus('error');
+      setMessage(error.message);
+    }
+  }
+
+  async function handleGoogleCredential(response) {
+    if (!apiUrl) {
+      setStatus('error');
+      setMessage('Thiếu cấu hình VITE_API_URL.');
+      return;
+    }
+
+    setStatus('loading');
+    setMessage('');
+
+    try {
+      const payload = await requestAuth('/api/auth/google', {
+        idToken: response.credential,
+      });
 
       localStorage.setItem(storageKey, JSON.stringify(payload));
       setSession(payload);
@@ -94,20 +168,28 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      <section className="auth-panel">
-        <div className="brand-mark">CM</div>
-        <p className="eyebrow">CareerMap</p>
-        <h1>Sign in to continue</h1>
-        <p className="description">
-          Use your Google account to access the CareerMap workspace.
+      <section className="intro-panel" aria-label="CareerMap">
+        <div className="brand-row">
+          <span className="brand-mark">CM</span>
+          <span>CareerMap</span>
+        </div>
+        <h1>Vào workspace định hướng nghề nghiệp</h1>
+        <p>
+          Quản lý lộ trình học tập, hồ sơ ứng tuyển và kế hoạch phát triển bằng
+          một tài khoản CareerMap duy nhất.
         </p>
+        <div className="signal-grid" aria-hidden="true">
+          <span>Lộ trình</span>
+          <span>Kỹ năng</span>
+          <span>Mục tiêu</span>
+        </div>
+      </section>
 
-        {!isConfigured && (
-          <div className="alert">
-            Missing frontend environment variables. Set VITE_API_URL and
-            VITE_GOOGLE_CLIENT_ID.
-          </div>
-        )}
+      <section className="auth-panel" aria-label="Đăng nhập CareerMap">
+        <div className="auth-header">
+          <p className="eyebrow">Tài khoản CareerMap</p>
+          <h2>{mode === 'login' ? 'Đăng nhập' : 'Đăng ký'}</h2>
+        </div>
 
         {session ? (
           <div className="profile-card">
@@ -123,25 +205,122 @@ export default function App() {
               <span>{session.user.email}</span>
             </div>
             <button type="button" onClick={signOut}>
-              Sign out
+              Đăng xuất
             </button>
           </div>
         ) : (
-          <div className="login-area">
-            <div id="googleSignInButton" />
-            {status === 'loading' && <p className="helper">Signing in...</p>}
-          </div>
+          <>
+            <div className="mode-switch" role="tablist" aria-label="Chọn chế độ">
+              <button
+                type="button"
+                className={mode === 'login' ? 'active' : ''}
+                onClick={() => switchMode('login')}
+              >
+                Đăng nhập
+              </button>
+              <button
+                type="button"
+                className={mode === 'register' ? 'active' : ''}
+                onClick={() => switchMode('register')}
+              >
+                Đăng ký
+              </button>
+            </div>
+
+            <form className="auth-form" onSubmit={submitAuth}>
+              <label>
+                <span>Tên đăng nhập</span>
+                <input
+                  name="username"
+                  value={activeForm.username}
+                  onChange={mode === 'login' ? updateLoginField : updateRegisterField}
+                  minLength={3}
+                  maxLength={100}
+                  autoComplete="username"
+                  required
+                />
+              </label>
+
+              {mode === 'register' && (
+                <>
+                  <label>
+                    <span>Email</span>
+                    <input
+                      type="email"
+                      name="email"
+                      value={registerForm.email}
+                      onChange={updateRegisterField}
+                      maxLength={256}
+                      autoComplete="email"
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    <span>Họ và tên</span>
+                    <input
+                      name="fullName"
+                      value={registerForm.fullName}
+                      onChange={updateRegisterField}
+                      maxLength={200}
+                      autoComplete="name"
+                      required
+                    />
+                  </label>
+                </>
+              )}
+
+              <label>
+                <span>Mật khẩu</span>
+                <input
+                  type="password"
+                  name="password"
+                  value={activeForm.password}
+                  onChange={mode === 'login' ? updateLoginField : updateRegisterField}
+                  minLength={6}
+                  maxLength={100}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  required
+                />
+              </label>
+
+              <button className="primary-action" type="submit" disabled={status === 'loading'}>
+                {submitLabel}
+              </button>
+            </form>
+
+            {isGoogleConfigured && (
+              <>
+                <div className="divider">
+                  <span>hoặc</span>
+                </div>
+                <div className="google-area">
+                  <div id="googleSignInButton" />
+                </div>
+              </>
+            )}
+          </>
         )}
 
         {status === 'error' && <div className="alert">{message}</div>}
-
-        <dl className="config-list">
-          <div>
-            <dt>API</dt>
-            <dd>{apiUrl || 'Not configured'}</dd>
-          </div>
-        </dl>
       </section>
     </main>
   );
+}
+
+async function requestAuth(endpoint, body) {
+  const response = await fetch(`${apiUrl}${endpoint}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload.message || 'Không thể xử lý yêu cầu. Vui lòng thử lại.');
+  }
+
+  return payload;
 }
