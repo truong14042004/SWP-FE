@@ -13,6 +13,11 @@ const initialRegisterForm = {
   email: '',
   fullName: '',
   password: '',
+  confirmPassword: '',
+};
+const initialOtpForm = {
+  email: '',
+  otp: '',
 };
 
 function getStoredSession() {
@@ -29,6 +34,8 @@ export default function App() {
   const [mode, setMode] = useState('login');
   const [loginForm, setLoginForm] = useState(initialLoginForm);
   const [registerForm, setRegisterForm] = useState(initialRegisterForm);
+  const [otpForm, setOtpForm] = useState(initialOtpForm);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
   const [status, setStatus] = useState('idle');
   const [message, setMessage] = useState('');
 
@@ -90,7 +97,7 @@ export default function App() {
     return () => {
       script.removeEventListener('load', renderGoogleButton);
     };
-  }, [isGoogleConfigured, session]);
+  }, [isGoogleConfigured, session, pendingVerificationEmail, mode]);
 
   function updateLoginField(event) {
     const { name, value } = event.target;
@@ -102,8 +109,15 @@ export default function App() {
     setRegisterForm((current) => ({ ...current, [name]: value }));
   }
 
+  function updateOtpField(event) {
+    const { name, value } = event.target;
+    setOtpForm((current) => ({ ...current, [name]: value }));
+  }
+
   function switchMode(nextMode) {
     setMode(nextMode);
+    setPendingVerificationEmail('');
+    setOtpForm(initialOtpForm);
     setStatus('idle');
     setMessage('');
   }
@@ -122,13 +136,53 @@ export default function App() {
 
     try {
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+      if (mode === 'register' && activeForm.password !== activeForm.confirmPassword) {
+        throw new Error('Mật khẩu xác nhận không khớp.');
+      }
+
       const payload = await requestAuth(endpoint, activeForm);
+
+      if (mode === 'register') {
+        setPendingVerificationEmail(payload.email);
+        setOtpForm({ email: payload.email, otp: '' });
+        setStatus('success');
+        setMessage(payload.message || 'Mã OTP đã được gửi đến email của bạn.');
+        return;
+      }
 
       localStorage.setItem(storageKey, JSON.stringify(payload));
       setSession(payload);
       setStatus('success');
       setLoginForm(initialLoginForm);
       setRegisterForm(initialRegisterForm);
+    } catch (error) {
+      setStatus('error');
+      setMessage(error.message);
+    }
+  }
+
+  async function submitOtp(event) {
+    event.preventDefault();
+
+    if (!apiUrl) {
+      setStatus('error');
+      setMessage('Thiếu cấu hình VITE_API_URL.');
+      return;
+    }
+
+    setStatus('loading');
+    setMessage('');
+
+    try {
+      const payload = await requestAuth('/api/auth/verify-email', otpForm);
+
+      localStorage.setItem(storageKey, JSON.stringify(payload));
+      setSession(payload);
+      setStatus('success');
+      setMessage('');
+      setRegisterForm(initialRegisterForm);
+      setOtpForm(initialOtpForm);
+      setPendingVerificationEmail('');
     } catch (error) {
       setStatus('error');
       setMessage(error.message);
@@ -227,81 +281,141 @@ export default function App() {
               </button>
             </div>
 
-            <form className="auth-form" onSubmit={submitAuth}>
-              <label>
-                <span>Tên đăng nhập</span>
-                <input
-                  name="username"
-                  value={activeForm.username}
-                  onChange={mode === 'login' ? updateLoginField : updateRegisterField}
-                  minLength={3}
-                  maxLength={100}
-                  autoComplete="username"
-                  required
-                />
-              </label>
+            {pendingVerificationEmail ? (
+              <form className="auth-form" onSubmit={submitOtp}>
+                <label>
+                  <span>Email nhận OTP</span>
+                  <input
+                    name="email"
+                    value={otpForm.email}
+                    onChange={updateOtpField}
+                    autoComplete="email"
+                    readOnly
+                    required
+                  />
+                </label>
 
-              {mode === 'register' && (
-                <>
-                  <label>
-                    <span>Email</span>
-                    <input
-                      type="email"
-                      name="email"
-                      value={registerForm.email}
-                      onChange={updateRegisterField}
-                      maxLength={256}
-                      autoComplete="email"
-                      required
-                    />
-                  </label>
+                <label>
+                  <span>Mã OTP</span>
+                  <input
+                    name="otp"
+                    value={otpForm.otp}
+                    onChange={updateOtpField}
+                    inputMode="numeric"
+                    minLength={6}
+                    maxLength={6}
+                    autoComplete="one-time-code"
+                    required
+                  />
+                </label>
 
-                  <label>
-                    <span>Họ và tên</span>
-                    <input
-                      name="fullName"
-                      value={registerForm.fullName}
-                      onChange={updateRegisterField}
-                      maxLength={200}
-                      autoComplete="name"
-                      required
-                    />
-                  </label>
-                </>
-              )}
-
-              <label>
-                <span>Mật khẩu</span>
-                <input
-                  type="password"
-                  name="password"
-                  value={activeForm.password}
-                  onChange={mode === 'login' ? updateLoginField : updateRegisterField}
-                  minLength={6}
-                  maxLength={100}
-                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                  required
-                />
-              </label>
-
-              <button className="primary-action" type="submit" disabled={status === 'loading'}>
-                {submitLabel}
-              </button>
-            </form>
-
-            {isGoogleConfigured && (
+                <button className="primary-action" type="submit" disabled={status === 'loading'}>
+                  {status === 'loading' ? 'Đang xác nhận...' : 'Xác nhận OTP'}
+                </button>
+                <button
+                  className="secondary-action"
+                  type="button"
+                  onClick={() => switchMode('register')}
+                >
+                  Nhập lại thông tin
+                </button>
+              </form>
+            ) : (
               <>
-                <div className="divider">
-                  <span>hoặc</span>
-                </div>
-                <div className="google-area">
-                  <div id="googleSignInButton" />
-                </div>
+                <form className="auth-form" onSubmit={submitAuth}>
+                  <label>
+                    <span>Tên đăng nhập</span>
+                    <input
+                      name="username"
+                      value={activeForm.username}
+                      onChange={mode === 'login' ? updateLoginField : updateRegisterField}
+                      minLength={3}
+                      maxLength={100}
+                      autoComplete="username"
+                      required
+                    />
+                  </label>
+
+                  {mode === 'register' && (
+                    <>
+                      <label>
+                        <span>Email</span>
+                        <input
+                          type="email"
+                          name="email"
+                          value={registerForm.email}
+                          onChange={updateRegisterField}
+                          maxLength={256}
+                          autoComplete="email"
+                          required
+                        />
+                      </label>
+
+                      <label>
+                        <span>Họ và tên</span>
+                        <input
+                          name="fullName"
+                          value={registerForm.fullName}
+                          onChange={updateRegisterField}
+                          maxLength={200}
+                          autoComplete="name"
+                          required
+                        />
+                      </label>
+                    </>
+                  )}
+
+                  <label>
+                    <span>Mật khẩu</span>
+                    <input
+                      type="password"
+                      name="password"
+                      value={activeForm.password}
+                      onChange={mode === 'login' ? updateLoginField : updateRegisterField}
+                      minLength={6}
+                      maxLength={100}
+                      autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                      required
+                    />
+                  </label>
+
+                  {mode === 'register' && (
+                    <label>
+                      <span>Xác nhận mật khẩu</span>
+                      <input
+                        type="password"
+                        name="confirmPassword"
+                        value={registerForm.confirmPassword}
+                        onChange={updateRegisterField}
+                        minLength={6}
+                        maxLength={100}
+                        autoComplete="new-password"
+                        required
+                      />
+                    </label>
+                  )}
+
+                  <button className="primary-action" type="submit" disabled={status === 'loading'}>
+                    {submitLabel}
+                  </button>
+                </form>
+
+                {isGoogleConfigured && (
+                  <>
+                    <div className="divider">
+                      <span>hoặc</span>
+                    </div>
+                    <div className="google-area">
+                      <div id="googleSignInButton" />
+                    </div>
+                  </>
+                )}
               </>
             )}
           </>
         )}
 
+        {status === 'success' && message && <div className="success">{message}</div>}
         {status === 'error' && <div className="alert">{message}</div>}
       </section>
     </main>
