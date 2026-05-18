@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import '../../styles.css';
 import { AdminLayout } from './components/AdminLayout';
 import {
   deleteAdminUser,
@@ -298,7 +299,7 @@ export function AdminDashboard({ session, onSignOut }) {
 
   return (
     <AdminLayout session={session} activeSection={activeSection} onSectionChange={setActiveSection} onRefresh={refresh} onSignOut={onSignOut}>
-      {loading && <div className="state-card">Đang tải dữ liệu admin...</div>}
+      {loading && <div className="state-card">Loading...</div>}
       {error && <div className="alert">{error}</div>}
       {notice && <div className="success">{notice}</div>}
       {!loading && renderSection()}

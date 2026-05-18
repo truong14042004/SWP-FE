@@ -3,11 +3,6 @@ import { apiRequest, authorizedRequest } from '../../api/http';
 export async function loadAdminDashboard(session) {
   const [
     overview,
-    userStats,
-    paymentStats,
-    subscriptionStats,
-    learningResourcesStats,
-    careerRoleStats,
     users,
     payments,
     paymentSubscriptions,
@@ -19,11 +14,6 @@ export async function loadAdminDashboard(session) {
     careerRoles,
   ] = await Promise.all([
     authorizedRequest('/api/admin/stats/overview', session),
-    authorizedRequest('/api/admin/stats/users', session),
-    authorizedRequest('/api/admin/stats/payments', session),
-    authorizedRequest('/api/admin/stats/subscriptions', session),
-    authorizedRequest('/api/admin/stats/learning-resources', session),
-    authorizedRequest('/api/admin/stats/career-roles', session),
     authorizedRequest('/api/admin/users', session),
     authorizedRequest('/api/admin/payments', session),
     authorizedRequest('/api/admin/payments/subscriptions', session),
@@ -35,15 +25,11 @@ export async function loadAdminDashboard(session) {
     authorizedRequest('/api/career-roles', session),
   ]);
 
+  // BE overview shape: { users, subscriptions, payments, content }
+  // content: { totalSkills, activeSkills, totalLearningResources, activeLearningResources,
+  //            fileResources, linkResources, totalCareerRoles, activeCareerRoles, popularCareerRoles[] }
   return {
-    stats: {
-      ...overview,
-      users: userStats,
-      payments: paymentStats,
-      subscriptions: subscriptionStats,
-      learningResources: learningResourcesStats,
-      careerRoles: careerRoleStats,
-    },
+    stats: overview,
     users,
     payments,
     paymentSubscriptions,
@@ -55,6 +41,7 @@ export async function loadAdminDashboard(session) {
     careerRoles,
   };
 }
+
 
 export function getAdminUser(session, id) {
   return authorizedRequest(`/api/admin/users/${id}`, session);
