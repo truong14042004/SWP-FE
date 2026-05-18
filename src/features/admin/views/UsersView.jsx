@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { apiUrl } from '../../../config';
 import { formatDate } from '../../../shared/format';
 import { MetricCard, SectionHeader, StatusPill } from '../components/DashboardPrimitives';
 
@@ -10,6 +11,7 @@ const emptyUserForm = {
   fullName: '',
   role: 'Student',
   avatarUrl: '',
+  avatarFile: null,
   password: '',
   isEmailVerified: true,
   isActive: true,
@@ -20,6 +22,7 @@ export function UsersView({
   selectedUser,
   onSelectUser,
   onSaveUser,
+  onUploadAvatar,
   onToggleStatus,
   onDeleteUser,
 }) {
@@ -40,8 +43,11 @@ export function UsersView({
   const inactiveCount = users.length - activeCount;
 
   function updateField(event) {
-    const { name, value, type, checked } = event.target;
-    setForm((current) => ({ ...current, [name]: type === 'checkbox' ? checked : value }));
+    const { name, value, type, checked, files } = event.target;
+    setForm((current) => ({
+      ...current,
+      [name]: type === 'checkbox' ? checked : type === 'file' ? files?.[0] || null : value,
+    }));
   }
 
   async function editUser(user) {
@@ -54,6 +60,7 @@ export function UsersView({
       fullName: userForForm.fullName || '',
       role: userForForm.role || 'Student',
       avatarUrl: userForForm.avatarUrl || '',
+      avatarFile: null,
       password: '',
       isEmailVerified: Boolean(userForForm.isEmailVerified),
       isActive: Boolean(userForForm.isActive),
@@ -77,13 +84,17 @@ export function UsersView({
       avatarUrl: form.avatarUrl.trim() || null,
       password: form.password.trim(),
     };
+    delete payload.avatarFile;
 
     if (editingId && !payload.password) {
       delete payload.password;
     }
 
     try {
-      await onSaveUser(payload, editingId);
+      const savedUser = await onSaveUser(payload, editingId);
+      if (form.avatarFile && savedUser?.id) {
+        await onUploadAvatar(savedUser.id, form.avatarFile);
+      }
       resetForm();
     } finally {
       setSaving(false);
@@ -108,6 +119,15 @@ export function UsersView({
               <h2>{editingId ? 'Edit user' : 'Create user'}</h2>
             </div>
             {editingId && <StatusPill active={form.isActive} />}
+          </div>
+
+          <div className="avatar-editor">
+            <AvatarPreview user={{ id: editingId, avatarUrl: form.avatarUrl, fullName: form.fullName, updatedAt: selectedUser?.updatedAt }} />
+            <label>
+              <span>Avatar image</span>
+              <input name="avatarFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={updateField} />
+              <small>{form.avatarFile ? form.avatarFile.name : 'JPG, PNG, WebP or GIF, max 5 MB'}</small>
+            </label>
           </div>
 
           <label>
@@ -145,11 +165,6 @@ export function UsersView({
               />
             </label>
           </div>
-
-          <label>
-            <span>Avatar URL</span>
-            <input name="avatarUrl" value={form.avatarUrl} onChange={updateField} placeholder="https://..." />
-          </label>
 
           <div className="form-grid switches-grid">
             <label className="check-row">
@@ -212,8 +227,13 @@ export function UsersView({
                 {filteredUsers.map((user) => (
                   <tr key={user.id}>
                     <td>
-                      <strong>{user.fullName}</strong>
-                      <span>{user.username || 'No username'}</span>
+                      <div className="user-cell">
+                        <AvatarPreview user={user} />
+                        <div>
+                          <strong>{user.fullName}</strong>
+                          <span>{user.username || 'No username'}</span>
+                        </div>
+                      </div>
                     </td>
                     <td><span className="role-chip">{user.role}</span></td>
                     <td>{user.email}</td>
@@ -239,4 +259,50 @@ export function UsersView({
       </div>
     </section>
   );
+}
+
+function AvatarPreview({ user }) {
+  const avatarSrc = getAvatarSrc(user);
+  const initials = getInitials(user?.fullName);
+
+  if (!avatarSrc) {
+    return <span className="avatar-preview fallback">{initials}</span>;
+  }
+
+  return (
+    <img
+      className="avatar-preview"
+      src={avatarSrc}
+      alt={user?.fullName ? `${user.fullName} avatar` : 'User avatar'}
+      onError={(event) => {
+        event.currentTarget.style.display = 'none';
+      }}
+    />
+  );
+}
+
+function getAvatarSrc(user) {
+  if (!user?.avatarUrl) {
+    return '';
+  }
+
+  if (/^https?:\/\//i.test(user.avatarUrl)) {
+    return user.avatarUrl;
+  }
+
+  if (!user.id || !apiUrl) {
+    return '';
+  }
+
+  const version = user.updatedAt ? `?v=${encodeURIComponent(user.updatedAt)}` : '';
+  return `${apiUrl}/api/storage/public/users/${user.id}/avatar/download${version}`;
+}
+
+function getInitials(fullName = '') {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) {
+    return 'U';
+  }
+
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
 }
