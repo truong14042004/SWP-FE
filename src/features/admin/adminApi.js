@@ -67,6 +67,16 @@ export function saveAdminUser(session, user, id) {
   });
 }
 
+export function uploadAdminUserAvatar(session, id, file) {
+  const formData = new FormData();
+  formData.append('File', file);
+
+  return authorizedRequest(`/api/admin/users/${id}/avatar`, session, {
+    method: 'POST',
+    body: formData,
+  });
+}
+
 export function deleteAdminUser(session, id) {
   return authorizedRequest(`/api/admin/users/${id}`, session, { method: 'DELETE' });
 }

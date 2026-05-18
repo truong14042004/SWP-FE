@@ -23,6 +23,7 @@ import {
   saveSubscriptionPlan,
   updatePaymentStatus,
   updateUserStatus,
+  uploadAdminUserAvatar,
   uploadLearningResource,
 } from './adminApi';
 import { OverviewView } from './views/OverviewView';
@@ -93,10 +94,33 @@ export function AdminDashboard({ session, onSignOut }) {
   }
 
   async function handleSaveUser(user, id) {
-    await runAction(async () => {
+    setError('');
+    setNotice('');
+    try {
       const savedUser = await saveAdminUser(session, user, id);
       setSelectedUser(savedUser);
-    }, id ? 'Da cap nhat user.' : 'Da tao user.');
+      setNotice(id ? 'Da cap nhat user.' : 'Da tao user.');
+      await refresh();
+      return savedUser;
+    } catch (requestError) {
+      setError(requestError.message);
+      throw requestError;
+    }
+  }
+
+  async function handleUploadUserAvatar(userId, file) {
+    setError('');
+    setNotice('');
+    try {
+      const updatedUser = await uploadAdminUserAvatar(session, userId, file);
+      setSelectedUser(updatedUser);
+      setNotice('Da upload avatar.');
+      await refresh();
+      return updatedUser;
+    } catch (requestError) {
+      setError(requestError.message);
+      throw requestError;
+    }
   }
 
   async function handleDeleteUser(user) {
@@ -210,6 +234,7 @@ export function AdminDashboard({ session, onSignOut }) {
           selectedUser={selectedUser}
           onSelectUser={handleSelectUser}
           onSaveUser={handleSaveUser}
+          onUploadAvatar={handleUploadUserAvatar}
           onToggleStatus={handleToggleUserStatus}
           onDeleteUser={handleDeleteUser}
         />
