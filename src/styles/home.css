@@ -1,0 +1,345 @@
+/* ════════════════════════════════════════════════════════════
+   HOME PAGE - Apple Design System (Strict)
+   ════════════════════════════════════════════════════════════ */
+
+.hp-root {
+  min-height: 100vh;
+  background: #ffffff; /* canvas */
+  color: #1d1d1f; /* ink */
+  font-family: "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Typography ── */
+.hp-hero-display {
+  font-family: "SF Pro Display", system-ui, -apple-system, sans-serif;
+  font-size: 56px;
+  font-weight: 600;
+  line-height: 1.07;
+  letter-spacing: -0.28px;
+  margin: 0 0 16px;
+}
+
+.hp-display-lg {
+  font-family: "SF Pro Display", system-ui, -apple-system, sans-serif;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0;
+  margin: 0 0 12px;
+}
+
+.hp-lead {
+  font-family: "SF Pro Display", system-ui, -apple-system, sans-serif;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: 0.196px;
+  margin: 0;
+}
+
+.hp-tagline {
+  font-family: "SF Pro Display", system-ui, -apple-system, sans-serif;
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.19;
+  letter-spacing: 0.231px;
+}
+
+.hp-body {
+  font-family: "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+}
+
+.hp-body-strong {
+  font-family: "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: -0.374px;
+}
+
+/* ── Global Nav ── */
+.hp-global-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 44px;
+  background: #000000;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  font-family: "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: -0.12px;
+}
+
+.hp-global-nav-links {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.hp-global-nav a {
+  color: #ffffff;
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 200ms;
+}
+
+.hp-global-nav a:hover {
+  opacity: 1;
+}
+
+.hp-dark-utility-btn {
+  background: #1d1d1f;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 400;
+  border-radius: 8px; /* rounded.sm */
+  padding: 8px 15px;
+  border: none;
+  cursor: pointer;
+  letter-spacing: -0.224px;
+  transition: transform 150ms ease;
+}
+
+.hp-dark-utility-btn:active {
+  transform: scale(0.95);
+}
+
+/* ── Buttons ── */
+.hp-btn-primary {
+  background: #0066cc;
+  color: #ffffff;
+  font-family: "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  border-radius: 9999px;
+  padding: 11px 22px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: transform 150ms ease;
+}
+
+.hp-btn-primary:active {
+  transform: scale(0.95);
+}
+
+.hp-btn-primary:focus-visible {
+  outline: 2px solid #0071e3;
+  outline-offset: 2px;
+}
+
+.hp-btn-secondary {
+  background: transparent;
+  color: #0066cc;
+  font-family: "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  border-radius: 9999px;
+  padding: 11px 22px;
+  border: 1px solid #0066cc;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: transform 150ms ease;
+}
+
+.hp-btn-secondary:active {
+  transform: scale(0.95);
+}
+
+.hp-actions-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+  justify-content: center;
+}
+
+/* ── Links ── */
+.hp-text-link {
+  color: #0066cc;
+  font-size: 17px;
+  text-decoration: none;
+}
+.hp-text-link:hover { text-decoration: underline; }
+
+.hp-text-link-dark {
+  color: #2997ff;
+  font-size: 17px;
+  text-decoration: none;
+}
+.hp-text-link-dark:hover { text-decoration: underline; }
+
+/* ── Tiles (Layout) ── */
+.hp-tile {
+  width: 100%;
+  padding: 80px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.hp-tile-light {
+  background: #ffffff;
+  color: #1d1d1f;
+}
+
+.hp-tile-parchment {
+  background: #f5f5f7;
+  color: #1d1d1f;
+}
+
+.hp-tile-dark {
+  background: #272729; /* surface-tile-1 */
+  color: #ffffff; /* body-on-dark */
+}
+
+/* ── Imagery ── */
+.hp-product-render {
+  max-width: 100%;
+  margin-top: 64px;
+  /* The only shadow in the system, applied to product images */
+  box-shadow: 0 30px 30px -10px rgba(0, 0, 0, 0.22);
+  /* The strict token: rgba(0, 0, 0, 0.22) 3px 5px 30px 0 */
+  filter: drop-shadow(3px 5px 30px rgba(0, 0, 0, 0.22)); 
+  box-shadow: none; /* override box-shadow in favor of filter for pngs */
+  border-radius: 0;
+}
+
+/* ── Store Utility Grid ── */
+.hp-utility-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  max-width: 1440px;
+  margin: 64px auto 0;
+  padding: 0 24px;
+}
+
+.hp-utility-card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0; /* hairline */
+  border-radius: 18px; /* rounded.lg */
+  padding: 24px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+
+.hp-utility-card-img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  object-fit: cover;
+  border-radius: 8px; /* rounded.sm */
+  margin-bottom: 24px;
+  background: #f5f5f7;
+}
+
+.hp-utility-card-title {
+  font-family: "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.24;
+  margin: 0 0 8px;
+}
+
+.hp-utility-card-price {
+  font-family: "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  margin: 0 0 16px;
+  color: #1d1d1f;
+}
+
+.hp-utility-card-action {
+  margin-top: auto;
+}
+
+/* ── Footer ── */
+.hp-footer {
+  background: #f5f5f7;
+  padding: 64px 24px;
+  color: #7a7a7a;
+}
+
+.hp-footer-content {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.hp-footer-fine-print {
+  font-family: "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.0;
+  letter-spacing: -0.12px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.hp-footer-links-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.hp-footer-col h4 {
+  font-family: "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 12px;
+}
+
+.hp-footer-col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.hp-footer-col li {
+  margin-bottom: 8px;
+}
+
+.hp-footer-col a {
+  font-family: "SF Pro Text", system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #7a7a7a;
+  text-decoration: none;
+}
+
+.hp-footer-col a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 833px) {
+  .hp-global-nav-links { display: none; }
+  .hp-footer-links-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+  .hp-hero-display { font-size: 34px; }
+  .hp-display-lg { font-size: 34px; }
+  .hp-utility-grid { grid-template-columns: 1fr; }
+  .hp-footer-links-grid { grid-template-columns: 1fr; }
+  .hp-tile { padding: 48px 24px; }
+}
