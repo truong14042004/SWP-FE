@@ -15,6 +15,7 @@ import {
   getSkill,
   getSubscriptionPlan,
   loadAdminDashboard,
+  saveAdminUser,
   saveCareerRole,
   saveLearningResource,
   saveRoleSkillRequirement,
@@ -72,9 +73,16 @@ export function AdminDashboard({ session, onSignOut }) {
   }
 
   async function handleSelectUser(id) {
-    await runAction(async () => {
-      setSelectedUser(await getAdminUser(session, id));
-    });
+    setError('');
+    setNotice('');
+    try {
+      const user = await getAdminUser(session, id);
+      setSelectedUser(user);
+      return user;
+    } catch (requestError) {
+      setError(requestError.message);
+      return null;
+    }
   }
 
   async function handleToggleUserStatus(user) {
@@ -82,6 +90,13 @@ export function AdminDashboard({ session, onSignOut }) {
       () => updateUserStatus(session, user.id, !user.isActive),
       user.isActive ? 'Đã vô hiệu hóa user.' : 'Đã kích hoạt user.',
     );
+  }
+
+  async function handleSaveUser(user, id) {
+    await runAction(async () => {
+      const savedUser = await saveAdminUser(session, user, id);
+      setSelectedUser(savedUser);
+    }, id ? 'Da cap nhat user.' : 'Da tao user.');
   }
 
   async function handleDeleteUser(user) {
@@ -194,6 +209,7 @@ export function AdminDashboard({ session, onSignOut }) {
           users={data.users}
           selectedUser={selectedUser}
           onSelectUser={handleSelectUser}
+          onSaveUser={handleSaveUser}
           onToggleStatus={handleToggleUserStatus}
           onDeleteUser={handleDeleteUser}
         />

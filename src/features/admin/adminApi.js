@@ -60,6 +60,13 @@ export function getAdminUser(session, id) {
   return authorizedRequest(`/api/admin/users/${id}`, session);
 }
 
+export function saveAdminUser(session, user, id) {
+  return authorizedRequest(id ? `/api/admin/users/${id}` : '/api/admin/users', session, {
+    method: id ? 'PUT' : 'POST',
+    body: JSON.stringify(user),
+  });
+}
+
 export function deleteAdminUser(session, id) {
   return authorizedRequest(`/api/admin/users/${id}`, session, { method: 'DELETE' });
 }

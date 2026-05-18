@@ -1,54 +1,241 @@
+import { useMemo, useState } from 'react';
 import { formatDate } from '../../../shared/format';
-import { Panel, SectionHeader, StatusPill } from '../components/DashboardPrimitives';
+import { MetricCard, SectionHeader, StatusPill } from '../components/DashboardPrimitives';
 
-export function UsersView({ users, selectedUser, onSelectUser, onToggleStatus, onDeleteUser }) {
+const roles = ['Student', 'Admin', 'AcademicCounselor', 'IndustryMentor'];
+
+const emptyUserForm = {
+  username: '',
+  email: '',
+  fullName: '',
+  role: 'Student',
+  avatarUrl: '',
+  password: '',
+  isEmailVerified: true,
+  isActive: true,
+};
+
+export function UsersView({
+  users,
+  selectedUser,
+  onSelectUser,
+  onSaveUser,
+  onToggleStatus,
+  onDeleteUser,
+}) {
+  const [form, setForm] = useState(emptyUserForm);
+  const [editingId, setEditingId] = useState('');
+  const [roleFilter, setRoleFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [saving, setSaving] = useState(false);
+
+  const filteredUsers = useMemo(() => users.filter((user) => {
+    const roleMatch = roleFilter === 'All' || user.role === roleFilter;
+    const statusMatch = statusFilter === 'All'
+      || (statusFilter === 'Active' ? user.isActive : !user.isActive);
+    return roleMatch && statusMatch;
+  }), [users, roleFilter, statusFilter]);
+
+  const activeCount = users.filter((user) => user.isActive).length;
+  const inactiveCount = users.length - activeCount;
+
+  function updateField(event) {
+    const { name, value, type, checked } = event.target;
+    setForm((current) => ({ ...current, [name]: type === 'checkbox' ? checked : value }));
+  }
+
+  async function editUser(user) {
+    const latest = await onSelectUser(user.id);
+    const userForForm = latest || user;
+    setEditingId(userForForm.id);
+    setForm({
+      username: userForForm.username || '',
+      email: userForForm.email || '',
+      fullName: userForForm.fullName || '',
+      role: userForForm.role || 'Student',
+      avatarUrl: userForForm.avatarUrl || '',
+      password: '',
+      isEmailVerified: Boolean(userForForm.isEmailVerified),
+      isActive: Boolean(userForForm.isActive),
+    });
+  }
+
+  function resetForm() {
+    setEditingId('');
+    setForm(emptyUserForm);
+  }
+
+  async function submitUser(event) {
+    event.preventDefault();
+    setSaving(true);
+
+    const payload = {
+      ...form,
+      username: form.username.trim(),
+      email: form.email.trim(),
+      fullName: form.fullName.trim(),
+      avatarUrl: form.avatarUrl.trim() || null,
+      password: form.password.trim(),
+    };
+
+    if (editingId && !payload.password) {
+      delete payload.password;
+    }
+
+    try {
+      await onSaveUser(payload, editingId);
+      resetForm();
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <section className="admin-section">
-      <SectionHeader title="User management" subtitle={`${users.length} accounts`} />
-      <div className="split-grid wide-left">
-        <div className="table-wrap">
-          <table>
-            <thead><tr><th>User</th><th>Role</th><th>Email</th><th>Status</th><th></th></tr></thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td><strong>{user.fullName}</strong><span>{user.username || 'No username'}</span></td>
-                  <td>{user.role}</td>
-                  <td>{user.email}</td>
-                  <td><StatusPill active={user.isActive} /></td>
-                  <td className="table-actions">
-                    <button type="button" onClick={() => onSelectUser(user.id)}>Detail</button>
-                    <button type="button" onClick={() => onToggleStatus(user)}>{user.isActive ? 'Disable' : 'Activate'}</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <SectionHeader title="User management" subtitle="CRUD accounts, roles and access" />
 
-        <Panel title="User detail">
-          {selectedUser ? (
-            <div className="detail-stack">
-              <strong>{selectedUser.fullName}</strong>
-              <span>{selectedUser.email}</span>
-              <span>Role: {selectedUser.role}</span>
-              <span>Email verified: {selectedUser.isEmailVerified ? 'Yes' : 'No'}</span>
-              <span>Created: {formatDate(selectedUser.createdAt)}</span>
-              <span>Updated: {formatDate(selectedUser.updatedAt)}</span>
-              <StatusPill active={selectedUser.isActive} />
-              <div className="button-row">
-                <button type="button" onClick={() => onToggleStatus(selectedUser)}>
-                  {selectedUser.isActive ? 'Disable account' : 'Activate account'}
-                </button>
-                <button type="button" onClick={() => onDeleteUser(selectedUser)}>
-                  Delete user
-                </button>
-              </div>
+      <div className="metric-grid compact user-metrics">
+        <MetricCard label="Total users" value={users.length} detail="All accounts" />
+        <MetricCard label="Active" value={activeCount} detail="Can sign in" />
+        <MetricCard label="Inactive" value={inactiveCount} detail="Soft deleted or disabled" />
+      </div>
+
+      <div className="plan-layout user-crud-layout">
+        <form className="plan-form user-form" onSubmit={submitUser}>
+          <div className="form-title-row">
+            <div>
+              <p className="eyebrow">Account editor</p>
+              <h2>{editingId ? 'Edit user' : 'Create user'}</h2>
             </div>
-          ) : (
-            <p className="empty-text">Chọn một user để xem chi tiết.</p>
+            {editingId && <StatusPill active={form.isActive} />}
+          </div>
+
+          <label>
+            <span>Full name</span>
+            <input name="fullName" value={form.fullName} onChange={updateField} required />
+          </label>
+
+          <div className="form-grid">
+            <label>
+              <span>Username</span>
+              <input name="username" value={form.username} onChange={updateField} required />
+            </label>
+            <label>
+              <span>Email</span>
+              <input name="email" type="email" value={form.email} onChange={updateField} required />
+            </label>
+          </div>
+
+          <div className="form-grid">
+            <label>
+              <span>Role</span>
+              <select name="role" value={form.role} onChange={updateField}>
+                {roles.map((role) => <option key={role} value={role}>{role}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>{editingId ? 'New password' : 'Password'}</span>
+              <input
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={updateField}
+                required={!editingId}
+                placeholder={editingId ? 'Leave empty to keep current password' : ''}
+              />
+            </label>
+          </div>
+
+          <label>
+            <span>Avatar URL</span>
+            <input name="avatarUrl" value={form.avatarUrl} onChange={updateField} placeholder="https://..." />
+          </label>
+
+          <div className="form-grid switches-grid">
+            <label className="check-row">
+              <input type="checkbox" name="isEmailVerified" checked={form.isEmailVerified} onChange={updateField} />
+              <span>Email verified</span>
+            </label>
+            <label className="check-row">
+              <input type="checkbox" name="isActive" checked={form.isActive} onChange={updateField} />
+              <span>Active account</span>
+            </label>
+          </div>
+
+          <div className="button-row">
+            <button className="primary-action" type="submit" disabled={saving}>
+              {saving ? 'Saving...' : editingId ? 'Save changes' : 'Create user'}
+            </button>
+            {editingId && <button type="button" className="secondary-action" onClick={resetForm}>Cancel</button>}
+          </div>
+
+          {selectedUser && (
+            <div className="user-audit-box">
+              <span>Selected user</span>
+              <strong>{selectedUser.fullName}</strong>
+              <small>Created {formatDate(selectedUser.createdAt)} · Updated {formatDate(selectedUser.updatedAt)}</small>
+            </div>
           )}
-        </Panel>
+        </form>
+
+        <div className="user-list-panel">
+          <div className="user-list-toolbar">
+            <div>
+              <h2>Accounts</h2>
+              <span>{filteredUsers.length} shown</span>
+            </div>
+            <div className="filter-controls">
+              <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)} aria-label="Filter role">
+                <option value="All">All roles</option>
+                {roles.map((role) => <option key={role} value={role}>{role}</option>)}
+              </select>
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filter status">
+                <option value="All">All status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user) => (
+                  <tr key={user.id}>
+                    <td>
+                      <strong>{user.fullName}</strong>
+                      <span>{user.username || 'No username'}</span>
+                    </td>
+                    <td><span className="role-chip">{user.role}</span></td>
+                    <td>{user.email}</td>
+                    <td><StatusPill active={user.isActive} /></td>
+                    <td className="table-actions">
+                      <button type="button" onClick={() => editUser(user)}>Edit</button>
+                      <button type="button" onClick={() => onToggleStatus(user)}>
+                        {user.isActive ? 'Disable' : 'Activate'}
+                      </button>
+                      <button type="button" onClick={() => onDeleteUser(user)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+                {!filteredUsers.length && (
+                  <tr>
+                    <td colSpan="5"><span className="empty-text">No users match the current filters.</span></td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </section>
   );
