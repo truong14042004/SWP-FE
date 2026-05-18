@@ -21,6 +21,10 @@ export function getSessionToken(session) {
   return session?.token || session?.accessToken || '';
 }
 
+export function getRefreshToken(session) {
+  return session?.refreshToken || '';
+}
+
 export function getSessionRole(session) {
   return session?.user?.role || session?.role || '';
 }

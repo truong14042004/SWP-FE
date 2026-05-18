@@ -613,6 +613,77 @@ tr:last-child td { border-bottom: 0; }
   color: var(--primary);
   font-weight: 600;
 }
+.user-crud-layout {
+  grid-template-columns: minmax(360px, 460px) minmax(0, 1fr);
+}
+.user-form {
+  position: sticky;
+  top: 28px;
+}
+.form-title-row,
+.user-list-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.form-title-row h2,
+.user-list-toolbar h2 {
+  margin: 0;
+}
+.switches-grid {
+  align-items: center;
+}
+.user-audit-box {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--hairline);
+  border-radius: 18px;
+  padding: 14px 16px;
+  background: var(--parchment);
+}
+.user-audit-box span,
+.user-audit-box small,
+.user-list-toolbar span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.user-audit-box strong {
+  color: var(--ink);
+}
+.user-list-panel {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.filter-controls select {
+  min-height: 40px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 0 14px;
+  background: var(--canvas);
+  color: var(--ink);
+  font-weight: 600;
+}
+.role-chip {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 30px;
+  align-items: center;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 0 12px;
+  background: var(--parchment);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
 
 @media (max-width: 1120px) {
   .home-hero,
@@ -625,7 +696,8 @@ tr:last-child td { border-bottom: 0; }
   .admin-shell { grid-template-columns: 1fr; }
   .admin-sidebar { min-height: auto; position: static; grid-template-rows: auto; }
   .admin-nav { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
-  .metric-grid, .metric-grid.compact, .split-grid, .split-grid.wide-left, .plan-layout { grid-template-columns: 1fr; }
+  .metric-grid, .metric-grid.compact, .split-grid, .split-grid.wide-left, .plan-layout, .user-crud-layout { grid-template-columns: 1fr; }
+  .user-form { position: static; }
   .plan-list { grid-template-columns: 1fr; }
 }
 
@@ -641,6 +713,8 @@ tr:last-child td { border-bottom: 0; }
   .intro-panel h1 { font-size: 2.65rem; }
   .signal-grid, .form-grid, .admin-nav, .role-action-grid { grid-template-columns: 1fr; }
   .signal-grid span { min-height: 64px; }
-  .section-header, .admin-topbar { align-items: start; flex-direction: column; }
+  .section-header, .admin-topbar, .form-title-row, .user-list-toolbar { align-items: start; flex-direction: column; }
+  .filter-controls { width: 100%; justify-content: stretch; }
+  .filter-controls select { flex: 1 1 140px; }
   .metric-card { min-height: 128px; }
 }
