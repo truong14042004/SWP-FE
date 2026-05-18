@@ -1,233 +1,259 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   createSubscriptionCheckout,
   getMySubscriptions,
   getSubscriptionPlans,
   parsePlanFeatures,
 } from '../subscriptions/subscriptionApi';
-import { formatDate, formatMoney } from '../../shared/format';
+import { formatMoney } from '../../shared/format';
+import '../../styles/home.css';
 
 export function HomePage({ session, onLogin, onSignOut }) {
-  const isStudent = session?.user?.role === 'Student';
+  const isLoggedIn = Boolean(session);
   const [plans, setPlans] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
-  const [plansStatus, setPlansStatus] = useState('idle');
   const [checkoutPlanId, setCheckoutPlanId] = useState('');
-  const [paymentMessage, setPaymentMessage] = useState('');
-  const [paymentError, setPaymentError] = useState('');
 
-  const activeSubscription = useMemo(
-    () => subscriptions.find((item) => item.status === 'Active'),
-    [subscriptions],
-  );
-
-  useEffect(() => {
-    loadPlans();
-  }, [session?.token]);
+  useEffect(() => { loadPlans(); }, [session?.token]);
 
   async function loadPlans() {
-    setPlansStatus('loading');
-    setPaymentError('');
-
     try {
-      const [planList, subscriptionList] = await Promise.all([
+      const [planList, subList] = await Promise.all([
         getSubscriptionPlans(),
         session ? getMySubscriptions(session).catch(() => []) : Promise.resolve([]),
       ]);
-      setPlans(planList);
-      setSubscriptions(subscriptionList);
-      setPlansStatus('ready');
-    } catch (error) {
-      setPaymentError(error.message);
-      setPlansStatus('error');
-    }
+      setPlans(planList); setSubscriptions(subList);
+    } catch (err) { console.error(err); }
   }
 
   async function buyPlan(plan) {
-    setPaymentMessage('');
-    setPaymentError('');
-
-    if (!session) {
-      onLogin();
-      return;
-    }
-
+    if (!session) { onLogin(); return; }
     setCheckoutPlanId(plan.id);
     try {
       const checkout = await createSubscriptionCheckout(session, plan.id);
-      if (checkout.checkoutUrl) {
-        window.location.assign(checkout.checkoutUrl);
-        return;
-      }
-
-      setPaymentMessage('Gói miễn phí đã được kích hoạt cho tài khoản của bạn.');
-      await loadPlans();
-    } catch (error) {
-      setPaymentError(error.message);
-    } finally {
-      setCheckoutPlanId('');
-    }
+      if (checkout.checkoutUrl) window.location.assign(checkout.checkoutUrl);
+      else await loadPlans();
+    } catch (err) { alert(err.message); }
+    finally { setCheckoutPlanId(''); }
   }
 
   return (
-    <main className="home-shell">
-      <nav className="home-nav" aria-label="CareerMap navigation">
-        <div className="brand-row compact">
-          <span className="brand-mark">CM</span>
-          <span>CareerMap</span>
+    <div className="hp-root">
+      {/* ── GLOBAL NAV ── */}
+      <nav className="hp-global-nav">
+        <a href="#" style={{ textDecoration: 'none', color: '#fff', fontWeight: 600, fontSize: '15px' }}>
+          CareerMap
+        </a>
+        <div className="hp-global-nav-links">
+          <a href="#platform">Nền tảng</a>
+          <a href="#features">Tính năng</a>
+          <a href="#network">Mạng lưới</a>
+          <a href="#store">Đăng ký</a>
         </div>
-        <div className="home-nav-actions">
-          {session ? (
-            <>
-              <span>{session.user.fullName}</span>
-              <button type="button" className="secondary-action" onClick={onSignOut}>
-                Đăng xuất
-              </button>
-            </>
+        <div style={{ display: 'flex', gap: '16px' }}>
+          {isLoggedIn ? (
+            <button className="hp-dark-utility-btn" onClick={onSignOut}>Đăng xuất</button>
           ) : (
-            <button type="button" className="pill-button" onClick={onLogin}>
-              Đăng nhập
-            </button>
+            <button className="hp-dark-utility-btn" onClick={onLogin}>Đăng nhập</button>
           )}
         </div>
       </nav>
 
-      <section className="home-hero">
-        <div>
-          <p className="eyebrow">{isStudent ? 'Student workspace' : 'Career guidance platform'}</p>
-          <h1>{isStudent ? 'Tiếp tục lộ trình nghề nghiệp của bạn.' : 'Lộ trình học tập rõ ràng cho từng mục tiêu nghề nghiệp.'}</h1>
-          <p>
-            CareerMap giúp sinh viên chọn career role, phân tích skill gap, xem roadmap,
-            truy cập tài liệu theo từng node và nhận mentor review cho portfolio.
-          </p>
-          <div className="home-actions">
-            {session ? (
-              <a href="#student-dashboard" className="pill-link">Xem dashboard</a>
-            ) : (
-              <button type="button" className="pill-button" onClick={onLogin}>Bắt đầu</button>
-            )}
-            <a href="#workflow" className="text-link">Xem luồng chính</a>
-          </div>
+      {/* ── TILE 1: LIGHT HERO ── */}
+      <section className="hp-tile hp-tile-light" id="platform">
+        <h1 className="hp-hero-display">CareerMap.</h1>
+        <p className="hp-lead">Xác định điểm đến. Vẽ lối đi riêng.</p>
+        <p className="hp-body" style={{ maxWidth: '600px', margin: '16px auto 0', color: '#7a7a7a' }}>
+          Nền tảng hướng nghiệp toàn diện kết hợp trí tuệ nhân tạo và mạng lưới chuyên gia. 
+          Giúp bạn chuyển đổi từ người mới bắt đầu thành chuyên gia thực thụ.
+        </p>
+        <div className="hp-actions-row">
+          <a href="#store" className="hp-btn-primary">Bắt đầu miễn phí</a>
+          <a href="#features" className="hp-text-link" style={{ alignSelf: 'center' }}>Khám phá quy trình &gt;</a>
         </div>
-
-        <div className="home-showcase" aria-label="CareerMap overview">
-          <div className="showcase-header">
-            <span>Roadmap progress</span>
-            <strong>{isStudent ? '68%' : 'Skill-first'}</strong>
-          </div>
-          <div className="roadmap-preview">
-            <span className="done">Career role</span>
-            <span className="done">Skill gap</span>
-            <span>Learning nodes</span>
-            <span>Portfolio review</span>
-          </div>
-        </div>
+        <img 
+          src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1400&q=80" 
+          alt="CareerMap Dashboard" 
+          className="hp-product-render"
+          style={{ height: '500px', objectFit: 'cover', width: '1200px' }}
+        />
       </section>
 
-      <section id="workflow" className="home-band dark">
-        <div className="home-section-header">
-          <p className="eyebrow">Main workflow</p>
-          <h2>5 luồng chính của CareerMap</h2>
+      {/* ── TILE 2: DARK TILE - AI ── */}
+      <section className="hp-tile hp-tile-dark" id="features">
+        <h2 className="hp-display-lg">AI Gap Analysis.</h2>
+        <p className="hp-lead">Phát hiện lỗ hổng kỹ năng trong 30 giây.</p>
+        <p className="hp-body" style={{ maxWidth: '600px', margin: '16px auto 0', color: '#cccccc' }}>
+          Thuật toán AI của chúng tôi phân tích CV của bạn, đối chiếu với hàng ngàn mô tả công việc thực tế trên thị trường, và chỉ ra chính xác những kỹ năng bạn còn thiếu. Không còn phỏng đoán, chỉ có dữ liệu.
+        </p>
+        <div className="hp-actions-row">
+          <button onClick={onLogin} className="hp-btn-primary">Phân tích CV ngay</button>
         </div>
-        <div className="workflow-grid">
-          <WorkflowCard title="Chọn career role" text="Sinh viên chọn mục tiêu nghề nghiệp để hệ thống biết cần so skill nào." />
-          <WorkflowCard title="Phân tích skill gap" text="AI và dữ liệu requirement xác định kỹ năng thiếu so với role đã chọn." />
-          <WorkflowCard title="Sinh roadmap" text="Roadmap chia thành từng node học tập, mỗi node có thể gắn nhiều link và file tài liệu." />
-          <WorkflowCard title="Xây portfolio" text="Sinh viên publish portfolio và cập nhật GitHub/project evidence." />
-          <WorkflowCard title="Mentor review" text="Mentor đánh giá portfolio, technical skill và job readiness." />
-        </div>
+        <img 
+          src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80" 
+          alt="AI Analysis" 
+          className="hp-product-render"
+          style={{ height: '400px', objectFit: 'cover', width: '900px' }}
+        />
       </section>
 
-      <section id="student-dashboard" className="home-band">
-        <div className="home-section-header">
-          <p className="eyebrow">{isStudent ? 'Your dashboard' : 'Student view'}</p>
-          <h2>{isStudent ? `Xin chào, ${session.user.fullName}` : 'Sinh viên xem được gì sau khi đăng nhập'}</h2>
+      {/* ── TILE 3: PARCHMENT - ROADMAP ── */}
+      <section className="hp-tile hp-tile-parchment">
+        <h2 className="hp-display-lg">Lộ trình cá nhân hoá.</h2>
+        <p className="hp-lead">Từng bước một, đến đúng mục tiêu.</p>
+        <p className="hp-body" style={{ maxWidth: '600px', margin: '16px auto 0', color: '#7a7a7a' }}>
+          Dựa trên kết quả phân tích, hệ thống tự động sinh ra một bản đồ học tập (Learning Node) độc quyền. Mỗi Node cung cấp tài liệu, bài tập và dự án thực tế để bạn hoàn thiện mảnh ghép còn thiếu.
+        </p>
+        <div className="hp-actions-row">
+          <a href="#store" className="hp-text-link" style={{ alignSelf: 'center' }}>Xem ví dụ Roadmap &gt;</a>
         </div>
-        <div className="student-dashboard-grid">
-          <StudentTile label="Target role" value={isStudent ? 'Frontend Developer' : 'Chọn role'} />
-          <StudentTile label="Roadmap" value={isStudent ? '4/7 nodes' : 'Node + tài liệu'} />
-          <StudentTile label="Resources" value="File / Link" />
-          <StudentTile label="Mentor reviews" value={isStudent ? '2 lượt free' : 'Theo gói'} />
-        </div>
+        <img 
+          src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80" 
+          alt="Roadmap Generation" 
+          className="hp-product-render"
+          style={{ height: '400px', objectFit: 'cover', width: '900px' }}
+        />
       </section>
 
-      <section id="pricing" className="home-band pricing-band">
-        <div className="home-section-header">
-          <p className="eyebrow">Subscription</p>
-          <h2>Mua gói mentor review</h2>
-          {activeSubscription && (
-            <p className="subscription-note">
-              Gói hiện tại: {activeSubscription.planName} · {activeSubscription.status}
-              {activeSubscription.expiredAt ? ` · hết hạn ${formatDate(activeSubscription.expiredAt)}` : ''}
+      {/* ── TILE 4: DARK TILE 2 - MENTORS ── */}
+      <section className="hp-tile hp-tile-dark" style={{ background: '#2a2a2c' }} id="network">
+        <h2 className="hp-display-lg">Industry Mentors.</h2>
+        <p className="hp-lead">Nhận feedback từ những người giỏi nhất.</p>
+        <p className="hp-body" style={{ maxWidth: '600px', margin: '16px auto 0', color: '#cccccc' }}>
+          Nộp bài tập và Portfolio của bạn trực tiếp cho mạng lưới chuyên gia đang làm việc tại các tập đoàn công nghệ hàng đầu. Những lời khuyên thực chiến sẽ giúp bạn tránh khỏi những sai lầm đắt giá.
+        </p>
+        <div className="hp-actions-row">
+          <a href="#store" className="hp-text-link-dark" style={{ alignSelf: 'center' }}>Tìm hiểu mạng lưới Mentor &gt;</a>
+        </div>
+        <img 
+          src="https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=1200&q=80" 
+          alt="Mentorship" 
+          className="hp-product-render"
+          style={{ height: '500px', objectFit: 'cover', width: '800px' }}
+        />
+      </section>
+
+      {/* ── TILE 5: LIGHT - ECOSYSTEM ── */}
+      <section className="hp-tile hp-tile-light">
+        <h2 className="hp-display-lg">Hệ sinh thái đa chiều.</h2>
+        <p className="hp-lead">Không chỉ là học tập. Đây là sân chơi sự nghiệp.</p>
+        <p className="hp-body" style={{ maxWidth: '700px', margin: '16px auto 48px', color: '#7a7a7a' }}>
+          CareerMap kết nối tất cả các bên liên quan để tạo ra một hành trình khép kín, từ định hướng, đào tạo, đến tuyển dụng.
+        </p>
+
+        <div className="hp-utility-grid" style={{ marginTop: '0', maxWidth: '1000px' }}>
+          <div className="hp-utility-card">
+            <h3 className="hp-utility-card-title">Academic Counselors</h3>
+            <p className="hp-body" style={{ margin: '0 0 16px', color: '#7a7a7a' }}>
+              Đội ngũ tư vấn viên học thuật luôn sẵn sàng hỗ trợ, gỡ rối những thắc mắc định hướng trong quá trình theo đuổi lộ trình dài hạn.
             </p>
-          )}
-        </div>
+            <a href="#" className="hp-text-link hp-utility-card-action">Trò chuyện cùng Counselor &gt;</a>
+          </div>
 
-        {paymentMessage && <div className="success">{paymentMessage}</div>}
-        {paymentError && <div className="alert">{paymentError}</div>}
-        {plansStatus === 'loading' && <div className="state-card">Đang tải danh sách gói...</div>}
-
-        <div className="pricing-grid">
-          {plans.map((plan) => (
-            <PricingCard
-              key={plan.id}
-              plan={plan}
-              isActive={activeSubscription?.planId === plan.id}
-              isLoading={checkoutPlanId === plan.id}
-              onBuy={() => buyPlan(plan)}
-            />
-          ))}
+          <div className="hp-utility-card">
+            <h3 className="hp-utility-card-title">Recruiters</h3>
+            <p className="hp-body" style={{ margin: '0 0 16px', color: '#7a7a7a' }}>
+              Nhà tuyển dụng có thể truy cập nền tảng để theo dõi sự trưởng thành của ứng viên thông qua các bài test và nhận xét từ Mentor.
+            </p>
+            <a href="#" className="hp-text-link hp-utility-card-action">Đăng tin tuyển dụng &gt;</a>
+          </div>
         </div>
       </section>
-    </main>
-  );
-}
 
-function WorkflowCard({ title, text }) {
-  return (
-    <article className="workflow-card">
-      <h3>{title}</h3>
-      <p>{text}</p>
-    </article>
-  );
-}
+      {/* ── TILE 6: STORE / PRICING (PARCHMENT) ── */}
+      <section className="hp-tile hp-tile-parchment" id="store">
+        <h2 className="hp-display-lg">Đầu tư vào chính bạn.</h2>
+        <p className="hp-lead">Sở hữu lộ trình, mở khóa tương lai.</p>
 
-function StudentTile({ label, value }) {
-  return (
-    <article className="student-tile">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </article>
-  );
-}
+        <div className="hp-utility-grid" style={{ maxWidth: '1200px' }}>
+          {plans.map((plan) => {
+            const details = parsePlanFeatures(plan.featuresJson);
+            const isFree = Number(plan.price) === 0;
+            const isLoading = checkoutPlanId === plan.id;
+            
+            return (
+              <div key={plan.id} className="hp-utility-card">
+                <h3 className="hp-utility-card-title" style={{ fontSize: '24px', marginBottom: '8px' }}>{plan.name}</h3>
+                <p className="hp-utility-card-price" style={{ fontSize: '32px', fontWeight: 600, color: '#1d1d1f' }}>
+                  {formatMoney(plan.price, plan.currency)}
+                </p>
+                <div style={{ marginBottom: '32px' }}>
+                  <p className="hp-body" style={{ margin: '0 0 24px', color: '#7a7a7a' }}>
+                    {plan.description || 'Gói giải pháp giúp bạn nắm bắt cơ hội và rèn luyện các kỹ năng thiết yếu nhất.'}
+                  </p>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#1d1d1f' }}>
+                    <li className="hp-body" style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}>
+                      <span style={{color: '#0066cc'}}>✓</span> {details.mentorReviewLimit} lượt Mentor Review
+                    </li>
+                    {(details.features || []).map((f, i) => (
+                      <li key={i} className="hp-body" style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}>
+                        <span style={{color: '#0066cc'}}>✓</span> {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="hp-utility-card-action">
+                  <button 
+                    className="hp-btn-primary" 
+                    onClick={() => buyPlan(plan)}
+                    disabled={isLoading}
+                    style={{ width: '100%', padding: '14px 24px', fontSize: '17px' }}
+                  >
+                    {isLoading ? 'Đang xử lý...' : isFree ? 'Dùng thử miễn phí' : 'Chọn gói này'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
-function PricingCard({ plan, isActive, isLoading, onBuy }) {
-  const details = parsePlanFeatures(plan.featuresJson);
-  const isFree = Number(plan.price) === 0;
-
-  return (
-    <article className={`pricing-card ${isActive ? 'current' : ''}`}>
-      <div>
-        <span className="pricing-kicker">{plan.billingCycle}</span>
-        <h3>{plan.name}</h3>
-        <p>{plan.description || 'Gói học tập và mentor review cho sinh viên CareerMap.'}</p>
-      </div>
-
-      <div className="price-line">
-        <strong>{formatMoney(plan.price, plan.currency)}</strong>
-        <span>{isFree ? 'Kích hoạt ngay' : 'Thanh toán qua PayOS'}</span>
-      </div>
-
-      <ul className="pricing-features">
-        <li>{details.mentorReviewLimit} lượt mentor review</li>
-        {(details.features || []).slice(0, 4).map((feature) => (
-          <li key={feature}>{feature}</li>
-        ))}
-      </ul>
-
-      <button type="button" className="primary-action" onClick={onBuy} disabled={isLoading || isActive}>
-        {isActive ? 'Đang sử dụng' : isLoading ? 'Đang xử lý...' : isFree ? 'Kích hoạt Free' : 'Mua gói'}
-      </button>
-    </article>
+      {/* ── FOOTER ── */}
+      <footer className="hp-footer">
+        <div className="hp-footer-content">
+          <div className="hp-footer-fine-print">
+            Cần có tài khoản và sự chấp thuận Điều khoản dịch vụ để sử dụng nền tảng CareerMap. Tính năng phân tích AI có thể thay đổi độ chính xác phụ thuộc vào dữ liệu đầu vào. Gói Pro cung cấp đặc quyền review trực tiếp từ Mentor trong vòng 48 giờ. Số lượng mentor hữu hạn tại mỗi thời điểm. Hình ảnh sử dụng mang tính chất minh hoạ.
+          </div>
+          <div className="hp-footer-links-grid">
+            <div className="hp-footer-col">
+              <h4>Khám phá</h4>
+              <ul>
+                <li><a href="#platform">Roadmap</a></li>
+                <li><a href="#features">AI Analysis</a></li>
+                <li><a href="#network">Mentor Network</a></li>
+                <li><a href="#">Portfolio</a></li>
+              </ul>
+            </div>
+            <div className="hp-footer-col">
+              <h4>Dịch vụ</h4>
+              <ul>
+                <li><a href="#">Hỗ trợ học viên</a></li>
+                <li><a href="#">Tuyển dụng Mentor</a></li>
+                <li><a href="#">Dành cho Doanh nghiệp</a></li>
+              </ul>
+            </div>
+            <div className="hp-footer-col">
+              <h4>Về CareerMap</h4>
+              <ul>
+                <li><a href="#">Câu chuyện của chúng tôi</a></li>
+                <li><a href="#">Tin tức</a></li>
+                <li><a href="#">Cơ hội nghề nghiệp</a></li>
+              </ul>
+            </div>
+            <div className="hp-footer-col">
+              <h4>Pháp lý</h4>
+              <ul>
+                <li><a href="#">Điều khoản sử dụng</a></li>
+                <li><a href="#">Bảo mật thông tin</a></li>
+                <li><a href="#">Cookies</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="hp-footer-fine-print" style={{ border: 'none', paddingTop: '24px', marginTop: '24px', borderTop: '1px solid #e0e0e0' }}>
+            Bản quyền © 2026 CareerMap Inc. Bảo lưu mọi quyền.
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }
