@@ -132,7 +132,7 @@ export function HomePage({ session, onLogin, onSignOut }) {
         <div className="workflow-grid">
           <WorkflowCard title="Chọn career role" text="Sinh viên chọn mục tiêu nghề nghiệp để hệ thống biết cần so skill nào." />
           <WorkflowCard title="Phân tích skill gap" text="AI và dữ liệu requirement xác định kỹ năng thiếu so với role đã chọn." />
-          <WorkflowCard title="Sinh roadmap" text="Roadmap chia thành từng node học tập, mỗi node gắn tài liệu hoặc link." />
+          <WorkflowCard title="Sinh roadmap" text="Roadmap chia thành từng node học tập, mỗi node có thể gắn nhiều link và file tài liệu." />
           <WorkflowCard title="Xây portfolio" text="Sinh viên publish portfolio và cập nhật GitHub/project evidence." />
           <WorkflowCard title="Mentor review" text="Mentor đánh giá portfolio, technical skill và job readiness." />
         </div>
