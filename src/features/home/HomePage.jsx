@@ -15,7 +15,7 @@ import '../../styles/home.css';
    - Animate khi scroll qua từng section (Intersection Observer)
    ──────────────────────────────────────────────────────────── */
 
-export function HomePage({ session, onLogin, onSignOut }) {
+export function HomePage({ session, onLogin, onSignOut, onOpenDashboard }) {
   const isLoggedIn = Boolean(session);
   const [plans, setPlans] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -82,7 +82,10 @@ export function HomePage({ session, onLogin, onSignOut }) {
           {isLoggedIn ? (
             <>
               <span className="hp-nav-link-btn" aria-hidden>{session?.user?.fullName}</span>
-              <button type="button" className="hp-nav-pill" onClick={onSignOut}>Đăng xuất</button>
+              {onOpenDashboard ? (
+                <button type="button" className="hp-nav-pill" onClick={onOpenDashboard}>Dashboard</button>
+              ) : null}
+              <button type="button" className="hp-nav-link-btn" onClick={onSignOut}>Đăng xuất</button>
             </>
           ) : (
             <>
