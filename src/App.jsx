@@ -6,6 +6,7 @@ import { HomePage } from './features/home/HomePage';
 import { MentorHome } from './features/mentor/MentorHome';
 import { PaymentResultPage } from './features/subscriptions/PaymentResultPage';
 import { UnsupportedRoleHome } from './features/member/UnsupportedRoleHome';
+import { StudentDashboard } from './features/student/StudentDashboard';
 import { normalizeRole, userRoles } from './auth/roles';
 import { clearSession, getSessionRole, getStoredSession } from './auth/session';
 
@@ -78,7 +79,18 @@ export default function App() {
   }
 
   if (role === normalizeRole(userRoles.student)) {
-    return <HomePage session={session} onLogin={() => setShowLogin(true)} onSignOut={signOut} />;
+    if (currentPath === '/dashboard') {
+      return <StudentDashboard session={session} onSignOut={signOut} onNavigateHome={() => navigateTo('/')} />;
+    }
+
+    return (
+      <HomePage
+        session={session}
+        onLogin={() => setShowLogin(true)}
+        onSignOut={signOut}
+        onOpenDashboard={() => navigateTo('/dashboard')}
+      />
+    );
   }
 
   if (role === normalizeRole(userRoles.academicCounselor)) {
