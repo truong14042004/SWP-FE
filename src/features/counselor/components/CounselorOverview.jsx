@@ -1,148 +1,262 @@
-import { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import { getCounselorStudents, getMyFeedbacks } from '../api/counselorApi';
+﻿import { useMemo } from 'react';
 
 function getInitials(name = '') {
-  return name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'S';
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || 'S'
+  );
 }
 
 function formatRelativeTime(date) {
+  if (!date) return 'â€”';
   const now = new Date();
   const d = new Date(date);
   const diff = Math.floor((now - d) / 1000);
-  
-  if (diff < 60) return 'Vừa xong';
-  if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)} ngày trước`;
+
+  if (diff < 60) return 'Vá»«a xong';
+  if (diff < 3600) return `${Math.floor(diff / 60)} phĂºt trÆ°á»›c`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} giá» trÆ°á»›c`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)} ngĂ y trÆ°á»›c`;
   return d.toLocaleDateString('vi-VN', { day: '2-digit', month: 'short' });
 }
 
-export function CounselorOverview({ students, feedbacks, loading, onNavigateToStudents, onNavigateToStudent, onNavigateToFeedback }) {
+function renderStars(rating = 0) {
+  return Array.from({ length: 5 }, (_, i) => (
+    <span
+      key={i}
+      className={`counselor-feedback-star ${i < (rating || 0) ? '' : 'empty'}`}
+    >
+      â˜…
+    </span>
+  ));
+}
+
+function formatGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'ChĂ o buá»•i sĂ¡ng';
+  if (hour < 18) return 'ChĂ o buá»•i chiá»u';
+  return 'ChĂ o buá»•i tá»‘i';
+}
+
+export function CounselorOverview({
+  students = [],
+  feedbacks = [],
+  loading,
+  counselorName = '',
+  onNavigateToStudents,
+  onNavigateToStudent,
+  onNavigateToFeedback,
+}) {
   const totalStudents = students.length;
-  
-  const thisMonthFeedbacks = feedbacks.filter(f => {
-    const d = new Date(f.createdAt);
+
+  const thisMonthFeedbacks = useMemo(() => {
     const now = new Date();
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  });
-  
-  const avgRating = feedbacks.length > 0
-    ? (feedbacks.reduce((sum, f) => sum + (f.rating || 0), 0) / feedbacks.length).toFixed(1)
-    : '—';
-  
+    return feedbacks.filter((f) => {
+      const d = new Date(f.createdAt);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+  }, [feedbacks]);
+
+  const avgRating = useMemo(() => {
+    const rated = feedbacks.filter((f) => f.rating);
+    if (rated.length === 0) return 'â€”';
+    return (rated.reduce((s, f) => s + (f.rating || 0), 0) / rated.length).toFixed(1);
+  }, [feedbacks]);
+
+  const studentsNeedReview = useMemo(
+    () =>
+      students.filter(
+        (s) => s.latestMatchScore != null && Number(s.latestMatchScore) < 60,
+      ),
+    [students],
+  );
+
+  const studentsWithoutGap = useMemo(
+    () => students.filter((s) => s.latestMatchScore == null),
+    [students],
+  );
+
   const recentFeedbacks = feedbacks.slice(0, 5);
+  const firstName = counselorName.split(' ').slice(-1)[0] || 'báº¡n';
 
   if (loading) {
     return (
-      <div>
-        <div className="counselor-page-header">
-          <h1>Đang tải...</h1>
+      <section className="counselor-section">
+        <div className="counselor-section-inner">
+          <div className="counselor-loading">
+            <div className="counselor-spinner" aria-hidden />
+            <p>Äang táº£i workspace...</p>
+          </div>
         </div>
-        <div className="counselor-loading">
-          <div className="counselor-spinner" />
-        </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div>
-      <div className="counselor-page-header">
-        <h1>Tổng quan</h1>
-        <p>Chào mừng bạn quay trở lại</p>
-      </div>
-
-      <div className="counselor-kpi-grid">
-        <div className="counselor-kpi-card">
-          <span className="counselor-kpi-card-label">Tổng sinh viên</span>
-          <span className="counselor-kpi-card-value">{totalStudents}</span>
-          <span className="counselor-kpi-card-caption">Được phân công theo dõi</span>
-        </div>
-        <div className="counselor-kpi-card">
-          <span className="counselor-kpi-card-label">Cần chú ý</span>
-          <span className="counselor-kpi-card-value">—</span>
-          <span className="counselor-kpi-card-caption">Sinh viên cần review</span>
-        </div>
-        <div className="counselor-kpi-card">
-          <span className="counselor-kpi-card-label">Feedback tháng</span>
-          <span className="counselor-kpi-card-value">{thisMonthFeedbacks.length}</span>
-          <span className="counselor-kpi-card-caption">Phản hồi đã gửi</span>
-        </div>
-        <div className="counselor-kpi-card">
-          <span className="counselor-kpi-card-label">Đánh giá TB</span>
-          <span className="counselor-kpi-card-value">{avgRating}</span>
-          <span className="counselor-kpi-card-caption">Trên 5 sao</span>
-        </div>
-      </div>
-
-      <div className="counselor-panel-grid">
-        <div className="counselor-panel">
-          <div className="counselor-panel-header">
-            <h3>Sinh viên của tôi</h3>
-            <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToStudents(); }}>Xem tất cả →</a>
+    <>
+      {/* Section 1 â€” Hero (canvas) */}
+      <section className="counselor-section">
+        <div className="counselor-section-inner">
+          <div className="counselor-hero">
+            <span className="counselor-hero-eyebrow">Counselor workspace</span>
+            <h1>
+              {formatGreeting()}, {firstName}.
+            </h1>
+            <p className="counselor-hero-lead">
+              Äang theo dĂµi {totalStudents} sinh viĂªn Â·{' '}
+              {thisMonthFeedbacks.length} feedback thĂ¡ng nĂ y.
+              {studentsNeedReview.length > 0 &&
+                ` ${studentsNeedReview.length} sinh viĂªn cáº§n Ä‘Æ°á»£c chĂº Ă½.`}
+            </p>
           </div>
-          <div className="counselor-panel-content">
-            {students.length === 0 ? (
-              <div className="counselor-empty-state">
-                <div className="counselor-empty-state-icon">👥</div>
-                <h3>Chưa có sinh viên</h3>
-                <p>Liên hệ admin để được phân công sinh viên</p>
-              </div>
-            ) : (
-              students.slice(0, 5).map(student => (
+
+          {/* KPI Strip */}
+          <div className="counselor-kpi-strip">
+            <article className="counselor-kpi-cell">
+              <span className="counselor-kpi-cell-label">Tá»•ng sinh viĂªn</span>
+              <span className="counselor-kpi-cell-value">{totalStudents}</span>
+              <span className="counselor-kpi-cell-caption">
+                Äang Ä‘Æ°á»£c phĂ¢n cĂ´ng
+              </span>
+            </article>
+
+            <article className="counselor-kpi-cell">
+              <span className="counselor-kpi-cell-label">Cáº§n chĂº Ă½</span>
+              <span className="counselor-kpi-cell-value">
+                {studentsNeedReview.length}
+              </span>
+              <span className="counselor-kpi-cell-caption">
+                {studentsWithoutGap.length > 0
+                  ? `${studentsWithoutGap.length} chÆ°a phĂ¢n tĂ­ch Â· Match < 60%`
+                  : 'Match score < 60%'}
+              </span>
+            </article>
+
+            <article className="counselor-kpi-cell">
+              <span className="counselor-kpi-cell-label">Feedback thĂ¡ng</span>
+              <span className="counselor-kpi-cell-value">
+                {thisMonthFeedbacks.length}
+              </span>
+              <span className="counselor-kpi-cell-caption">Pháº£n há»“i Ä‘Ă£ gá»­i</span>
+            </article>
+
+            <article className="counselor-kpi-cell">
+              <span className="counselor-kpi-cell-label">ÄĂ¡nh giĂ¡ TB</span>
+              <span className="counselor-kpi-cell-value">{avgRating}</span>
+              <span className="counselor-kpi-cell-caption">
+                TrĂªn thang 5 sao
+              </span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 2 â€” Two-col panels (parchment) */}
+      <section className="counselor-section counselor-section--parchment">
+        <div className="counselor-section-inner">
+          <div className="counselor-twocol">
+            {/* Need attention */}
+            <article className="counselor-panel">
+              <header className="counselor-panel-head">
+                <h2>Sinh viĂªn cáº§n chĂº Ă½</h2>
                 <button
-                  key={student.id}
                   type="button"
-                  className="counselor-student-card"
-                  onClick={() => onNavigateToStudent(student.id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', marginBottom: '12px', textAlign: 'left' }}
+                  className="counselor-panel-link"
+                  onClick={onNavigateToStudents}
                 >
-                  <div className="counselor-student-avatar" style={{ width: '40px', height: '40px', fontSize: '14px' }}>
-                    {getInitials(student.fullName)}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <strong style={{ display: 'block', color: '#1d1d1f', fontSize: '14px' }}>{student.fullName}</strong>
-                    <small style={{ color: '#7a7a7a', fontSize: '12px' }}>{student.email}</small>
-                  </div>
-                  <span style={{ color: '#7a7a7a', fontSize: '12px' }}>{formatRelativeTime(student.createdAt)}</span>
+                  Xem táº¥t cáº£ â†’
                 </button>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="counselor-panel">
-          <div className="counselor-panel-header">
-            <h3>Feedback gần nhất</h3>
-            <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToFeedback(); }}>Xem tất cả →</a>
-          </div>
-          <div className="counselor-panel-content">
-            {recentFeedbacks.length === 0 ? (
-              <div className="counselor-empty-state">
-                <div className="counselor-empty-state-icon">💬</div>
-                <h3>Chưa có feedback</h3>
-                <p>Gửi feedback cho sinh viên để bắt đầu</p>
-              </div>
-            ) : (
-              recentFeedbacks.map(fb => (
-                <div key={fb.id} style={{ padding: '12px 0', borderBottom: '1px solid #e0e0e0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <strong style={{ color: '#1d1d1f', fontSize: '13px' }}>{fb.studentFullName || 'Sinh viên'}</strong>
-                    <span style={{ color: '#7a7a7a', fontSize: '11px' }}>{formatRelativeTime(fb.createdAt)}</span>
-                  </div>
-                  <div style={{ color: '#f59e0b', fontSize: '12px' }}>
-                    {'★'.repeat(fb.rating || 0)}{'☆'.repeat(5 - (fb.rating || 0))}
-                  </div>
-                  <p style={{ margin: '6px 0 0', color: '#7a7a7a', fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {fb.feedbackText}
-                  </p>
+              </header>
+              {students.length === 0 ? (
+                <div className="counselor-empty-state">
+                  <div className="counselor-empty-state-icon">đŸ‘¥</div>
+                  <h3>ChÆ°a cĂ³ sinh viĂªn</h3>
+                  <p>LiĂªn há»‡ admin Ä‘á»ƒ Ä‘Æ°á»£c phĂ¢n cĂ´ng sinh viĂªn</p>
                 </div>
-              ))
-            )}
+              ) : (
+                <div>
+                  {(studentsNeedReview.length > 0
+                    ? studentsNeedReview.slice(0, 5)
+                    : students.slice(0, 5)
+                  ).map((student) => (
+                    <button
+                      key={student.id}
+                      type="button"
+                      className="counselor-listrow"
+                      onClick={() => onNavigateToStudent(student.id)}
+                    >
+                      <div className="counselor-avatar" aria-hidden>
+                        {getInitials(student.fullName)}
+                      </div>
+                      <div className="counselor-listrow-info">
+                        <strong>{student.fullName}</strong>
+                        <small>
+                          {student.targetRoleName || 'ChÆ°a chá»n target role'}
+                        </small>
+                      </div>
+                      <span className="counselor-listrow-meta">
+                        {student.latestMatchScore != null
+                          ? `${Math.round(Number(student.latestMatchScore))}%`
+                          : 'ChÆ°a phĂ¢n tĂ­ch'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </article>
+
+            {/* Recent feedback */}
+            <article className="counselor-panel">
+              <header className="counselor-panel-head">
+                <h2>Feedback gáº§n nháº¥t</h2>
+                <button
+                  type="button"
+                  className="counselor-panel-link"
+                  onClick={onNavigateToFeedback}
+                >
+                  Xem táº¥t cáº£ â†’
+                </button>
+              </header>
+              {recentFeedbacks.length === 0 ? (
+                <div className="counselor-empty-state">
+                  <div className="counselor-empty-state-icon">đŸ’¬</div>
+                  <h3>ChÆ°a cĂ³ feedback</h3>
+                  <p>Gá»­i feedback cho sinh viĂªn Ä‘á»ƒ báº¯t Ä‘áº§u</p>
+                </div>
+              ) : (
+                <div>
+                  {recentFeedbacks.map((fb) => (
+                    <div key={fb.id} className="counselor-feedback-row">
+                      <div className="counselor-feedback-row-head">
+                        <strong>{fb.studentFullName || 'Sinh viĂªn'}</strong>
+                        <time dateTime={fb.createdAt}>
+                          {formatRelativeTime(fb.createdAt)}
+                        </time>
+                      </div>
+                      {fb.rating > 0 && (
+                        <div
+                          className="counselor-feedback-row-stars"
+                          aria-hidden
+                        >
+                          {renderStars(fb.rating)}
+                        </div>
+                      )}
+                      <p className="counselor-feedback-row-text">
+                        {fb.feedbackText}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </article>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </>
   );
 }
