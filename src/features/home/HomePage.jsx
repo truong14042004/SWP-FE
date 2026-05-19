@@ -8,7 +8,7 @@ import {
 import { formatMoney } from '../../shared/format';
 import '../../styles/home.css';
 
-export function HomePage({ session, onLogin, onSignOut }) {
+export function HomePage({ session, onLogin, onSignOut, onOpenDashboard }) {
   const isLoggedIn = Boolean(session);
   const [plans, setPlans] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -22,155 +22,170 @@ export function HomePage({ session, onLogin, onSignOut }) {
         getSubscriptionPlans(),
         session ? getMySubscriptions(session).catch(() => []) : Promise.resolve([]),
       ]);
-      setPlans(planList); setSubscriptions(subList);
-    } catch (err) { console.error(err); }
+      setPlans(planList);
+      setSubscriptions(subList);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   async function buyPlan(plan) {
-    if (!session) { onLogin(); return; }
+    if (!session) {
+      onLogin();
+      return;
+    }
     setCheckoutPlanId(plan.id);
     try {
       const checkout = await createSubscriptionCheckout(session, plan.id);
       if (checkout.checkoutUrl) window.location.assign(checkout.checkoutUrl);
       else await loadPlans();
-    } catch (err) { alert(err.message); }
-    finally { setCheckoutPlanId(''); }
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setCheckoutPlanId('');
+    }
   }
 
   return (
     <div className="hp-root">
-      {/* ── GLOBAL NAV ── */}
       <nav className="hp-global-nav">
         <a href="#" style={{ textDecoration: 'none', color: '#fff', fontWeight: 600, fontSize: '15px' }}>
           CareerMap
         </a>
         <div className="hp-global-nav-links">
-          <a href="#platform">Nền tảng</a>
-          <a href="#features">Tính năng</a>
-          <a href="#network">Mạng lưới</a>
-          <a href="#store">Đăng ký</a>
+          <a href="#platform">Nen tang</a>
+          <a href="#features">Tinh nang</a>
+          <a href="#network">Mang luoi</a>
+          <a href="#store">Dang ky</a>
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
           {isLoggedIn ? (
-            <button className="hp-dark-utility-btn" onClick={onSignOut}>Đăng xuất</button>
+            <>
+              <button className="hp-dark-utility-btn" onClick={onOpenDashboard}>Dashboard</button>
+              <button className="hp-dark-utility-btn" onClick={onSignOut}>Dang xuat</button>
+            </>
           ) : (
-            <button className="hp-dark-utility-btn" onClick={onLogin}>Đăng nhập</button>
+            <button className="hp-dark-utility-btn" onClick={onLogin}>Dang nhap</button>
           )}
         </div>
       </nav>
 
-      {/* ── TILE 1: LIGHT HERO ── */}
       <section className="hp-tile hp-tile-light" id="platform">
         <h1 className="hp-hero-display">CareerMap.</h1>
-        <p className="hp-lead">Xác định điểm đến. Vẽ lối đi riêng.</p>
+        <p className="hp-lead">Xac dinh diem den. Ve loi di rieng.</p>
         <p className="hp-body" style={{ maxWidth: '600px', margin: '16px auto 0', color: '#7a7a7a' }}>
-          Nền tảng hướng nghiệp toàn diện kết hợp trí tuệ nhân tạo và mạng lưới chuyên gia. 
-          Giúp bạn chuyển đổi từ người mới bắt đầu thành chuyên gia thực thụ.
+          Nen tang huong nghiep toan dien ket hop tri tue nhan tao va mang luoi chuyen gia.
+          Giup ban chuyen doi tu nguoi moi bat dau thanh chuyen gia thuc thu.
         </p>
         <div className="hp-actions-row">
-          <a href="#store" className="hp-btn-primary">Bắt đầu miễn phí</a>
-          <a href="#features" className="hp-text-link" style={{ alignSelf: 'center' }}>Khám phá quy trình &gt;</a>
+          <a href="#store" className="hp-btn-primary">Bat dau mien phi</a>
+          <a href="#features" className="hp-text-link" style={{ alignSelf: 'center' }}>Kham pha quy trinh &gt;</a>
         </div>
-        <img 
-          src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1400&q=80" 
-          alt="CareerMap Dashboard" 
+        <img
+          src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1400&q=80"
+          alt="CareerMap Dashboard"
           className="hp-product-render"
           style={{ height: '500px', objectFit: 'cover', width: '1200px' }}
         />
       </section>
 
-      {/* ── TILE 2: DARK TILE - AI ── */}
       <section className="hp-tile hp-tile-dark" id="features">
         <h2 className="hp-display-lg">AI Gap Analysis.</h2>
-        <p className="hp-lead">Phát hiện lỗ hổng kỹ năng trong 30 giây.</p>
+        <p className="hp-lead">Phat hien lo hong ky nang trong 30 giay.</p>
         <p className="hp-body" style={{ maxWidth: '600px', margin: '16px auto 0', color: '#cccccc' }}>
-          Thuật toán AI của chúng tôi phân tích CV của bạn, đối chiếu với hàng ngàn mô tả công việc thực tế trên thị trường, và chỉ ra chính xác những kỹ năng bạn còn thiếu. Không còn phỏng đoán, chỉ có dữ liệu.
+          Thuat toan AI phan tich CV cua ban, doi chieu voi mo ta cong viec thuc te tren thi truong
+          va chi ra nhung ky nang ban con thieu de di nhanh hon den muc tieu nghe nghiep.
         </p>
         <div className="hp-actions-row">
-          <button onClick={onLogin} className="hp-btn-primary">Phân tích CV ngay</button>
+          <button onClick={onLogin} className="hp-btn-primary">Phan tich CV ngay</button>
         </div>
-        <img 
-          src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80" 
-          alt="AI Analysis" 
+        <img
+          src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80"
+          alt="AI Analysis"
           className="hp-product-render"
           style={{ height: '400px', objectFit: 'cover', width: '900px' }}
         />
       </section>
 
-      {/* ── TILE 3: PARCHMENT - ROADMAP ── */}
       <section className="hp-tile hp-tile-parchment">
-        <h2 className="hp-display-lg">Lộ trình cá nhân hoá.</h2>
-        <p className="hp-lead">Từng bước một, đến đúng mục tiêu.</p>
+        <h2 className="hp-display-lg">Lo trinh ca nhan hoa.</h2>
+        <p className="hp-lead">Tung buoc mot, den dung muc tieu.</p>
         <p className="hp-body" style={{ maxWidth: '600px', margin: '16px auto 0', color: '#7a7a7a' }}>
-          Dựa trên kết quả phân tích, hệ thống tự động sinh ra một bản đồ học tập (Learning Node) độc quyền. Mỗi Node cung cấp tài liệu, bài tập và dự án thực tế để bạn hoàn thiện mảnh ghép còn thiếu.
+          Dua tren ket qua phan tich, he thong tu dong sinh ra ban do hoc tap rieng,
+          gom tai lieu, bai tap va du an thuc te de bo sung dung nhung manh ghep dang thieu.
         </p>
         <div className="hp-actions-row">
-          <a href="#store" className="hp-text-link" style={{ alignSelf: 'center' }}>Xem ví dụ Roadmap &gt;</a>
+          <a href="#store" className="hp-text-link" style={{ alignSelf: 'center' }}>Xem vi du roadmap &gt;</a>
         </div>
-        <img 
-          src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80" 
-          alt="Roadmap Generation" 
+        <img
+          src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80"
+          alt="Roadmap Generation"
           className="hp-product-render"
           style={{ height: '400px', objectFit: 'cover', width: '900px' }}
         />
       </section>
 
-      {/* ── TILE 4: DARK TILE 2 - MENTORS ── */}
       <section className="hp-tile hp-tile-dark" style={{ background: '#2a2a2c' }} id="network">
         <h2 className="hp-display-lg">Industry Mentors.</h2>
-        <p className="hp-lead">Nhận feedback từ những người giỏi nhất.</p>
+        <p className="hp-lead">Nhan feedback tu nhung nguoi gioi nhat.</p>
         <p className="hp-body" style={{ maxWidth: '600px', margin: '16px auto 0', color: '#cccccc' }}>
-          Nộp bài tập và Portfolio của bạn trực tiếp cho mạng lưới chuyên gia đang làm việc tại các tập đoàn công nghệ hàng đầu. Những lời khuyên thực chiến sẽ giúp bạn tránh khỏi những sai lầm đắt giá.
+          Nop bai tap va portfolio truc tiep cho mang luoi chuyen gia dang lam viec tai doanh nghiep,
+          nhan gop y thuc chien de tranh nhung sai lam ton thoi gian va chi phi.
         </p>
         <div className="hp-actions-row">
-          <a href="#store" className="hp-text-link-dark" style={{ alignSelf: 'center' }}>Tìm hiểu mạng lưới Mentor &gt;</a>
+          <a href="#store" className="hp-text-link-dark" style={{ alignSelf: 'center' }}>Tim hieu mang luoi mentor &gt;</a>
         </div>
-        <img 
-          src="https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=1200&q=80" 
-          alt="Mentorship" 
+        <img
+          src="https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=1200&q=80"
+          alt="Mentorship"
           className="hp-product-render"
           style={{ height: '500px', objectFit: 'cover', width: '800px' }}
         />
       </section>
 
-      {/* ── TILE 5: LIGHT - ECOSYSTEM ── */}
       <section className="hp-tile hp-tile-light">
-        <h2 className="hp-display-lg">Hệ sinh thái đa chiều.</h2>
-        <p className="hp-lead">Không chỉ là học tập. Đây là sân chơi sự nghiệp.</p>
+        <h2 className="hp-display-lg">He sinh thai da chieu.</h2>
+        <p className="hp-lead">Khong chi la hoc tap. Day la san choi su nghiep.</p>
         <p className="hp-body" style={{ maxWidth: '700px', margin: '16px auto 48px', color: '#7a7a7a' }}>
-          CareerMap kết nối tất cả các bên liên quan để tạo ra một hành trình khép kín, từ định hướng, đào tạo, đến tuyển dụng.
+          CareerMap ket noi cac ben lien quan de tao mot hanh trinh khep kin, tu dinh huong,
+          dao tao den danh gia nang luc va tim kiem co hoi nghe nghiep.
         </p>
 
         <div className="hp-utility-grid" style={{ marginTop: '0', maxWidth: '1000px' }}>
           <div className="hp-utility-card">
             <h3 className="hp-utility-card-title">Academic Counselors</h3>
             <p className="hp-body" style={{ margin: '0 0 16px', color: '#7a7a7a' }}>
-              Đội ngũ tư vấn viên học thuật luôn sẵn sàng hỗ trợ, gỡ rối những thắc mắc định hướng trong quá trình theo đuổi lộ trình dài hạn.
+              Doi ngu tu van vien hoc thuat ho tro thao go dinh huong va giu dong luc trong suot qua trinh theo duoi lo trinh.
             </p>
-            <a href="#" className="hp-text-link hp-utility-card-action">Trò chuyện cùng Counselor &gt;</a>
+            <a href="#" className="hp-text-link hp-utility-card-action">Tro chuyen cung counselor &gt;</a>
           </div>
 
           <div className="hp-utility-card">
             <h3 className="hp-utility-card-title">Recruiters</h3>
             <p className="hp-body" style={{ margin: '0 0 16px', color: '#7a7a7a' }}>
-              Nhà tuyển dụng có thể truy cập nền tảng để theo dõi sự trưởng thành của ứng viên thông qua các bài test và nhận xét từ Mentor.
+              Nha tuyen dung co the theo doi su truong thanh cua ung vien thong qua bai test, portfolio va nhan xet tu mentor.
             </p>
-            <a href="#" className="hp-text-link hp-utility-card-action">Đăng tin tuyển dụng &gt;</a>
+            <a href="#" className="hp-text-link hp-utility-card-action">Dang tin tuyen dung &gt;</a>
           </div>
         </div>
       </section>
 
-      {/* ── TILE 6: STORE / PRICING (PARCHMENT) ── */}
       <section className="hp-tile hp-tile-parchment" id="store">
-        <h2 className="hp-display-lg">Đầu tư vào chính bạn.</h2>
-        <p className="hp-lead">Sở hữu lộ trình, mở khóa tương lai.</p>
+        <h2 className="hp-display-lg">Dau tu vao chinh ban.</h2>
+        <p className="hp-lead">So huu lo trinh, mo khoa tuong lai.</p>
+
+        {subscriptions.length > 0 && (
+          <p className="hp-body" style={{ marginTop: '20px', color: '#4b5563' }}>
+            Ban dang co {subscriptions.length} goi dang ky trong tai khoan.
+          </p>
+        )}
 
         <div className="hp-utility-grid" style={{ maxWidth: '1200px' }}>
           {plans.map((plan) => {
             const details = parsePlanFeatures(plan.featuresJson);
             const isFree = Number(plan.price) === 0;
             const isLoading = checkoutPlanId === plan.id;
-            
+
             return (
               <div key={plan.id} className="hp-utility-card">
                 <h3 className="hp-utility-card-title" style={{ fontSize: '24px', marginBottom: '8px' }}>{plan.name}</h3>
@@ -179,27 +194,27 @@ export function HomePage({ session, onLogin, onSignOut }) {
                 </p>
                 <div style={{ marginBottom: '32px' }}>
                   <p className="hp-body" style={{ margin: '0 0 24px', color: '#7a7a7a' }}>
-                    {plan.description || 'Gói giải pháp giúp bạn nắm bắt cơ hội và rèn luyện các kỹ năng thiết yếu nhất.'}
+                    {plan.description || 'Goi giai phap giup ban nam bat co hoi va ren luyen cac ky nang thiet yeu nhat.'}
                   </p>
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#1d1d1f' }}>
                     <li className="hp-body" style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}>
-                      <span style={{color: '#0066cc'}}>✓</span> {details.mentorReviewLimit} lượt Mentor Review
+                      <span style={{ color: '#0066cc' }}>+</span> {details.mentorReviewLimit} luot Mentor Review
                     </li>
-                    {(details.features || []).map((f, i) => (
-                      <li key={i} className="hp-body" style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}>
-                        <span style={{color: '#0066cc'}}>✓</span> {f}
+                    {(details.features || []).map((feature, index) => (
+                      <li key={index} className="hp-body" style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}>
+                        <span style={{ color: '#0066cc' }}>+</span> {feature}
                       </li>
                     ))}
                   </ul>
                 </div>
                 <div className="hp-utility-card-action">
-                  <button 
-                    className="hp-btn-primary" 
+                  <button
+                    className="hp-btn-primary"
                     onClick={() => buyPlan(plan)}
                     disabled={isLoading}
                     style={{ width: '100%', padding: '14px 24px', fontSize: '17px' }}
                   >
-                    {isLoading ? 'Đang xử lý...' : isFree ? 'Dùng thử miễn phí' : 'Chọn gói này'}
+                    {isLoading ? 'Dang xu ly...' : isFree ? 'Dung thu mien phi' : 'Chon goi nay'}
                   </button>
                 </div>
               </div>
@@ -208,15 +223,14 @@ export function HomePage({ session, onLogin, onSignOut }) {
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
       <footer className="hp-footer">
         <div className="hp-footer-content">
           <div className="hp-footer-fine-print">
-            Cần có tài khoản và sự chấp thuận Điều khoản dịch vụ để sử dụng nền tảng CareerMap. Tính năng phân tích AI có thể thay đổi độ chính xác phụ thuộc vào dữ liệu đầu vào. Gói Pro cung cấp đặc quyền review trực tiếp từ Mentor trong vòng 48 giờ. Số lượng mentor hữu hạn tại mỗi thời điểm. Hình ảnh sử dụng mang tính chất minh hoạ.
+            Nen tang CareerMap cung cap cong cu dinh huong, phan tich AI va ket noi mentor phu hop voi tung giai doan phat trien cua ban.
           </div>
           <div className="hp-footer-links-grid">
             <div className="hp-footer-col">
-              <h4>Khám phá</h4>
+              <h4>Kham pha</h4>
               <ul>
                 <li><a href="#platform">Roadmap</a></li>
                 <li><a href="#features">AI Analysis</a></li>
@@ -225,32 +239,32 @@ export function HomePage({ session, onLogin, onSignOut }) {
               </ul>
             </div>
             <div className="hp-footer-col">
-              <h4>Dịch vụ</h4>
+              <h4>Dich vu</h4>
               <ul>
-                <li><a href="#">Hỗ trợ học viên</a></li>
-                <li><a href="#">Tuyển dụng Mentor</a></li>
-                <li><a href="#">Dành cho Doanh nghiệp</a></li>
+                <li><a href="#">Ho tro hoc vien</a></li>
+                <li><a href="#">Tuyen dung Mentor</a></li>
+                <li><a href="#">Danh cho Doanh nghiep</a></li>
               </ul>
             </div>
             <div className="hp-footer-col">
-              <h4>Về CareerMap</h4>
+              <h4>Ve CareerMap</h4>
               <ul>
-                <li><a href="#">Câu chuyện của chúng tôi</a></li>
-                <li><a href="#">Tin tức</a></li>
-                <li><a href="#">Cơ hội nghề nghiệp</a></li>
+                <li><a href="#">Cau chuyen cua chung toi</a></li>
+                <li><a href="#">Tin tuc</a></li>
+                <li><a href="#">Co hoi nghe nghiep</a></li>
               </ul>
             </div>
             <div className="hp-footer-col">
-              <h4>Pháp lý</h4>
+              <h4>Phap ly</h4>
               <ul>
-                <li><a href="#">Điều khoản sử dụng</a></li>
-                <li><a href="#">Bảo mật thông tin</a></li>
+                <li><a href="#">Dieu khoan su dung</a></li>
+                <li><a href="#">Bao mat thong tin</a></li>
                 <li><a href="#">Cookies</a></li>
               </ul>
             </div>
           </div>
           <div className="hp-footer-fine-print" style={{ border: 'none', paddingTop: '24px', marginTop: '24px', borderTop: '1px solid #e0e0e0' }}>
-            Bản quyền © 2026 CareerMap Inc. Bảo lưu mọi quyền.
+            Ban quyen © 2026 CareerMap Inc. Bao luu moi quyen.
           </div>
         </div>
       </footer>
