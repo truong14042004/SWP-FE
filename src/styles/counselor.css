@@ -1024,11 +1024,14 @@
 
 .counselor-card-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   margin-top: auto;
 }
 
-.counselor-card-actions .counselor-btn { flex: 0 1 auto; }
+.counselor-card-actions .counselor-btn {
+  flex: 1;
+  justify-content: center;
+}
 
 /* ---------- Detail back ---------- */
 .counselor-back-btn {
@@ -1828,7 +1831,16 @@
   max-height: 92vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   animation: counselor-pop 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.counselor-modal > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 @keyframes counselor-pop {
@@ -1906,6 +1918,8 @@
   gap: 12px;
   padding: 20px 32px;
   border-top: 1px solid var(--c-divider-soft);
+  background: var(--c-canvas);
+  flex-shrink: 0;
 }
 
 /* ---------- Form ---------- */
