@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import {
   getStudentProfile,
@@ -23,7 +23,7 @@ function getInitials(name = '') {
 }
 
 function formatDate(date) {
-  if (!date) return 'â€”';
+  if (!date) return '—';
   return new Date(date).toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: 'long',
@@ -32,7 +32,7 @@ function formatDate(date) {
 }
 
 function formatShortDate(date) {
-  if (!date) return 'â€”';
+  if (!date) return '—';
   return new Date(date).toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -65,9 +65,9 @@ function getRoadmapStatusClass(status = '') {
 
 function getRoadmapStatusIcon(status = '') {
   const s = normalizeStatus(status);
-  if (s === 'completed') return 'âœ“';
-  if (s === 'inprogress') return 'â†»';
-  return 'â—‹';
+  if (s === 'completed') return '✓';
+  if (s === 'inprogress') return '↻';
+  return '○';
 }
 
 function renderStars(rating = 0) {
@@ -76,14 +76,14 @@ function renderStars(rating = 0) {
       key={i}
       className={`counselor-feedback-star ${i < (rating || 0) ? '' : 'empty'}`}
     >
-      â˜…
+      ★
     </span>
   ));
 }
 
 const TABS = [
-  { id: 'profile', label: 'Há»“ sÆ¡' },
-  { id: 'skills', label: 'Ká»¹ nÄƒng' },
+  { id: 'profile', label: 'Hồ sơ' },
+  { id: 'skills', label: 'Kỹ năng' },
   { id: 'skillgap', label: 'Skill Gap' },
   { id: 'roadmap', label: 'Roadmap' },
   { id: 'feedback', label: 'Feedback' },
@@ -136,7 +136,7 @@ export function CounselorStudentDetail({
         setFeedbacks(Array.isArray(fb) ? fb : []);
       } catch (error) {
         if (!cancelled) {
-          toast.error(error.message || 'KhĂ´ng thá»ƒ táº£i dá»¯ liá»‡u sinh viĂªn');
+          toast.error(error.message || 'Không thể tải dữ liệu sinh viên');
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -151,7 +151,7 @@ export function CounselorStudentDetail({
 
   const skillsByCategory = useMemo(() => {
     return skills.reduce((acc, skill) => {
-      const cat = skill.skillCategory || 'KhĂ¡c';
+      const cat = skill.skillCategory || 'Khác';
       if (!acc[cat]) acc[cat] = [];
       acc[cat].push(skill);
       return acc;
@@ -189,18 +189,18 @@ export function CounselorStudentDetail({
 
   if (loading) {
     return (
-      <section className="counselor-section">
-        <div className="counselor-section-inner">
+      <section className="counselor-section counselor-section--tight">
+        <div className="counselor-section-inner counselor-section-inner--wide">
           <button
             type="button"
-            className="counselor-detail-back"
+            className="counselor-back-btn"
             onClick={onBack}
           >
-            â† Quay láº¡i danh sĂ¡ch
+            Quay lại
           </button>
           <div className="counselor-loading">
             <div className="counselor-spinner" aria-hidden />
-            <p>Äang táº£i dá»¯ liá»‡u sinh viĂªn...</p>
+            <p>Đang tải...</p>
           </div>
         </div>
       </section>
@@ -208,55 +208,59 @@ export function CounselorStudentDetail({
   }
 
   return (
-    <section className="counselor-section">
-      <div className="counselor-section-inner">
-        <button
-          type="button"
-          className="counselor-detail-back"
-          onClick={onBack}
-        >
-          â† Quay láº¡i danh sĂ¡ch
-        </button>
-
-        {/* Hero card (dark tile) */}
-        <header className="counselor-hero-card">
+    <>
+      {/* Full-bleed dark hero */}
+      <section className="counselor-detail-hero">
+        <div className="counselor-detail-hero-inner">
           <div className="counselor-avatar counselor-avatar--xl" aria-hidden>
             {getInitials(student?.fullName)}
           </div>
-          <div className="counselor-hero-card-info">
-            <h2>{student?.fullName || 'Sinh viĂªn'}</h2>
+          <div className="counselor-detail-hero-info">
+            <span className="counselor-eyebrow">Sinh viên</span>
+            <h1>{student?.fullName || 'Sinh viên'}</h1>
             <p>{student?.email}</p>
-            <div className="counselor-hero-card-tags">
+            <div className="counselor-tags">
               {profileDetails?.school && (
-                <span className="counselor-tag">đŸ“ {profileDetails.school}</span>
+                <span className="counselor-tag">{profileDetails.school}</span>
               )}
               {profileDetails?.major && (
-                <span className="counselor-tag">đŸ“ {profileDetails.major}</span>
+                <span className="counselor-tag">{profileDetails.major}</span>
               )}
               {profileDetails?.year && (
-                <span className="counselor-tag">NÄƒm {profileDetails.year}</span>
+                <span className="counselor-tag">Năm {profileDetails.year}</span>
               )}
               {profileDetails?.targetRoleName && (
                 <span className="counselor-tag counselor-tag--accent">
-                  đŸ¯ {profileDetails.targetRoleName}
+                  {profileDetails.targetRoleName}
                 </span>
               )}
             </div>
           </div>
-          <button
-            type="button"
-            className="counselor-btn counselor-btn-primary counselor-btn-fixed"
-            onClick={() => onOpenFeedbackModal(student)}
-          >
-            Viáº¿t feedback
-          </button>
-        </header>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+            <button
+              type="button"
+              className="counselor-btn counselor-btn-on-dark counselor-btn-lg"
+              onClick={() => onOpenFeedbackModal(student)}
+            >
+              Viết feedback
+            </button>
+            <button
+              type="button"
+              className="counselor-btn counselor-btn-link on-dark"
+              onClick={onBack}
+            >
+              Quay lại danh sách
+            </button>
+          </div>
+        </div>
+      </section>
 
-        {/* Tabs */}
+      {/* Sticky tabs */}
+      <div className="counselor-tabs-wrap">
         <nav
           className="counselor-tabs"
           role="tablist"
-          aria-label="Tabs chi tiáº¿t sinh viĂªn"
+          aria-label="Tabs chi tiết sinh viên"
         >
           {TABS.map((tab) => (
             <button
@@ -271,94 +275,98 @@ export function CounselorStudentDetail({
             </button>
           ))}
         </nav>
-
-        <div className="counselor-tab-content" role="tabpanel">
-          {activeTab === 'profile' && <ProfileTab profile={profileDetails} />}
-
-          {activeTab === 'skills' && (
-            <SkillsTab skills={skills} skillsByCategory={skillsByCategory} />
-          )}
-
-          {activeTab === 'skillgap' && (
-            <SkillGapTab
-              latest={skillGapLatest}
-              history={skillGapHistory}
-              selected={selectedSkillGapReport}
-              stats={gapStats}
-              loadingDetail={skillGapLoading}
-              onSelect={async (report) => {
-                if (skillGapLatest && report.id === skillGapLatest.id) {
-                  setSelectedSkillGapReport(skillGapLatest);
-                  return;
-                }
-                setSkillGapLoading(true);
-                try {
-                  const full = await getStudentSkillGapById(
-                    session,
-                    studentId,
-                    report.id,
-                  );
-                  setSelectedSkillGapReport(full);
-                } catch (error) {
-                  toast.error(error.message || 'KhĂ´ng thá»ƒ táº£i chi tiáº¿t bĂ¡o cĂ¡o');
-                  setSelectedSkillGapReport(report);
-                } finally {
-                  setSkillGapLoading(false);
-                }
-              }}
-            />
-          )}
-
-          {activeTab === 'roadmap' && (
-            <RoadmapTab
-              roadmap={roadmap}
-              topLevelNodes={roadmapTopLevelNodes}
-              totalHours={roadmapTotalHours}
-            />
-          )}
-
-          {activeTab === 'feedback' && (
-            <FeedbackTab
-              feedbacks={feedbacks}
-              onOpenFeedback={() => onOpenFeedbackModal(student)}
-            />
-          )}
-        </div>
       </div>
-    </section>
+
+      <section className="counselor-section counselor-section--tight">
+        <div className="counselor-section-inner counselor-section-inner--wide">
+          <div className="counselor-tab-content" role="tabpanel">
+            {activeTab === 'profile' && <ProfileTab profile={profileDetails} />}
+
+            {activeTab === 'skills' && (
+              <SkillsTab skills={skills} skillsByCategory={skillsByCategory} />
+            )}
+
+            {activeTab === 'skillgap' && (
+              <SkillGapTab
+                latest={skillGapLatest}
+                history={skillGapHistory}
+                selected={selectedSkillGapReport}
+                stats={gapStats}
+                loadingDetail={skillGapLoading}
+                onSelect={async (report) => {
+                  if (skillGapLatest && report.id === skillGapLatest.id) {
+                    setSelectedSkillGapReport(skillGapLatest);
+                    return;
+                  }
+                  setSkillGapLoading(true);
+                  try {
+                    const full = await getStudentSkillGapById(
+                      session,
+                      studentId,
+                      report.id,
+                    );
+                    setSelectedSkillGapReport(full);
+                  } catch (error) {
+                    toast.error(error.message || 'Không thể tải chi tiết báo cáo');
+                    setSelectedSkillGapReport(report);
+                  } finally {
+                    setSkillGapLoading(false);
+                  }
+                }}
+              />
+            )}
+
+            {activeTab === 'roadmap' && (
+              <RoadmapTab
+                roadmap={roadmap}
+                topLevelNodes={roadmapTopLevelNodes}
+                totalHours={roadmapTotalHours}
+              />
+            )}
+
+            {activeTab === 'feedback' && (
+              <FeedbackTab
+                feedbacks={feedbacks}
+                onOpenFeedback={() => onOpenFeedbackModal(student)}
+              />
+            )}
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
 
-/* â”€â”€ Profile Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Profile Tab ─────────────────────────────────────────── */
 function ProfileTab({ profile }) {
   if (!profile) {
     return (
-      <div className="counselor-empty-state">
-        <div className="counselor-empty-state-icon">đŸ“‹</div>
-        <h3>ChÆ°a cĂ³ há»“ sÆ¡</h3>
-        <p>Sinh viĂªn chÆ°a cáº­p nháº­t thĂ´ng tin há»“ sÆ¡</p>
+      <div className="counselor-empty">
+        <div className="counselor-empty-icon" aria-hidden>◇</div>
+        <h4>Chưa có hồ sơ</h4>
+        <p>Sinh viên chưa cập nhật thông tin hồ sơ</p>
       </div>
     );
   }
 
   return (
     <div className="counselor-profile-grid">
-      <ProfileItem label="TrÆ°á»ng há»c" value={profile.school} />
-      <ProfileItem label="ChuyĂªn ngĂ nh" value={profile.major} />
-      <ProfileItem label="NÄƒm há»c" value={profile.year} />
+      <ProfileItem label="Trường học" value={profile.school} />
+      <ProfileItem label="Chuyên ngành" value={profile.major} />
+      <ProfileItem label="Năm học" value={profile.year} />
       <ProfileItem label="GPA" value={profile.gpa} />
-      <ProfileItem label="Má»¥c tiĂªu nghá» nghiá»‡p" value={profile.targetRoleName} />
+      <ProfileItem label="Mục tiêu nghề nghiệp" value={profile.targetRoleName} />
       <ProfileItem
-        label="Giá» há»c/tuáº§n"
+        label="Giờ học/tuần"
         value={
           profile.preferredLearningHoursPerWeek != null
-            ? `${profile.preferredLearningHoursPerWeek} giá»`
+            ? `${profile.preferredLearningHoursPerWeek} giờ`
             : null
         }
       />
       {profile.careerGoal && (
         <ProfileItem
-          label="Má»¥c tiĂªu nghá» nghiá»‡p chi tiáº¿t"
+          label="Mục tiêu nghề nghiệp chi tiết"
           value={profile.careerGoal}
           fullWidth
         />
@@ -386,19 +394,19 @@ function ProfileItem({ label, value, fullWidth }) {
   return (
     <div className={`counselor-profile-item ${fullWidth ? 'full-width' : ''}`}>
       <span className="counselor-profile-label">{label}</span>
-      <span className="counselor-profile-value">{value || 'â€”'}</span>
+      <span className="counselor-profile-value">{value || '—'}</span>
     </div>
   );
 }
 
-/* â”€â”€ Skills Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Skills Tab ──────────────────────────────────────────── */
 function SkillsTab({ skills, skillsByCategory }) {
   if (skills.length === 0) {
     return (
-      <div className="counselor-empty-state">
-        <div className="counselor-empty-state-icon">đŸ’»</div>
-        <h3>ChÆ°a cĂ³ ká»¹ nÄƒng</h3>
-        <p>Sinh viĂªn chÆ°a khai bĂ¡o ká»¹ nÄƒng nĂ o</p>
+      <div className="counselor-empty">
+        <div className="counselor-empty-icon" aria-hidden>◌</div>
+        <h4>Chưa có kỹ năng</h4>
+        <p>Sinh viên chưa khai báo kỹ năng nào</p>
       </div>
     );
   }
@@ -408,14 +416,14 @@ function SkillsTab({ skills, skillsByCategory }) {
   return (
     <div>
       <p className="counselor-tab-meta">
-        {skills.length} ká»¹ nÄƒng Â· {verifiedCount} Ä‘Ă£ verify Â·{' '}
-        {skills.length - verifiedCount} chÆ°a verify
+        {skills.length} kỹ năng · {verifiedCount} đã verify ·{' '}
+        {skills.length - verifiedCount} chưa verify
       </p>
       {Object.entries(skillsByCategory).map(([category, list]) => (
         <div key={category} className="counselor-skill-category">
           <header className="counselor-skill-category-head">
             <h4>{category}</h4>
-            <span>{list.length} ká»¹ nÄƒng</span>
+            <span>{list.length} kỹ năng</span>
           </header>
           {list.map((skill) => (
             <div key={skill.id} className="counselor-skill-row">
@@ -425,7 +433,7 @@ function SkillsTab({ skills, skillsByCategory }) {
                 }`}
                 aria-hidden
               >
-                {skill.isVerified ? 'âœ“' : 'â '}
+                {skill.isVerified ? '✓' : '○'}
               </div>
               <span className="counselor-skill-name">{skill.skillName}</span>
               <span
@@ -448,23 +456,23 @@ function SkillsTab({ skills, skillsByCategory }) {
   );
 }
 
-/* â”€â”€ Skill Gap Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Skill Gap Tab ───────────────────────────────────────── */
 function SkillGapTab({ latest, history, selected, stats, loadingDetail, onSelect }) {
   if (!latest && history.length === 0) {
     return (
-      <div className="counselor-empty-state">
-        <div className="counselor-empty-state-icon">đŸ“</div>
-        <h3>ChÆ°a cĂ³ bĂ¡o cĂ¡o Skill Gap</h3>
-        <p>Sinh viĂªn chÆ°a cháº¡y phĂ¢n tĂ­ch skill gap</p>
+      <div className="counselor-empty">
+        <div className="counselor-empty-icon" aria-hidden>◇</div>
+        <h4>Chưa có báo cáo Skill Gap</h4>
+        <p>Sinh viên chưa chạy phân tích skill gap</p>
       </div>
     );
   }
 
   const matchPercent = selected ? Math.round(Number(selected.matchScore)) : 0;
   const ringStyle = {
-    background: `conic-gradient(var(--counselor-primary) 0deg, var(--counselor-primary) ${
+    background: `conic-gradient(var(--c-primary) 0deg, var(--c-primary) ${
       matchPercent * 3.6
-    }deg, var(--counselor-divider-soft) ${matchPercent * 3.6}deg)`,
+    }deg, var(--c-divider-soft) ${matchPercent * 3.6}deg)`,
   };
 
   return (
@@ -472,29 +480,27 @@ function SkillGapTab({ latest, history, selected, stats, loadingDetail, onSelect
       {selected && (
         <>
           <div className="counselor-gap-overview">
-            <div className="counselor-gap-ring-wrap">
-              <div className="counselor-gap-ring" style={ringStyle}>
-                <div className="counselor-gap-ring-inner">
-                  <div>
-                    <div className="counselor-gap-ring-value">{matchPercent}%</div>
-                    <div className="counselor-gap-ring-label">Match score</div>
-                  </div>
+            <div className="counselor-gap-ring" style={ringStyle}>
+              <div className="counselor-gap-ring-inner">
+                <div>
+                  <div className="counselor-gap-ring-value">{matchPercent}%</div>
+                  <div className="counselor-gap-ring-label">Match</div>
                 </div>
               </div>
             </div>
             <div className="counselor-gap-summary">
               <h3>{selected.careerRoleName}</h3>
-              <p>{selected.summary || 'KhĂ´ng cĂ³ tá»•ng káº¿t.'}</p>
+              <p>{selected.summary || 'Không có tổng kết.'}</p>
               {selected.items && (
                 <div className="counselor-gap-stats">
                   <span className="counselor-gap-stat missing">
-                    {stats.missing} thiáº¿u
+                    {stats.missing} thiếu
                   </span>
                   <span className="counselor-gap-stat weak">
-                    {stats.weak} yáº¿u
+                    {stats.weak} yếu
                   </span>
                   <span className="counselor-gap-stat achieved">
-                    {stats.achieved} Ä‘áº¡t
+                    {stats.achieved} đạt
                   </span>
                 </div>
               )}
@@ -504,14 +510,14 @@ function SkillGapTab({ latest, history, selected, stats, loadingDetail, onSelect
           {loadingDetail && (
             <div className="counselor-loading">
               <div className="counselor-spinner" aria-hidden />
-              <p>Äang táº£i chi tiáº¿t bĂ¡o cĂ¡o...</p>
+              <p>Đang tải chi tiết báo cáo...</p>
             </div>
           )}
 
           {!loadingDetail && selected.items?.length > 0 && (
             <>
               <h4 className="counselor-tab-section-title">
-                Ká»¹ nÄƒng cáº§n Æ°u tiĂªn
+                Kỹ năng cần ưu tiên
               </h4>
               <div className="counselor-gap-list">
                 {selected.items.map((item, index) => {
@@ -524,13 +530,13 @@ function SkillGapTab({ latest, history, selected, stats, loadingDetail, onSelect
                       <div className="counselor-gap-item-priority">
                         #{index + 1}
                       </div>
-                      <div className="counselor-gap-item-info">
+                      <div>
                         <div className="counselor-gap-item-name">
                           {item.skillName}
                         </div>
                         <div className="counselor-gap-item-levels">
-                          Hiá»‡n táº¡i: <strong>{item.currentLevel || 'â€”'}</strong>
-                          {' â†’ '}YĂªu cáº§u: <strong>{item.requiredLevel}</strong>
+                          Hiện tại: <strong>{item.currentLevel || '—'}</strong>
+                          {' → '}Yêu cầu: <strong>{item.requiredLevel}</strong>
                         </div>
                         {item.recommendation && (
                           <div className="counselor-gap-item-recommendation">
@@ -552,7 +558,7 @@ function SkillGapTab({ latest, history, selected, stats, loadingDetail, onSelect
 
       {history.length > 1 && (
         <div className="counselor-gap-history">
-          <h4 className="counselor-tab-section-title">Lá»‹ch sá»­ bĂ¡o cĂ¡o</h4>
+          <h4 className="counselor-tab-section-title">Lịch sử báo cáo</h4>
           {history.map((report) => (
             <button
               key={report.id}
@@ -565,11 +571,11 @@ function SkillGapTab({ latest, history, selected, stats, loadingDetail, onSelect
               <div className="counselor-gap-history-info">
                 <strong>{formatShortDate(report.createdAt)}</strong>
                 <span>
-                  {Math.round(Number(report.matchScore))}% Â·{' '}
+                  {Math.round(Number(report.matchScore))}% ·{' '}
                   {report.careerRoleName}
                 </span>
               </div>
-              <span className="counselor-btn counselor-btn-text">Xem</span>
+              <span className="counselor-btn counselor-btn-link">Xem</span>
             </button>
           ))}
         </div>
@@ -578,14 +584,14 @@ function SkillGapTab({ latest, history, selected, stats, loadingDetail, onSelect
   );
 }
 
-/* â”€â”€ Roadmap Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Roadmap Tab ─────────────────────────────────────────── */
 function RoadmapTab({ roadmap, topLevelNodes, totalHours }) {
   if (!roadmap) {
     return (
-      <div className="counselor-empty-state">
-        <div className="counselor-empty-state-icon">đŸ§­</div>
-        <h3>ChÆ°a cĂ³ Roadmap</h3>
-        <p>Sinh viĂªn chÆ°a táº¡o lá»™ trĂ¬nh há»c táº­p</p>
+      <div className="counselor-empty">
+        <div className="counselor-empty-icon" aria-hidden>◇</div>
+        <h4>Chưa có Roadmap</h4>
+        <p>Sinh viên chưa tạo lộ trình học tập</p>
       </div>
     );
   }
@@ -595,10 +601,10 @@ function RoadmapTab({ roadmap, topLevelNodes, totalHours }) {
   return (
     <div>
       <header className="counselor-roadmap-head">
-        <h3>{roadmap.title || 'Lá»™ trĂ¬nh há»c táº­p'}</h3>
+        <h3>{roadmap.title || 'Lộ trình học tập'}</h3>
         <p>
-          Tráº¡ng thĂ¡i: {roadmap.status || 'Draft'} Â· {progress}% hoĂ n thĂ nh
-          {totalHours > 0 ? ` Â· Dá»± kiáº¿n ${totalHours} giá»` : ''}
+          Trạng thái: {roadmap.status || 'Draft'} · {progress}% hoàn thành
+          {totalHours > 0 ? ` · Dự kiến ${totalHours} giờ` : ''}
         </p>
       </header>
 
@@ -607,7 +613,7 @@ function RoadmapTab({ roadmap, topLevelNodes, totalHours }) {
           <span style={{ width: `${progress}%` }} />
         </div>
         <div className="counselor-roadmap-progress-text">
-          <span>Tiáº¿n Ä‘á»™</span>
+          <span>Tiến độ</span>
           <span>{progress}%</span>
         </div>
       </div>
@@ -657,26 +663,26 @@ function RoadmapNode({ node }) {
   );
 }
 
-/* â”€â”€ Feedback Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Feedback Tab ────────────────────────────────────────── */
 function FeedbackTab({ feedbacks, onOpenFeedback }) {
   return (
     <div>
       <header className="counselor-feedback-tab-head">
-        <h3>Feedback Ä‘Ă£ gá»­i ({feedbacks.length})</h3>
+        <h3>Feedback đã gửi ({feedbacks.length})</h3>
         <button
           type="button"
-          className="counselor-btn counselor-btn-primary counselor-btn-fixed"
+          className="counselor-btn counselor-btn-primary"
           onClick={onOpenFeedback}
         >
-          + Má»›i
+          + Mới
         </button>
       </header>
 
       {feedbacks.length === 0 ? (
-        <div className="counselor-empty-state">
-          <div className="counselor-empty-state-icon">đŸ’¬</div>
-          <h3>ChÆ°a cĂ³ feedback</h3>
-          <p>Gá»­i feedback Ä‘áº§u tiĂªn cho sinh viĂªn nĂ y</p>
+        <div className="counselor-empty">
+          <div className="counselor-empty-icon" aria-hidden>◈</div>
+          <h4>Chưa có feedback</h4>
+          <p>Gửi feedback đầu tiên cho sinh viên này</p>
         </div>
       ) : (
         <div className="counselor-feedback-list">
@@ -701,7 +707,7 @@ function FeedbackTab({ feedbacks, onOpenFeedback }) {
                   </span>
                 )}
                 {!fb.roadmapId && !fb.skillGapReportId && (
-                  <span className="counselor-feedback-type-badge">Tá»•ng quĂ¡t</span>
+                  <span className="counselor-feedback-type-badge">Tổng quát</span>
                 )}
               </div>
 
@@ -710,7 +716,7 @@ function FeedbackTab({ feedbacks, onOpenFeedback }) {
               {fb.recommendations && (
                 <div className="counselor-feedback-section">
                   <div className="counselor-feedback-section-title">
-                    Khuyáº¿n nghá»‹
+                    Khuyến nghị
                   </div>
                   <p>{fb.recommendations}</p>
                 </div>
@@ -719,7 +725,7 @@ function FeedbackTab({ feedbacks, onOpenFeedback }) {
               {fb.privateNotes && (
                 <div className="counselor-feedback-private">
                   <div className="counselor-feedback-section-title">
-                    Ghi chĂº riĂªng (chá»‰ báº¡n tháº¥y)
+                    Ghi chú riêng (chỉ bạn thấy)
                   </div>
                   <p>{fb.privateNotes}</p>
                 </div>

@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 function getInitials(name = '') {
   return (
@@ -13,11 +13,11 @@ function getInitials(name = '') {
 }
 
 function formatRelativeTime(date) {
-  if (!date) return 'â€”';
+  if (!date) return '—';
   const now = new Date();
   const d = new Date(date);
   const diff = Math.floor((now - d) / 1000);
-  if (diff < 60) return 'Vá»«a xong';
+  if (diff < 60) return 'Vừa xong';
   if (diff < 3600) return `${Math.floor(diff / 60)}p`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
   if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
@@ -33,15 +33,15 @@ function getMatchScoreClass(score) {
 }
 
 function formatMatchScore(score) {
-  if (score == null) return 'ChÆ°a phĂ¢n tĂ­ch';
+  if (score == null) return 'Chưa phân tích';
   return `${Math.round(Number(score))}%`;
 }
 
 const FILTERS = [
-  { id: 'all', label: 'Táº¥t cáº£' },
-  { id: 'review', label: 'Cáº§n review', title: 'Match score < 60%' },
-  { id: 'no-gap', label: 'ChÆ°a phĂ¢n tĂ­ch', title: 'ChÆ°a cháº¡y phĂ¢n tĂ­ch skill gap' },
-  { id: 'new', label: 'Má»›i', title: 'PhĂ¢n cĂ´ng trong 7 ngĂ y' },
+  { id: 'all', label: 'Tất cả' },
+  { id: 'review', label: 'Cần review' },
+  { id: 'no-gap', label: 'Chưa phân tích' },
+  { id: 'new', label: 'Mới' },
 ];
 
 export function CounselorStudentList({
@@ -81,11 +81,11 @@ export function CounselorStudentList({
 
   if (loading) {
     return (
-      <section className="counselor-section">
+      <section className="counselor-section counselor-section--tight">
         <div className="counselor-section-inner">
           <div className="counselor-loading">
             <div className="counselor-spinner" aria-hidden />
-            <p>Äang táº£i danh sĂ¡ch sinh viĂªn...</p>
+            <p>Đang tải...</p>
           </div>
         </div>
       </section>
@@ -93,30 +93,19 @@ export function CounselorStudentList({
   }
 
   return (
-    <section className="counselor-section">
-      <div className="counselor-section-inner">
-        {/* Header */}
-        <div className="counselor-hero" style={{ marginBottom: 32 }}>
-          <span className="counselor-hero-eyebrow">Sinh viĂªn cá»§a tĂ´i</span>
-          <h1>{students.length} sinh viĂªn</h1>
-          <p className="counselor-hero-lead">
-            Theo dĂµi target role, match score vĂ  lĂªn lá»‹ch feedback cho tá»«ng sinh viĂªn.
-          </p>
-        </div>
-
+    <section className="counselor-section counselor-section--tight">
+      <div className="counselor-section-inner counselor-section-inner--wide">
         {/* Toolbar */}
         <div className="counselor-toolbar">
           <div className="counselor-search">
-            <span className="counselor-search-icon" aria-hidden>
-              đŸ”
-            </span>
+            <span className="counselor-search-icon" aria-hidden>⌕</span>
             <input
               type="search"
               className="counselor-search-input"
-              placeholder="TĂ¬m theo tĂªn hoáº·c email..."
+              placeholder="Tìm theo tên hoặc email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="TĂ¬m kiáº¿m sinh viĂªn"
+              aria-label="Tìm kiếm sinh viên"
             />
           </div>
           <div className="counselor-filters" role="tablist">
@@ -127,7 +116,6 @@ export function CounselorStudentList({
                 role="tab"
                 aria-selected={filter === f.id}
                 className={`counselor-filter-chip ${filter === f.id ? 'active' : ''}`}
-                title={f.title}
                 onClick={() => setFilter(f.id)}
               >
                 {f.label}
@@ -138,13 +126,13 @@ export function CounselorStudentList({
 
         {/* Grid */}
         {filteredStudents.length === 0 ? (
-          <div className="counselor-empty-state">
-            <div className="counselor-empty-state-icon">đŸ‘¥</div>
-            <h3>KhĂ´ng tĂ¬m tháº¥y sinh viĂªn</h3>
+          <div className="counselor-empty">
+            <div className="counselor-empty-icon" aria-hidden>◇</div>
+            <h3>Không tìm thấy sinh viên</h3>
             <p>
               {searchQuery
-                ? 'Thá»­ thay Ä‘á»•i tá»« khĂ³a tĂ¬m kiáº¿m hoáº·c bá»™ lá»c'
-                : 'Báº¡n chÆ°a Ä‘Æ°á»£c phĂ¢n cĂ´ng sinh viĂªn nĂ o, vui lĂ²ng liĂªn há»‡ admin'}
+                ? 'Thử thay đổi từ khóa hoặc bộ lọc'
+                : 'Chưa được phân công sinh viên nào'}
             </p>
           </div>
         ) : (
@@ -164,10 +152,10 @@ export function CounselorStudentList({
                 <dl className="counselor-card-meta">
                   <div className="counselor-card-meta-row">
                     <span>Career goal</span>
-                    <strong>{student.targetRoleName || 'ChÆ°a chá»n'}</strong>
+                    <strong>{student.targetRoleName || 'Chưa chọn'}</strong>
                   </div>
                   <div className="counselor-card-meta-row">
-                    <span>Match score</span>
+                    <span>Match</span>
                     <strong
                       className={`counselor-score-pill counselor-score-pill--${getMatchScoreClass(
                         student.latestMatchScore,
@@ -177,11 +165,11 @@ export function CounselorStudentList({
                     </strong>
                   </div>
                   <div className="counselor-card-meta-row">
-                    <span>Cáº­p nháº­t gap</span>
+                    <span>Cập nhật</span>
                     <strong>
                       {student.latestSkillGapAt
                         ? formatRelativeTime(student.latestSkillGapAt)
-                        : 'â€”'}
+                        : '—'}
                     </strong>
                   </div>
                 </dl>
@@ -189,17 +177,17 @@ export function CounselorStudentList({
                 <div className="counselor-card-actions">
                   <button
                     type="button"
-                    className="counselor-btn counselor-btn-secondary"
+                    className="counselor-btn counselor-btn-link no-arrow"
                     onClick={() => onOpenFeedbackModal(student)}
                   >
                     Feedback
                   </button>
                   <button
                     type="button"
-                    className="counselor-btn counselor-btn-primary"
+                    className="counselor-btn counselor-btn-link"
                     onClick={() => onSelectStudent(student.id)}
                   >
-                    Xem chi tiáº¿t
+                    Chi tiết
                   </button>
                 </div>
               </article>

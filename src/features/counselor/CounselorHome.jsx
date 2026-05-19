@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import '../../styles/counselor.css';
 import { CounselorOverview } from './components/CounselorOverview';
 import { CounselorStudentList } from './components/CounselorStudentList';
@@ -12,16 +12,10 @@ import {
 } from './api/counselorApi';
 
 const NAV_ITEMS = [
-  { id: 'overview', label: 'Tá»•ng quan' },
-  { id: 'students', label: 'Sinh viĂªn' },
-  { id: 'feedback', label: 'Lá»‹ch sá»­ feedback' },
+  { id: 'overview', label: 'Tổng quan' },
+  { id: 'students', label: 'Sinh viên' },
+  { id: 'feedback', label: 'Lịch sử feedback' },
 ];
-
-const VIEW_TITLE = {
-  overview: 'Counselor',
-  students: 'Counselor',
-  feedback: 'Counselor',
-};
 
 export function CounselorHome({ session, onSignOut }) {
   const [currentView, setCurrentView] = useState('overview');
@@ -34,6 +28,7 @@ export function CounselorHome({ session, onSignOut }) {
 
   useEffect(() => {
     loadInitialData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadInitialData() {
@@ -82,7 +77,7 @@ export function CounselorHome({ session, onSignOut }) {
     } catch (error) {
       return {
         success: false,
-        error: error?.message || 'KhĂ´ng thá»ƒ gá»­i feedback',
+        error: error?.message || 'Không thể gửi feedback',
       };
     }
   }
@@ -91,58 +86,63 @@ export function CounselorHome({ session, onSignOut }) {
 
   return (
     <div className="counselor-shell">
-      {/* Global nav (black 44px) */}
+      {/* Global nav — black 44px */}
       <header className="counselor-globalnav">
         <div className="counselor-globalnav-inner">
           <span className="counselor-globalnav-brand">
-            <strong>CareerMap</strong>
+            <span className="counselor-globalnav-brand-dot" aria-hidden>C</span>
+            CareerMap
           </span>
           <span className="counselor-globalnav-spacer" />
           <span className="counselor-globalnav-meta">
-            ÄÄƒng nháº­p:<strong>{counselorName}</strong>
+            Đăng nhập:<strong>{counselorName}</strong>
           </span>
           <button
             type="button"
             className="counselor-globalnav-action"
             onClick={onSignOut}
           >
-            ÄÄƒng xuáº¥t
+            Đăng xuất
           </button>
         </div>
       </header>
 
-      {/* Sub-nav frosted (parchment 80% blur) */}
+      {/* Sub-nav — frosted parchment 52px */}
       <nav className="counselor-subnav" aria-label="Counselor sections">
         <div className="counselor-subnav-inner">
-          <span className="counselor-subnav-title">
-            {VIEW_TITLE[currentView] || 'Counselor'}
-          </span>
+          <span className="counselor-subnav-title">Counselor</span>
           <div className="counselor-subnav-links">
-            {NAV_ITEMS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={`counselor-subnav-link ${
-                  currentView === item.id && !selectedStudentId ? 'active' : ''
-                }`}
-                onClick={() => handleNavigate(item.id)}
-              >
-                {item.label}
-                {item.id === 'students' && students.length > 0 && (
-                  <span className="counselor-subnav-badge">
-                    {students.length}
-                  </span>
-                )}
-              </button>
-            ))}
+            {NAV_ITEMS.map((item) => {
+              const isActive = currentView === item.id && !selectedStudentId;
+              const badge =
+                item.id === 'students' && students.length > 0
+                  ? students.length
+                  : item.id === 'feedback' && feedbacks.length > 0
+                  ? feedbacks.length
+                  : null;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`counselor-subnav-link ${isActive ? 'active' : ''}`}
+                  onClick={() => handleNavigate(item.id)}
+                >
+                  {item.label}
+                  {badge != null && (
+                    <span className="counselor-subnav-badge">{badge}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
+          <span className="counselor-subnav-spacer" />
           {currentView === 'students' && !selectedStudentId && (
             <button
               type="button"
               className="counselor-subnav-cta"
               onClick={() => handleNavigate('feedback')}
             >
-              Xem feedback â†’
+              Xem feedback
             </button>
           )}
         </div>

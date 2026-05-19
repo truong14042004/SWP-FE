@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import {
   getStudentRoadmap,
@@ -37,9 +37,9 @@ const EMPTY_FORM = {
 };
 
 const FEEDBACK_TYPES = [
-  { id: 'general', label: 'Tá»•ng quĂ¡t', desc: 'Pháº£n há»“i chung' },
-  { id: 'roadmap', label: 'Roadmap', desc: 'LiĂªn káº¿t lá»™ trĂ¬nh' },
-  { id: 'skillgap', label: 'Skill Gap', desc: 'LiĂªn káº¿t bĂ¡o cĂ¡o gap' },
+  { id: 'general', label: 'Tổng quát', desc: 'Phản hồi chung' },
+  { id: 'roadmap', label: 'Roadmap', desc: 'Liên kết lộ trình' },
+  { id: 'skillgap', label: 'Skill Gap', desc: 'Liên kết báo cáo gap' },
 ];
 
 export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmit }) {
@@ -96,20 +96,20 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
     const next = {};
 
     if (!form.feedbackText.trim()) {
-      next.feedbackText = 'Vui lĂ²ng nháº­p ná»™i dung feedback';
+      next.feedbackText = 'Vui lòng nhập nội dung feedback';
     } else if (form.feedbackText.trim().length < 50) {
-      next.feedbackText = 'Feedback pháº£i cĂ³ Ă­t nháº¥t 50 kĂ½ tá»±';
+      next.feedbackText = 'Feedback phải có ít nhất 50 ký tự';
     }
 
     if (form.rating !== 0 && (form.rating < 1 || form.rating > 5)) {
-      next.rating = 'ÄĂ¡nh giĂ¡ pháº£i tá»« 1 Ä‘áº¿n 5 sao';
+      next.rating = 'Đánh giá phải từ 1 đến 5 sao';
     }
 
     if (form.feedbackType === 'roadmap' && !form.roadmapId) {
-      next.link = 'Sinh viĂªn chÆ°a cĂ³ roadmap Ä‘á»ƒ liĂªn káº¿t';
+      next.link = 'Sinh viên chưa có roadmap để liên kết';
     }
     if (form.feedbackType === 'skillgap' && !form.skillGapReportId) {
-      next.link = 'Sinh viĂªn chÆ°a cĂ³ bĂ¡o cĂ¡o skill gap Ä‘á»ƒ liĂªn káº¿t';
+      next.link = 'Sinh viên chưa có báo cáo skill gap để liên kết';
     }
 
     setErrors(next);
@@ -120,7 +120,7 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
     e.preventDefault();
 
     if (!validate()) {
-      toast.error('Vui lĂ²ng kiá»ƒm tra láº¡i thĂ´ng tin');
+      toast.error('Vui lòng kiểm tra lại thông tin');
       return;
     }
 
@@ -139,13 +139,13 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
 
       const result = await onSubmit(payload);
       if (result?.success) {
-        toast.success('ÄĂ£ gá»­i feedback thĂ nh cĂ´ng');
+        toast.success('Đã gửi feedback thành công');
         onClose();
       } else {
-        toast.error(result?.error || 'KhĂ´ng thá»ƒ gá»­i feedback');
+        toast.error(result?.error || 'Không thể gửi feedback');
       }
     } catch (error) {
-      toast.error(error.message || 'CĂ³ lá»—i xáº£y ra');
+      toast.error(error.message || 'Có lỗi xảy ra');
     } finally {
       setSaving(false);
     }
@@ -171,21 +171,21 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
         aria-labelledby="counselor-modal-title"
       >
         <header className="counselor-modal-header">
-          <h3 id="counselor-modal-title">Viáº¿t feedback</h3>
+          <h3 id="counselor-modal-title">Viết feedback</h3>
           <button
             type="button"
             className="counselor-modal-close"
             onClick={onClose}
-            aria-label="ÄĂ³ng modal"
+            aria-label="Đóng modal"
           >
-            âœ•
+            ✕
           </button>
         </header>
 
         <form onSubmit={handleSubmit}>
           <div className="counselor-modal-body">
             <div className="counselor-modal-recipient">
-              <div className="counselor-student-avatar" aria-hidden>
+              <div className="counselor-avatar" aria-hidden>
                 {getInitials(student.fullName)}
               </div>
               <div>
@@ -196,11 +196,11 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
 
             {/* Feedback Type selector */}
             <div className="counselor-form-group">
-              <label>LiĂªn káº¿t vá»›i</label>
+              <label>Liên kết với</label>
               <div
                 className="counselor-feedback-type-selector"
                 role="radiogroup"
-                aria-label="Loáº¡i feedback"
+                aria-label="Loại feedback"
               >
                 {FEEDBACK_TYPES.map((type) => {
                   const disabled =
@@ -220,8 +220,8 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
                       title={
                         disabled
                           ? type.id === 'roadmap'
-                            ? 'Sinh viĂªn chÆ°a cĂ³ roadmap'
-                            : 'Sinh viĂªn chÆ°a cĂ³ bĂ¡o cĂ¡o skill gap'
+                            ? 'Sinh viên chưa có roadmap'
+                            : 'Sinh viên chưa có báo cáo skill gap'
                           : undefined
                       }
                     >
@@ -233,7 +233,7 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
               </div>
               {linkingDataLoading && (
                 <span className="counselor-form-hint">
-                  Äang táº£i dá»¯ liá»‡u liĂªn káº¿t...
+                  Đang tải dữ liệu liên kết...
                 </span>
               )}
 
@@ -248,8 +248,8 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
                 >
                   {skillGapReports.map((report) => (
                     <option key={report.id} value={report.id}>
-                      {formatShortDate(report.createdAt)} Â·{' '}
-                      {Math.round(Number(report.matchScore))}% Â·{' '}
+                      {formatShortDate(report.createdAt)} ·{' '}
+                      {Math.round(Number(report.matchScore))}% ·{' '}
                       {report.careerRoleName}
                     </option>
                   ))}
@@ -259,7 +259,7 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
               {/* Roadmap info when type === roadmap */}
               {form.feedbackType === 'roadmap' && roadmap && (
                 <div className="counselor-feedback-link-info">
-                  đŸ“‹ {roadmap.title} Â· {Math.round(Number(roadmap.progress) || 0)}% hoĂ n thĂ nh
+                  ▸ {roadmap.title} · {Math.round(Number(roadmap.progress) || 0)}% hoàn thành
                 </div>
               )}
 
@@ -269,12 +269,12 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
             </div>
 
             <div className="counselor-form-group">
-              <label htmlFor="counselor-rating">ÄĂ¡nh giĂ¡ tá»•ng thá»ƒ</label>
+              <label htmlFor="counselor-rating">Đánh giá tổng thể</label>
               <div
                 className="counselor-rating-input"
                 role="radiogroup"
                 id="counselor-rating"
-                aria-label="Chá»n sá»‘ sao Ä‘Ă¡nh giĂ¡"
+                aria-label="Chọn số sao đánh giá"
               >
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -288,13 +288,13 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
                     }`}
                     onClick={() => updateField('rating', star)}
                   >
-                    â˜…
+                    ★
                   </button>
                 ))}
               </div>
               <div className="counselor-form-row">
                 <span className="counselor-form-hint">
-                  {form.rating > 0 ? `${form.rating}/5 sao` : 'TĂ¹y chá»n'}
+                  {form.rating > 0 ? `${form.rating}/5 sao` : 'Tùy chọn'}
                 </span>
                 {errors.rating && (
                   <span className="counselor-form-error">{errors.rating}</span>
@@ -303,18 +303,18 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
             </div>
 
             <div className="counselor-form-group">
-              <label htmlFor="counselor-feedback-text">Ná»™i dung feedback *</label>
+              <label htmlFor="counselor-feedback-text">Nội dung feedback *</label>
               <textarea
                 id="counselor-feedback-text"
                 value={form.feedbackText}
                 onChange={(e) => updateField('feedbackText', e.target.value)}
-                placeholder="Viáº¿t pháº£n há»“i chi tiáº¿t cho sinh viĂªn (Ă­t nháº¥t 50 kĂ½ tá»±)..."
+                placeholder="Viết phản hồi chi tiết cho sinh viên (ít nhất 50 ký tự)..."
                 rows={6}
                 required
               />
               <div className="counselor-form-row">
                 <span className="counselor-form-hint">
-                  {form.feedbackText.length}/50 kĂ½ tá»± tá»‘i thiá»ƒu
+                  {form.feedbackText.length}/50 ký tự tối thiểu
                 </span>
                 {errors.feedbackText && (
                   <span className="counselor-form-error">
@@ -325,32 +325,32 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
             </div>
 
             <div className="counselor-form-group">
-              <label htmlFor="counselor-recommendations">Khuyáº¿n nghá»‹</label>
+              <label htmlFor="counselor-recommendations">Khuyến nghị</label>
               <textarea
                 id="counselor-recommendations"
                 value={form.recommendations}
                 onChange={(e) => updateField('recommendations', e.target.value)}
-                placeholder="CĂ¡c bÆ°á»›c tiáº¿p theo sinh viĂªn nĂªn thá»±c hiá»‡n..."
+                placeholder="Các bước tiếp theo sinh viên nên thực hiện..."
                 rows={3}
               />
               <span className="counselor-form-hint">
-                TĂ¹y chá»n â€” sinh viĂªn sáº½ tháº¥y pháº§n nĂ y
+                Tùy chọn — sinh viên sẽ thấy phần này
               </span>
             </div>
 
             <div className="counselor-form-group">
-              <label htmlFor="counselor-private-notes">Ghi chĂº riĂªng</label>
+              <label htmlFor="counselor-private-notes">Ghi chú riêng</label>
               <textarea
                 id="counselor-private-notes"
                 value={form.privateNotes}
                 onChange={(e) => updateField('privateNotes', e.target.value)}
-                placeholder="Ghi chĂº cĂ¡ nhĂ¢n khĂ´ng hiá»ƒn thá»‹ vá»›i sinh viĂªn..."
+                placeholder="Ghi chú cá nhân không hiển thị với sinh viên..."
                 rows={2}
                 className="counselor-private-textarea"
               />
               <div className="counselor-form-warning">
-                <span aria-hidden>â ï¸</span>
-                <span>Sinh viĂªn khĂ´ng nhĂ¬n tháº¥y pháº§n nĂ y</span>
+                <span aria-hidden>⚠</span>
+                <span>Sinh viên không nhìn thấy phần này</span>
               </div>
             </div>
           </div>
@@ -362,14 +362,14 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
               onClick={onClose}
               disabled={saving}
             >
-              Há»§y
+              Hủy
             </button>
             <button
               type="submit"
               className="counselor-btn counselor-btn-primary"
               disabled={saving}
             >
-              {saving ? 'Äang gá»­i...' : 'Gá»­i feedback'}
+              {saving ? 'Đang gửi...' : 'Gửi feedback'}
             </button>
           </footer>
         </form>
