@@ -1,0 +1,779 @@
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
+import '../../../styles/skills.css';
+import {
+ analyzeSkillGap,
+  createUserSkill,
+  deleteUserSkill,
+  getLatestSkillGap,
+  getSkillGapById,
+  getSkills,
+  getUserSkills,
+  updateUserSkill,
+} from '../skillsApi';
+import { getStudentProfile } from '../studentApi';
+const EMPTY_FORM = {
+  skillId: '',
+  level: 'Beginner',
+  evidenceUrl: '',
+  evidenceType: 'Project',
+};
+
+const LEVELS = [
+  { value: 'Beginner', label: 'Beginner', score: 25 },
+  { value: 'Intermediate', label: 'Intermediate', score: 50 },
+  { value: 'Advanced', label: 'Advanced', score: 100 },
+];
+
+const EVIDENCE_TYPES = [
+  'Project',
+  'Certificate',
+  'GitHub',
+  'Portfolio',
+  'Course',
+  'Other',
+];
+
+function safeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function normalizeText(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function getLevelScore(level) {
+  const found = LEVELS.find((item) => normalizeText(item.value) === normalizeText(level));
+  return found?.score || 0;
+}
+
+function getLevelClass(level) {
+  const score = getLevelScore(level);
+
+  if (score >= 75) return 'strong';
+  if (score >= 50) return 'medium';
+  return 'weak';
+}
+
+function formatDate(value) {
+  if (!value) return 'Chưa cập nhật';
+
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(value));
+}
+
+function getSkillName(skill) {
+  return skill?.name || skill?.skillName || 'Kỹ năng chưa đặt tên';
+}
+
+function getSkillCategory(skill) {
+  return skill?.category || skill?.skillCategory || 'Khác';
+}
+
+function getSkillDescription(skill) {
+  return skill?.description || 'Chưa có mô tả cho kỹ năng này.';
+}
+
+function mergeUserSkillWithCatalog(userSkill, skills) {
+  const skill = skills.find((item) => item.id === userSkill.skillId);
+
+  return {
+    ...userSkill,
+    skillName: userSkill.skillName || skill?.name || 'Kỹ năng chưa xác định',
+    skillCategory: userSkill.skillCategory || skill?.category || 'Khác',
+    skillDescription: skill?.description || '',
+  };
+}
+
+export function StudentSkillsPage({ session }) {
+  const [skills, setSkills] = useState([]);
+  const [userSkills, setUserSkills] = useState([]);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [editingId, setEditingId] = useState('');
+  const [query, setQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('all');
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+const [profile, setProfile] = useState(null);
+const [skillGapReport, setSkillGapReport] = useState(null);
+const [gapIdInput, setGapIdInput] = useState('');
+const [loadingSkillGap, setLoadingSkillGap] = useState(false);
+const [analyzingSkillGap, setAnalyzingSkillGap] = useState(false);
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const enrichedUserSkills = useMemo(() => {
+    return safeArray(userSkills).map((item) => mergeUserSkillWithCatalog(item, skills));
+  }, [userSkills, skills]);
+
+  const categories = useMemo(() => {
+    const values = safeArray(skills)
+      .filter((skill) => skill.isActive !== false)
+      .map(getSkillCategory)
+      .filter(Boolean);
+
+    return ['all', ...Array.from(new Set(values))];
+  }, [skills]);
+
+  const addedSkillIds = useMemo(() => {
+    return new Set(enrichedUserSkills.map((item) => item.skillId));
+  }, [enrichedUserSkills]);
+
+  const availableSkills = useMemo(() => {
+    return safeArray(skills)
+      .filter((skill) => skill.isActive !== false)
+      .filter((skill) => !editingId || skill.id === form.skillId || !addedSkillIds.has(skill.id));
+  }, [skills, addedSkillIds, editingId, form.skillId]);
+
+  const filteredCatalogSkills = useMemo(() => {
+    const keyword = normalizeText(query);
+
+    return safeArray(skills)
+      .filter((skill) => skill.isActive !== false)
+      .filter((skill) => {
+        const matchedCategory =
+          activeCategory === 'all' || getSkillCategory(skill) === activeCategory;
+
+        const matchedSearch =
+          !keyword ||
+          normalizeText(getSkillName(skill)).includes(keyword) ||
+          normalizeText(getSkillCategory(skill)).includes(keyword) ||
+          normalizeText(getSkillDescription(skill)).includes(keyword);
+
+        return matchedCategory && matchedSearch;
+      });
+  }, [skills, query, activeCategory]);
+
+  const filteredUserSkills = useMemo(() => {
+    const keyword = normalizeText(query);
+
+    return enrichedUserSkills.filter((item) => {
+      const matchedCategory =
+        activeCategory === 'all' || item.skillCategory === activeCategory;
+
+      const matchedSearch =
+        !keyword ||
+        normalizeText(item.skillName).includes(keyword) ||
+        normalizeText(item.skillCategory).includes(keyword) ||
+        normalizeText(item.level).includes(keyword);
+
+      return matchedCategory && matchedSearch;
+    });
+  }, [enrichedUserSkills, query, activeCategory]);
+
+  const stats = useMemo(() => {
+    const totalCatalog = safeArray(skills).filter((skill) => skill.isActive !== false).length;
+    const totalUser = enrichedUserSkills.length;
+    const verified = enrichedUserSkills.filter((item) => item.isVerified).length;
+
+    const average =
+      totalUser > 0
+        ? Math.round(
+            enrichedUserSkills.reduce((sum, item) => sum + getLevelScore(item.level), 0) / totalUser
+          )
+        : 0;
+
+    return {
+      totalCatalog,
+      totalUser,
+      verified,
+      average,
+    };
+  }, [skills, enrichedUserSkills]);
+
+async function loadData() {
+  setLoading(true);
+  setLoadingSkillGap(true);
+  try {
+    const [skillResult, userSkillResult, profileResult, latestGapResult] = await Promise.all([
+      getSkills(session),
+      getUserSkills(session),
+      getStudentProfile(session).catch(() => null),
+      getLatestSkillGap(session).catch(() => null),
+    ]);
+
+    setSkills(safeArray(skillResult));
+    setUserSkills(safeArray(userSkillResult));
+    setProfile(profileResult);
+    setSkillGapReport(latestGapResult);
+  } catch (requestError) {
+    toast.error(requestError.message || 'Khong tai duoc du lieu ky nang.');
+  } finally {
+    setLoading(false);
+    setLoadingSkillGap(false);
+  }
+}
+
+  function updateField(event) {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: value }));
+  }
+
+  function startCreate(skillId = '') {
+    setEditingId('');
+    setForm({
+      ...EMPTY_FORM,
+      skillId,
+    });
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  }
+
+  function startEdit(userSkill) {
+    setEditingId(userSkill.id);
+    setForm({
+      skillId: userSkill.skillId || '',
+      level: userSkill.level || 'Beginner',
+      evidenceUrl: userSkill.evidenceUrl || '',
+      evidenceType: userSkill.evidenceType || 'Project',
+    });
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  }
+
+  function cancelEdit() {
+    setEditingId('');
+    setForm(EMPTY_FORM);
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    setSaving(true);
+    try {
+      const payload = {
+        skillId: form.skillId,
+        level: form.level,
+        evidenceUrl: form.evidenceUrl.trim(),
+        evidenceType: form.evidenceType,
+      };
+
+      if (editingId) {
+        const updated = await updateUserSkill(session, editingId, {
+          level: payload.level,
+          evidenceUrl: payload.evidenceUrl,
+          evidenceType: payload.evidenceType,
+        });
+
+        setUserSkills((current) =>
+          current.map((item) => (item.id === editingId ? updated : item))
+        );
+
+        toast.success('Da cap nhat ky nang.');
+      } else {
+        const created = await createUserSkill(session, payload);
+        setUserSkills((current) => [created, ...current]);
+        toast.success('Da them ky nang vao ho so.');
+      }
+
+      setEditingId('');
+      setForm(EMPTY_FORM);
+    } catch (requestError) {
+      toast.error(requestError.message || 'Khong luu duoc ky nang.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(userSkill) {
+    const confirmed = window.confirm(`Xóa kỹ năng "${userSkill.skillName}" khỏi hồ sơ?`);
+    if (!confirmed) return;
+
+    try {
+      await deleteUserSkill(session, userSkill.id);
+      setUserSkills((current) => current.filter((item) => item.id !== userSkill.id));
+      toast.success('Da xoa ky nang khoi ho so.');
+    } catch (requestError) {
+      toast.error(requestError.message || 'Khong xoa duoc ky nang.');
+    }
+  }
+
+  async function handleAnalyzeSkillGap() {
+  const careerRoleId = profile?.targetRoleId;
+
+  if (!careerRoleId) {
+    toast.warn('Ban chua cap nhat vai tro muc tieu trong ho so.');
+    return;
+  }
+
+  setAnalyzingSkillGap(true);
+  try {
+    const result = await analyzeSkillGap(session, careerRoleId);
+    setSkillGapReport(result);
+    toast.success('Da phan tich skill gap thanh cong.');
+  } catch (requestError) {
+    toast.error(requestError.message || 'Khong phan tich duoc skill gap.');
+  } finally {
+    setAnalyzingSkillGap(false);
+  }
+}
+
+async function handleLoadSkillGapById(event) {
+  event.preventDefault();
+
+  const id = gapIdInput.trim();
+
+  if (!id) {
+    toast.warn('Vui long nhap Skill Gap Report ID.');
+    return;
+  }
+
+  setLoadingSkillGap(true);
+  try {
+    const result = await getSkillGapById(session, id);
+    setSkillGapReport(result);
+    toast.success('Da tai bao cao skill gap.');
+  } catch (requestError) {
+    toast.error(requestError.message || 'Khong tai duoc bao cao skill gap.');
+  } finally {
+    setLoadingSkillGap(false);
+  }
+}
+  return (
+    <section className="skills-page">
+      <header className="skills-hero">
+        <div>
+          <span className="skills-eyebrow">◇ Kỹ năng & khóa học</span>
+          <h1>Quản lý kỹ năng cá nhân</h1>
+          <p>
+            Theo dõi kỹ năng đã có, mức độ hiện tại và minh chứng học tập để hệ thống
+            đề xuất roadmap phù hợp hơn.
+          </p>
+        </div>
+
+        <div className="skills-hero-actions">
+          <button type="button" onClick={() => startCreate()}>
+            + Thêm kỹ năng
+          </button>
+          <button type="button" className="secondary" onClick={loadData}>
+            Tải lại dữ liệu
+          </button>
+        </div>
+      </header>
+
+    <section className="skills-stats-grid">
+  <article>
+    <span>Kỹ năng của tôi</span>
+    <strong>{stats.totalUser}</strong>
+    <small>đã thêm vào hồ sơ</small>
+  </article>
+
+  <article>
+    <span>Kho kỹ năng</span>
+    <strong>{stats.totalCatalog}</strong>
+    <small>kỹ năng khả dụng</small>
+  </article>
+
+  <article>
+    <span>Điểm trung bình</span>
+    <strong>{stats.average}%</strong>
+    <small>dựa trên level hiện tại</small>
+  </article>
+
+  <article>
+    <span>Đã xác minh</span>
+    <strong>{stats.verified}</strong>
+    <small>kỹ năng có xác nhận</small>
+  </article>
+</section>
+
+<SkillGapPanel
+  profile={profile}
+  report={skillGapReport}
+  loading={loadingSkillGap}
+  analyzing={analyzingSkillGap}
+  gapIdInput={gapIdInput}
+  onGapIdChange={setGapIdInput}
+  onAnalyze={handleAnalyzeSkillGap}
+  onLoadById={handleLoadSkillGapById}
+/>
+
+      <section className="skills-layout">
+        <aside className="skills-form-card">
+          <div className="skills-card-head">
+            <h2>{editingId ? 'Cập nhật kỹ năng' : 'Thêm kỹ năng mới'}</h2>
+            <p>
+              Chọn kỹ năng từ danh sách hệ thống, sau đó nhập level và minh chứng.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <label className="skills-field">
+              <span>Kỹ năng</span>
+              <select
+                name="skillId"
+                value={form.skillId}
+                onChange={updateField}
+                disabled={Boolean(editingId)}
+                required
+              >
+                <option value="">-- Chọn kỹ năng --</option>
+                {availableSkills.map((skill) => (
+                  <option key={skill.id} value={skill.id}>
+                    {getSkillName(skill)} · {getSkillCategory(skill)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="skills-field">
+              <span>Level hiện tại</span>
+              <select name="level" value={form.level} onChange={updateField}>
+                {LEVELS.map((level) => (
+                  <option key={level.value} value={level.value}>
+                    {level.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="skills-field">
+              <span>Loại minh chứng</span>
+              <select name="evidenceType" value={form.evidenceType} onChange={updateField}>
+                {EVIDENCE_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="skills-field">
+              <span>Link minh chứng</span>
+              <input
+                name="evidenceUrl"
+                value={form.evidenceUrl}
+                onChange={updateField}
+                placeholder="GitHub, certificate, portfolio..."
+              />
+            </label>
+
+            <div className="skills-form-actions">
+              <button type="submit" disabled={saving || !form.skillId}>
+                {saving ? 'Đang lưu...' : editingId ? 'Lưu cập nhật' : 'Thêm kỹ năng'}
+              </button>
+
+              {(editingId || form.skillId || form.evidenceUrl) && (
+                <button type="button" className="ghost" onClick={cancelEdit}>
+                  Hủy
+                </button>
+              )}
+            </div>
+          </form>
+        </aside>
+
+        <main className="skills-main-panel">
+          <section className="skills-toolbar">
+            <div className="skills-search">
+              <span>⌕</span>
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Tìm kỹ năng, category, level..."
+              />
+            </div>
+
+            <div className="skills-category-tabs">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  className={activeCategory === category ? 'active' : ''}
+                  onClick={() => setActiveCategory(category)}
+                >
+                  {category === 'all' ? 'Tất cả' : category}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {loading ? (
+            <section className="skills-empty">
+              <span>⏳</span>
+              <h2>Đang tải kỹ năng</h2>
+              <p>Vui lòng chờ trong giây lát.</p>
+            </section>
+          ) : (
+            <>
+              <section className="skills-section">
+                <div className="skills-section-head">
+                  <div>
+                    <h2>Kỹ năng của tôi</h2>
+                    <p>Danh sách kỹ năng bạn đã thêm vào hồ sơ.</p>
+                  </div>
+                  <span>{filteredUserSkills.length} kỹ năng</span>
+                </div>
+
+                {filteredUserSkills.length === 0 ? (
+                  <div className="skills-empty compact">
+                    <span>📌</span>
+                    <h2>Chưa có kỹ năng phù hợp</h2>
+                    <p>Thêm kỹ năng mới hoặc đổi bộ lọc tìm kiếm.</p>
+                  </div>
+                ) : (
+                  <div className="user-skill-grid">
+                    {filteredUserSkills.map((userSkill) => (
+                      <UserSkillCard
+                        key={userSkill.id}
+                        userSkill={userSkill}
+                        onEdit={startEdit}
+                        onDelete={handleDelete}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <section className="skills-section">
+                <div className="skills-section-head">
+                  <div>
+                    <h2>Kho kỹ năng hệ thống</h2>
+                    <p>Chọn nhanh kỹ năng để thêm vào hồ sơ cá nhân.</p>
+                  </div>
+                  <span>{filteredCatalogSkills.length} kỹ năng</span>
+                </div>
+
+                <div className="catalog-skill-grid">
+                  {filteredCatalogSkills.map((skill) => {
+                    const added = addedSkillIds.has(skill.id);
+
+                    return (
+                      <article key={skill.id} className={added ? 'catalog-skill-card added' : 'catalog-skill-card'}>
+                        <div>
+                          <span>{getSkillCategory(skill)}</span>
+                          <h3>{getSkillName(skill)}</h3>
+                          <p>{getSkillDescription(skill)}</p>
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={added}
+                          onClick={() => startCreate(skill.id)}
+                        >
+                          {added ? 'Đã thêm' : '+ Thêm'}
+                        </button>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            </>
+          )}
+        </main>
+      </section>
+    </section>
+  );
+}
+
+function UserSkillCard({ userSkill, onEdit, onDelete }) {
+  const score = getLevelScore(userSkill.level);
+  const levelClass = getLevelClass(userSkill.level);
+
+  return (
+    <article className={`user-skill-card ${levelClass}`}>
+      <div className="user-skill-top">
+        <div>
+          <span>{userSkill.skillCategory || 'Khác'}</span>
+          <h3>{userSkill.skillName || 'Kỹ năng chưa xác định'}</h3>
+        </div>
+
+        <strong>{score}%</strong>
+      </div>
+
+      <div className="user-skill-progress">
+        <span style={{ width: `${score}%` }} />
+      </div>
+
+      <div className="user-skill-meta">
+        <span>Level: <b>{userSkill.level || 'Chưa có'}</b></span>
+        <span>
+          Trạng thái:{' '}
+          <b>{userSkill.isVerified ? 'Đã xác minh' : 'Chưa xác minh'}</b>
+        </span>
+        <span>Cập nhật: <b>{formatDate(userSkill.updatedAt)}</b></span>
+      </div>
+
+      {userSkill.evidenceUrl && (
+        <a
+          href={userSkill.evidenceUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="user-skill-evidence"
+        >
+          Xem minh chứng · {userSkill.evidenceType || 'Evidence'}
+        </a>
+      )}
+
+      <div className="user-skill-actions">
+        <button type="button" onClick={() => onEdit(userSkill)}>
+          Chỉnh sửa
+        </button>
+        <button type="button" className="danger" onClick={() => onDelete(userSkill)}>
+          Xóa
+        </button>
+      </div>
+    </article>
+  );
+}
+function getSkillGapItems(report) {
+  if (!report) return [];
+
+  const possibleLists = [
+    report.gaps,
+    report.skillGaps,
+    report.items,
+    report.details,
+    report.missingSkills,
+    report.skillGapDetails,
+  ];
+
+  const list = possibleLists.find(Array.isArray);
+
+  return list || [];
+}
+
+function getReportScore(report) {
+  return (
+    report?.matchScore ??
+    report?.score ??
+    report?.overallScore ??
+    report?.readinessScore ??
+    report?.progress ??
+    0
+  );
+}
+
+function SkillGapPanel({
+  profile,
+  report,
+  loading,
+  analyzing,
+  gapIdInput,
+  onGapIdChange,
+  onAnalyze,
+  onLoadById,
+}) {
+  const items = getSkillGapItems(report);
+  const score = Number(getReportScore(report) || 0);
+  const targetRoleId = profile?.targetRoleId;
+
+  return (
+    <section className="skill-gap-panel">
+      <div className="skill-gap-head">
+        <div>
+          <span className="skill-gap-eyebrow">Skill gap analysis</span>
+          <h2>Phân tích khoảng cách kỹ năng</h2>
+          <p>
+            Hệ thống dùng vai trò mục tiêu trong hồ sơ để so sánh với kỹ năng hiện tại của bạn.
+          </p>
+        </div>
+
+        <div className="skill-gap-actions">
+          <button
+            type="button"
+            onClick={onAnalyze}
+            disabled={analyzing || loading || !targetRoleId}
+          >
+            {analyzing ? 'Đang phân tích...' : 'Phân tích Skill Gap'}
+          </button>
+        </div>
+      </div>
+
+      <div className="skill-gap-target">
+        <span>Target Role ID</span>
+        <strong>{targetRoleId || 'Chưa có targetRoleId'}</strong>
+      </div>
+
+      <form className="skill-gap-load-form" onSubmit={onLoadById}>
+        <input
+          value={gapIdInput}
+          onChange={(event) => onGapIdChange(event.target.value)}
+          placeholder="Nhập Skill Gap Report ID để xem lại báo cáo cũ"
+        />
+        <button type="submit" disabled={loading}>
+          {loading ? 'Đang tải...' : 'Tải theo ID'}
+        </button>
+      </form>
+
+      {loading ? (
+        <div className="skill-gap-empty">
+          <span>⏳</span>
+          <h3>Đang tải báo cáo skill gap</h3>
+          <p>Vui lòng chờ trong giây lát.</p>
+        </div>
+      ) : !report ? (
+        <div className="skill-gap-empty">
+          <span>📊</span>
+          <h3>Chưa có báo cáo skill gap</h3>
+          <p>Bấm “Phân tích Skill Gap” để tạo báo cáo mới từ targetRoleId của profile.</p>
+        </div>
+      ) : (
+        <div className="skill-gap-result">
+          <div className="skill-gap-score-card">
+            <div>
+              <span>Điểm phù hợp</span>
+              <strong>{score}%</strong>
+              <small>{report.status || 'Báo cáo mới nhất'}</small>
+            </div>
+
+            <div className="skill-gap-score-line">
+              <span style={{ width: `${Math.min(Math.max(score, 0), 100)}%` }} />
+            </div>
+          </div>
+
+          <div className="skill-gap-meta-grid">
+            <div>
+              <span>Report ID</span>
+              <strong>{report.id || 'Không có'}</strong>
+            </div>
+
+            <div>
+              <span>Career Role</span>
+              <strong>{report.careerRoleName || report.careerRoleId || 'Không có'}</strong>
+            </div>
+
+            <div>
+              <span>Số gap</span>
+              <strong>{items.length}</strong>
+            </div>
+          </div>
+
+          {items.length > 0 && (
+            <div className="skill-gap-list">
+              {items.map((item, index) => (
+                <article key={item.id || index} className="skill-gap-item">
+                  <div>
+                    <span>{item.skillCategory || item.category || 'Skill'}</span>
+                    <h3>{item.skillName || item.name || item.title || `Kỹ năng #${index + 1}`}</h3>
+                    <p>{item.description || item.recommendation || item.note || 'Chưa có mô tả.'}</p>
+                  </div>
+
+                  <div className="skill-gap-levels">
+                    <small>
+                      Hiện tại:{' '}
+                      <b>{item.currentLevel || item.userLevel || item.level || 'N/A'}</b>
+                    </small>
+                    <small>
+                      Yêu cầu:{' '}
+                      <b>{item.requiredLevel || item.targetLevel || item.expectedLevel || 'N/A'}</b>
+                    </small>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
