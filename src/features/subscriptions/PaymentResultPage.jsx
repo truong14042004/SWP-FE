@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getMySubscriptions } from './subscriptionApi';
 import { formatDate } from '../../shared/format';
+import '../../styles/payment.css';
 
 export function PaymentResultPage({ type, session, onLogin, onHome }) {
   const [status, setStatus] = useState(type === 'success' ? 'checking' : 'cancelled');

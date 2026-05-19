@@ -1,3 +1,5 @@
+import '../../styles/member.css';
+
 export function MentorHome({ session, onSignOut }) {
   return (
     <main className="member-shell">
