@@ -177,14 +177,14 @@ export function CounselorStudentList({
                 <div className="counselor-card-actions">
                   <button
                     type="button"
-                    className="counselor-btn counselor-btn-link no-arrow"
+                    className="counselor-btn counselor-btn-secondary"
                     onClick={() => onOpenFeedbackModal(student)}
                   >
-                    Feedback
+                    Gửi feedback
                   </button>
                   <button
                     type="button"
-                    className="counselor-btn counselor-btn-link"
+                    className="counselor-btn counselor-btn-primary"
                     onClick={() => onSelectStudent(student.id)}
                   >
                     Chi tiết
