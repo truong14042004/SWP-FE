@@ -1,166 +1,212 @@
-import { useState } from 'react';
+﻿import { Fragment, useMemo, useState } from 'react';
 
 function getInitials(name = '') {
-  return name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'S';
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || 'S'
+  );
 }
 
 function formatDate(date) {
+  if (!date) return 'â€”';
   return new Date(date).toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric'
+    year: 'numeric',
   });
 }
 
-export function CounselorFeedbackHistory({ feedbacks, students, onSelectStudent, onRefresh }) {
+function renderStars(rating = 0) {
+  return Array.from({ length: 5 }, (_, i) => (
+    <span
+      key={i}
+      className={`counselor-feedback-star ${i < (rating || 0) ? '' : 'empty'}`}
+    >
+      â˜…
+    </span>
+  ));
+}
+
+function getFeedbackTypeBadges(fb) {
+  const types = [];
+  if (fb.roadmapId) types.push('R');
+  if (fb.skillGapReportId) types.push('SG');
+  if (types.length === 0) return null;
+  return types.join('+');
+}
+
+export function CounselorFeedbackHistory({
+  feedbacks = [],
+  students = [],
+  onSelectStudent,
+}) {
   const [filterStudent, setFilterStudent] = useState('');
   const [expandedId, setExpandedId] = useState(null);
 
-  const getStudentName = (studentId) => {
-    const student = students.find(s => s.id === studentId);
-    return student?.fullName || 'Sinh viên';
-  };
+  const studentMap = useMemo(() => {
+    const map = new Map();
+    students.forEach((s) => map.set(s.id, s));
+    return map;
+  }, [students]);
 
-  const filteredFeedbacks = feedbacks.filter(fb => {
-    if (!filterStudent) return true;
-    const studentName = getStudentName(fb.studentId);
-    return studentName.toLowerCase().includes(filterStudent.toLowerCase());
-  });
+  function getStudentName(studentId, fallback) {
+    return studentMap.get(studentId)?.fullName || fallback || 'Sinh viĂªn';
+  }
 
-  const renderStars = (rating) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <span key={i} className={`counselor-feedback-star ${i < (rating || 0) ? '' : 'empty'}`}>★</span>
-    ));
-  };
-
-  const getFeedbackTypeBadge = (fb) => {
-    const types = [];
-    if (fb.roadmapId) types.push('R');
-    if (fb.skillGapReportId) types.push('SG');
-    if (types.length === 0) return null;
-    return types.join('+');
-  };
+  const filteredFeedbacks = useMemo(() => {
+    const q = filterStudent.trim().toLowerCase();
+    if (!q) return feedbacks;
+    return feedbacks.filter((fb) => {
+      const name = getStudentName(fb.studentId, fb.studentFullName);
+      return name.toLowerCase().includes(q);
+    });
+  }, [feedbacks, filterStudent, studentMap]);
 
   if (feedbacks.length === 0) {
     return (
-      <div>
-        <div className="counselor-page-header">
-          <h1>Lịch sử Feedback</h1>
-          <p>0 feedback đã gửi</p>
+      <section className="counselor-section">
+        <div className="counselor-section-inner">
+          <div className="counselor-hero" style={{ marginBottom: 32 }}>
+            <span className="counselor-hero-eyebrow">Lá»‹ch sá»­ feedback</span>
+            <h1>ChÆ°a cĂ³ feedback nĂ o</h1>
+            <p className="counselor-hero-lead">
+              Gá»­i feedback Ä‘áº§u tiĂªn cho sinh viĂªn Ä‘á»ƒ báº¯t Ä‘áº§u xĂ¢y dá»±ng kho pháº£n há»“i.
+            </p>
+          </div>
         </div>
-        <div className="counselor-empty-state">
-          <div className="counselor-empty-state-icon">💬</div>
-          <h3>Chưa có feedback nào</h3>
-          <p>Gửi feedback cho sinh viên để bắt đầu</p>
-        </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div>
-      <div className="counselor-page-header">
-        <h1>Lịch sử Feedback</h1>
-        <p>{feedbacks.length} feedback đã gửi</p>
-      </div>
+    <section className="counselor-section">
+      <div className="counselor-section-inner">
+        <div className="counselor-hero" style={{ marginBottom: 32 }}>
+          <span className="counselor-hero-eyebrow">Lá»‹ch sá»­ feedback</span>
+          <h1>{feedbacks.length} pháº£n há»“i Ä‘Ă£ gá»­i</h1>
+          <p className="counselor-hero-lead">
+            Xem láº¡i cĂ¡c feedback báº¡n Ä‘Ă£ gá»­i cho sinh viĂªn, kĂ¨m liĂªn káº¿t Roadmap vĂ  Skill Gap.
+          </p>
+        </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <input
-          type="text"
-          placeholder="Lọc theo sinh viên..."
-          value={filterStudent}
-          onChange={(e) => setFilterStudent(e.target.value)}
-          style={{
-            width: '100%',
-            maxWidth: '300px',
-            padding: '10px 16px',
-            border: '1px solid #e0e0e0',
-            borderRadius: '10px',
-            fontSize: '14px',
-            outline: 'none'
-          }}
-        />
-      </div>
+        <div className="counselor-toolbar">
+          <div className="counselor-search">
+            <span className="counselor-search-icon" aria-hidden>
+              đŸ”
+            </span>
+            <input
+              type="search"
+              className="counselor-search-input"
+              placeholder="Lá»c theo tĂªn sinh viĂªn..."
+              value={filterStudent}
+              onChange={(e) => setFilterStudent(e.target.value)}
+              aria-label="TĂ¬m kiáº¿m theo sinh viĂªn"
+            />
+          </div>
+        </div>
 
-      <div className="counselor-tab-content" style={{ padding: 0, overflow: 'hidden' }}>
-        <table className="counselor-feedback-table">
-          <thead>
-            <tr>
-              <th>Ngày</th>
-              <th>Sinh viên</th>
-              <th>Rating</th>
-              <th>Loại</th>
-              <th>Nội dung</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredFeedbacks.map(fb => (
-              <>
-                <tr key={fb.id} onClick={() => setExpandedId(expandedId === fb.id ? null : fb.id)} style={{ cursor: 'pointer' }}>
-                  <td>{formatDate(fb.createdAt)}</td>
-                  <td>
-                    <div className="student-cell">
-                      <div className="student-avatar">{getInitials(getStudentName(fb.studentId))}</div>
-                      <span>{getStudentName(fb.studentId)}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="counselor-feedback-stars" style={{ display: 'flex' }}>
-                      {renderStars(fb.rating)}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="counselor-feedback-type-cell">
-                      {getFeedbackTypeBadge(fb) && (
-                        <span className="counselor-feedback-type-badge">{getFeedbackTypeBadge(fb)}</span>
-                      )}
-                    </div>
-                  </td>
-                  <td style={{ maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {fb.feedbackText}
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className="counselor-btn counselor-btn-secondary"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectStudent(fb.studentId);
-                      }}
-                      style={{ padding: '6px 12px', fontSize: '11px' }}
+        <div className="counselor-feedback-table-wrap">
+          <table className="counselor-feedback-table">
+            <thead>
+              <tr>
+                <th>NgĂ y</th>
+                <th>Sinh viĂªn</th>
+                <th>Rating</th>
+                <th>Loáº¡i</th>
+                <th>Ná»™i dung</th>
+                <th aria-label="HĂ nh Ä‘á»™ng" />
+              </tr>
+            </thead>
+            <tbody>
+              {filteredFeedbacks.map((fb) => {
+                const name = getStudentName(fb.studentId, fb.studentFullName);
+                const isExpanded = expandedId === fb.id;
+                const typeBadge = getFeedbackTypeBadges(fb);
+
+                return (
+                  <Fragment key={fb.id}>
+                    <tr
+                      className="row-clickable"
+                      onClick={() => setExpandedId(isExpanded ? null : fb.id)}
                     >
-                      Xem SV
-                    </button>
-                  </td>
-                </tr>
-                {expandedId === fb.id && (
-                  <tr key={`${fb.id}-expanded`}>
-                    <td colSpan="6" style={{ background: '#f9f9f9', padding: '20px' }}>
-                      <div style={{ marginBottom: fb.recommendations ? '16px' : 0 }}>
-                        <strong style={{ color: '#1d1d1f', fontSize: '13px', display: 'block', marginBottom: '8px' }}>Nội dung feedback:</strong>
-                        <p style={{ margin: 0, color: '#333', fontSize: '14px', lineHeight: '1.6' }}>{fb.feedbackText}</p>
-                      </div>
-                      {fb.recommendations && (
-                        <div style={{ marginBottom: fb.privateNotes ? '16px' : 0 }}>
-                          <strong style={{ color: '#1d1d1f', fontSize: '13px', display: 'block', marginBottom: '8px' }}>Khuyến nghị:</strong>
-                          <p style={{ margin: 0, color: '#333', fontSize: '14px', lineHeight: '1.6' }}>{fb.recommendations}</p>
+                      <td>{formatDate(fb.createdAt)}</td>
+                      <td>
+                        <div className="student-cell">
+                          <div className="student-avatar" aria-hidden>
+                            {getInitials(name)}
+                          </div>
+                          <span>{name}</span>
                         </div>
-                      )}
-                      {fb.privateNotes && (
-                        <div style={{ background: '#fef3c7', padding: '12px', borderRadius: '8px' }}>
-                          <strong style={{ color: '#92400e', fontSize: '12px', display: 'block', marginBottom: '4px' }}>Ghi chú riêng (chỉ bạn thấy):</strong>
-                          <p style={{ margin: 0, color: '#78350f', fontSize: '13px', lineHeight: '1.5' }}>{fb.privateNotes}</p>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                )}
-              </>
-            ))}
-          </tbody>
-        </table>
+                      </td>
+                      <td>
+                        <span className="counselor-feedback-stars" aria-hidden>
+                          {renderStars(fb.rating)}
+                        </span>
+                      </td>
+                      <td>
+                        {typeBadge ? (
+                          <span className="counselor-feedback-type-badge">
+                            {typeBadge}
+                          </span>
+                        ) : (
+                          'â€”'
+                        )}
+                      </td>
+                      <td>
+                        <div className="text-truncate">{fb.feedbackText}</div>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="counselor-btn counselor-btn-text"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectStudent(fb.studentId);
+                          }}
+                        >
+                          Xem SV
+                        </button>
+                      </td>
+                    </tr>
+
+                    {isExpanded && (
+                      <tr className="row-expanded">
+                        <td colSpan={6}>
+                          <div className="counselor-feedback-expanded">
+                            <h5>Ná»™i dung feedback</h5>
+                            <p>{fb.feedbackText}</p>
+
+                            {fb.recommendations && (
+                              <>
+                                <h5>Khuyáº¿n nghá»‹</h5>
+                                <p>{fb.recommendations}</p>
+                              </>
+                            )}
+
+                            {fb.privateNotes && (
+                              <div className="counselor-feedback-private">
+                                <div className="counselor-feedback-section-title">
+                                  Ghi chĂº riĂªng (chá»‰ báº¡n tháº¥y)
+                                </div>
+                                <p>{fb.privateNotes}</p>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

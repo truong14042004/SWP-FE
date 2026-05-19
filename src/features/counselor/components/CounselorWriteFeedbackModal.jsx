@@ -1,8 +1,29 @@
-import { useState, useEffect } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import {
+  getStudentRoadmap,
+  getStudentSkillGapHistory,
+} from '../api/counselorApi';
 
 function getInitials(name = '') {
-  return name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'S';
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || 'S'
+  );
+}
+
+function formatShortDate(date) {
+  if (!date) return '';
+  return new Date(date).toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 }
 
 const EMPTY_FORM = {
@@ -10,48 +31,99 @@ const EMPTY_FORM = {
   rating: 0,
   recommendations: '',
   privateNotes: '',
+  feedbackType: 'general',
   roadmapId: null,
   skillGapReportId: null,
-  feedbackType: 'general',
 };
+
+const FEEDBACK_TYPES = [
+  { id: 'general', label: 'Tá»•ng quĂ¡t', desc: 'Pháº£n há»“i chung' },
+  { id: 'roadmap', label: 'Roadmap', desc: 'LiĂªn káº¿t lá»™ trĂ¬nh' },
+  { id: 'skillgap', label: 'Skill Gap', desc: 'LiĂªn káº¿t bĂ¡o cĂ¡o gap' },
+];
 
 export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmit }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
+  const [roadmap, setRoadmap] = useState(null);
+  const [skillGapReports, setSkillGapReports] = useState([]);
+  const [linkingDataLoading, setLinkingDataLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadLinking() {
+      setLinkingDataLoading(true);
+      try {
+        const [rm, gaps] = await Promise.all([
+          getStudentRoadmap(session, student.id).catch(() => null),
+          getStudentSkillGapHistory(session, student.id).catch(() => []),
+        ]);
+        if (cancelled) return;
+        setRoadmap(rm);
+        setSkillGapReports(Array.isArray(gaps) ? gaps : []);
+      } finally {
+        if (!cancelled) setLinkingDataLoading(false);
+      }
+    }
+
+    loadLinking();
+    return () => {
+      cancelled = true;
+    };
+  }, [session, student.id]);
 
   function updateField(name, value) {
-    setForm(prev => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
+      setErrors((prev) => ({ ...prev, [name]: null }));
     }
   }
 
+  function setFeedbackType(type) {
+    setForm((prev) => ({
+      ...prev,
+      feedbackType: type,
+      roadmapId: type === 'roadmap' ? roadmap?.id || null : null,
+      skillGapReportId:
+        type === 'skillgap' ? skillGapReports[0]?.id || null : null,
+    }));
+    setErrors((prev) => ({ ...prev, link: null }));
+  }
+
   function validate() {
-    const newErrors = {};
-    
+    const next = {};
+
     if (!form.feedbackText.trim()) {
-      newErrors.feedbackText = 'Vui lòng nhập nội dung feedback';
+      next.feedbackText = 'Vui lĂ²ng nháº­p ná»™i dung feedback';
     } else if (form.feedbackText.trim().length < 50) {
-      newErrors.feedbackText = 'Feedback phải có ít nhất 50 ký tự';
+      next.feedbackText = 'Feedback pháº£i cĂ³ Ă­t nháº¥t 50 kĂ½ tá»±';
     }
-    
-    if (form.rating < 1 || form.rating > 5) {
-      newErrors.rating = 'Đánh giá phải từ 1 đến 5 sao';
+
+    if (form.rating !== 0 && (form.rating < 1 || form.rating > 5)) {
+      next.rating = 'ÄĂ¡nh giĂ¡ pháº£i tá»« 1 Ä‘áº¿n 5 sao';
     }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+    if (form.feedbackType === 'roadmap' && !form.roadmapId) {
+      next.link = 'Sinh viĂªn chÆ°a cĂ³ roadmap Ä‘á»ƒ liĂªn káº¿t';
+    }
+    if (form.feedbackType === 'skillgap' && !form.skillGapReportId) {
+      next.link = 'Sinh viĂªn chÆ°a cĂ³ bĂ¡o cĂ¡o skill gap Ä‘á»ƒ liĂªn káº¿t';
+    }
+
+    setErrors(next);
+    return Object.keys(next).length === 0;
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    
+
     if (!validate()) {
-      toast.error('Vui lòng kiểm tra lại thông tin');
+      toast.error('Vui lĂ²ng kiá»ƒm tra láº¡i thĂ´ng tin');
       return;
     }
-    
+
     setSaving(true);
     try {
       const payload = {
@@ -61,137 +133,245 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
         recommendations: form.recommendations.trim() || null,
         privateNotes: form.privateNotes.trim() || null,
         roadmapId: form.feedbackType === 'roadmap' ? form.roadmapId : null,
-        skillGapReportId: form.feedbackType === 'skillgap' ? form.skillGapReportId : null,
+        skillGapReportId:
+          form.feedbackType === 'skillgap' ? form.skillGapReportId : null,
       };
-      
+
       const result = await onSubmit(payload);
-      if (result.success) {
-        toast.success('Đã gửi feedback thành công');
+      if (result?.success) {
+        toast.success('ÄĂ£ gá»­i feedback thĂ nh cĂ´ng');
         onClose();
       } else {
-        toast.error(result.error || 'Không thể gửi feedback');
+        toast.error(result?.error || 'KhĂ´ng thá»ƒ gá»­i feedback');
       }
     } catch (error) {
-      toast.error(error.message || 'Có lỗi xảy ra');
+      toast.error(error.message || 'CĂ³ lá»—i xáº£y ra');
     } finally {
       setSaving(false);
     }
   }
 
   function handleOverlayClick(e) {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+    if (e.target === e.currentTarget) onClose();
   }
 
+  const roadmapAvailable = !!roadmap;
+  const skillGapAvailable = skillGapReports.length > 0;
+
   return (
-    <div className="counselor-modal-overlay" onClick={handleOverlayClick}>
-      <div className="counselor-modal">
-        <div className="counselor-modal-header">
-          <h3>Viết feedback</h3>
-          <button type="button" className="counselor-modal-close" onClick={onClose}>✕</button>
-        </div>
+    <div
+      className="counselor-modal-overlay"
+      onClick={handleOverlayClick}
+      role="presentation"
+    >
+      <div
+        className="counselor-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="counselor-modal-title"
+      >
+        <header className="counselor-modal-header">
+          <h3 id="counselor-modal-title">Viáº¿t feedback</h3>
+          <button
+            type="button"
+            className="counselor-modal-close"
+            onClick={onClose}
+            aria-label="ÄĂ³ng modal"
+          >
+            âœ•
+          </button>
+        </header>
 
         <form onSubmit={handleSubmit}>
           <div className="counselor-modal-body">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', padding: '14px', background: '#f5f5f7', borderRadius: '12px' }}>
-              <div className="counselor-student-avatar" style={{ width: '40px', height: '40px', fontSize: '14px' }}>
+            <div className="counselor-modal-recipient">
+              <div className="counselor-student-avatar" aria-hidden>
                 {getInitials(student.fullName)}
               </div>
               <div>
-                <strong style={{ color: '#1d1d1f', fontSize: '14px' }}>{student.fullName}</strong>
-                <p style={{ margin: '2px 0 0', color: '#7a7a7a', fontSize: '12px' }}>{student.email}</p>
+                <strong>{student.fullName}</strong>
+                <small>{student.email}</small>
               </div>
             </div>
 
+            {/* Feedback Type selector */}
             <div className="counselor-form-group">
-              <label>Đánh giá tổng thể</label>
-              <div className="counselor-rating-input">
+              <label>LiĂªn káº¿t vá»›i</label>
+              <div
+                className="counselor-feedback-type-selector"
+                role="radiogroup"
+                aria-label="Loáº¡i feedback"
+              >
+                {FEEDBACK_TYPES.map((type) => {
+                  const disabled =
+                    (type.id === 'roadmap' && !roadmapAvailable) ||
+                    (type.id === 'skillgap' && !skillGapAvailable);
+                  return (
+                    <button
+                      key={type.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={form.feedbackType === type.id}
+                      disabled={disabled || linkingDataLoading}
+                      className={`counselor-feedback-type-option ${
+                        form.feedbackType === type.id ? 'active' : ''
+                      }`}
+                      onClick={() => setFeedbackType(type.id)}
+                      title={
+                        disabled
+                          ? type.id === 'roadmap'
+                            ? 'Sinh viĂªn chÆ°a cĂ³ roadmap'
+                            : 'Sinh viĂªn chÆ°a cĂ³ bĂ¡o cĂ¡o skill gap'
+                          : undefined
+                      }
+                    >
+                      <strong>{type.label}</strong>
+                      <small>{type.desc}</small>
+                    </button>
+                  );
+                })}
+              </div>
+              {linkingDataLoading && (
+                <span className="counselor-form-hint">
+                  Äang táº£i dá»¯ liá»‡u liĂªn káº¿t...
+                </span>
+              )}
+
+              {/* Skill Gap dropdown when type === skillgap */}
+              {form.feedbackType === 'skillgap' && skillGapReports.length > 0 && (
+                <select
+                  className="counselor-feedback-link-select"
+                  value={form.skillGapReportId || ''}
+                  onChange={(e) =>
+                    updateField('skillGapReportId', e.target.value)
+                  }
+                >
+                  {skillGapReports.map((report) => (
+                    <option key={report.id} value={report.id}>
+                      {formatShortDate(report.createdAt)} Â·{' '}
+                      {Math.round(Number(report.matchScore))}% Â·{' '}
+                      {report.careerRoleName}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {/* Roadmap info when type === roadmap */}
+              {form.feedbackType === 'roadmap' && roadmap && (
+                <div className="counselor-feedback-link-info">
+                  đŸ“‹ {roadmap.title} Â· {Math.round(Number(roadmap.progress) || 0)}% hoĂ n thĂ nh
+                </div>
+              )}
+
+              {errors.link && (
+                <span className="counselor-form-error">{errors.link}</span>
+              )}
+            </div>
+
+            <div className="counselor-form-group">
+              <label htmlFor="counselor-rating">ÄĂ¡nh giĂ¡ tá»•ng thá»ƒ</label>
+              <div
+                className="counselor-rating-input"
+                role="radiogroup"
+                id="counselor-rating"
+                aria-label="Chá»n sá»‘ sao Ä‘Ă¡nh giĂ¡"
+              >
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
                     type="button"
-                    className={`counselor-rating-star ${star <= form.rating ? 'active' : ''}`}
+                    role="radio"
+                    aria-checked={star === form.rating}
+                    aria-label={`${star} sao`}
+                    className={`counselor-rating-star ${
+                      star <= form.rating ? 'active' : ''
+                    }`}
                     onClick={() => updateField('rating', star)}
                   >
-                    ★
+                    â˜…
                   </button>
                 ))}
               </div>
-              {form.rating > 0 && (
-                <span style={{ marginTop: '6px', color: '#7a7a7a', fontSize: '12px' }}>
-                  {form.rating}/5 sao
-                </span>
-              )}
-              {errors.rating && (
-                <span style={{ marginTop: '6px', color: '#dc2626', fontSize: '12px' }}>{errors.rating}</span>
-              )}
-            </div>
-
-            <div className="counselor-form-group">
-              <label>Nội dung feedback *</label>
-              <textarea
-                value={form.feedbackText}
-                onChange={(e) => updateField('feedbackText', e.target.value)}
-                placeholder="Viết phản hồi chi tiết cho sinh viên (ít nhất 50 ký tự)..."
-                rows={6}
-                style={{ minHeight: '150px' }}
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+              <div className="counselor-form-row">
                 <span className="counselor-form-hint">
-                  {form.feedbackText.length}/50 ký tự tối thiểu
+                  {form.rating > 0 ? `${form.rating}/5 sao` : 'TĂ¹y chá»n'}
                 </span>
-                {errors.feedbackText && (
-                  <span style={{ color: '#dc2626', fontSize: '12px' }}>{errors.feedbackText}</span>
+                {errors.rating && (
+                  <span className="counselor-form-error">{errors.rating}</span>
                 )}
               </div>
             </div>
 
             <div className="counselor-form-group">
-              <label>Khuyến nghị (Recommendations)</label>
+              <label htmlFor="counselor-feedback-text">Ná»™i dung feedback *</label>
               <textarea
-                value={form.recommendations}
-                onChange={(e) => updateField('recommendations', e.target.value)}
-                placeholder="Các bước tiếp theo mà sinh viên nên thực hiện..."
-                rows={3}
+                id="counselor-feedback-text"
+                value={form.feedbackText}
+                onChange={(e) => updateField('feedbackText', e.target.value)}
+                placeholder="Viáº¿t pháº£n há»“i chi tiáº¿t cho sinh viĂªn (Ă­t nháº¥t 50 kĂ½ tá»±)..."
+                rows={6}
+                required
               />
-              <span className="counselor-form-hint">Tùy chọn - khuyến nghị sẽ hiển thị với sinh viên</span>
+              <div className="counselor-form-row">
+                <span className="counselor-form-hint">
+                  {form.feedbackText.length}/50 kĂ½ tá»± tá»‘i thiá»ƒu
+                </span>
+                {errors.feedbackText && (
+                  <span className="counselor-form-error">
+                    {errors.feedbackText}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="counselor-form-group">
-              <label>Ghi chú riêng</label>
+              <label htmlFor="counselor-recommendations">Khuyáº¿n nghá»‹</label>
               <textarea
+                id="counselor-recommendations"
+                value={form.recommendations}
+                onChange={(e) => updateField('recommendations', e.target.value)}
+                placeholder="CĂ¡c bÆ°á»›c tiáº¿p theo sinh viĂªn nĂªn thá»±c hiá»‡n..."
+                rows={3}
+              />
+              <span className="counselor-form-hint">
+                TĂ¹y chá»n â€” sinh viĂªn sáº½ tháº¥y pháº§n nĂ y
+              </span>
+            </div>
+
+            <div className="counselor-form-group">
+              <label htmlFor="counselor-private-notes">Ghi chĂº riĂªng</label>
+              <textarea
+                id="counselor-private-notes"
                 value={form.privateNotes}
                 onChange={(e) => updateField('privateNotes', e.target.value)}
-                placeholder="Ghi chú cá nhân không hiển thị với sinh viên..."
+                placeholder="Ghi chĂº cĂ¡ nhĂ¢n khĂ´ng hiá»ƒn thá»‹ vá»›i sinh viĂªn..."
                 rows={2}
-                style={{ background: '#fef9c3' }}
+                className="counselor-private-textarea"
               />
               <div className="counselor-form-warning">
-                <span>⚠️</span>
-                <span>Sinh viên không nhìn thấy phần này</span>
+                <span aria-hidden>â ï¸</span>
+                <span>Sinh viĂªn khĂ´ng nhĂ¬n tháº¥y pháº§n nĂ y</span>
               </div>
             </div>
           </div>
 
-          <div className="counselor-modal-footer">
+          <footer className="counselor-modal-footer">
             <button
               type="button"
               className="counselor-btn counselor-btn-secondary"
               onClick={onClose}
               disabled={saving}
             >
-              Hủy
+              Há»§y
             </button>
             <button
               type="submit"
               className="counselor-btn counselor-btn-primary"
               disabled={saving}
-              style={{ minWidth: '140px' }}
             >
-              {saving ? 'Đang gửi...' : 'Gửi feedback'}
+              {saving ? 'Äang gá»­i...' : 'Gá»­i feedback'}
             </button>
-          </div>
+          </footer>
         </form>
       </div>
     </div>
