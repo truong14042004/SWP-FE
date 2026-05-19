@@ -12,6 +12,7 @@ export async function loadAdminDashboard(session) {
     learningResources,
     roleSkillRequirements,
     careerRoles,
+    assignments,
   ] = await Promise.all([
     authorizedRequest('/api/admin/stats/overview', session),
     authorizedRequest('/api/admin/users', session),
@@ -23,11 +24,9 @@ export async function loadAdminDashboard(session) {
     authorizedRequest('/api/admin/learning-resources', session),
     authorizedRequest('/api/admin/role-skill-requirements', session),
     authorizedRequest('/api/career-roles', session),
+    authorizedRequest('/api/admin/counselor-assignments', session).catch(() => []),
   ]);
 
-  // BE overview shape: { users, subscriptions, payments, content }
-  // content: { totalSkills, activeSkills, totalLearningResources, activeLearningResources,
-  //            fileResources, linkResources, totalCareerRoles, activeCareerRoles, popularCareerRoles[] }
   return {
     stats: overview,
     users,
@@ -39,6 +38,7 @@ export async function loadAdminDashboard(session) {
     learningResources,
     roleSkillRequirements,
     careerRoles,
+    assignments,
   };
 }
 
@@ -190,4 +190,27 @@ export function deleteCareerRole(session, careerRole) {
 
 export function getCareerRoles() {
   return apiRequest('/api/career-roles');
+}
+
+/* Counselor assignments */
+export function createCounselorAssignment(session, payload) {
+  return authorizedRequest('/api/admin/counselor-assignments', session, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteCounselorAssignment(session, id) {
+  return authorizedRequest(`/api/admin/counselor-assignments/${id}`, session, {
+    method: 'DELETE',
+  });
+}
+
+export function fetchDailyStats(session, year, month) {
+  const params = new URLSearchParams();
+  if (year)  params.set('year',  String(year));
+  if (month) params.set('month', String(month));
+  const query = params.toString();
+  const path = query ? `/api/admin/stats/daily?${query}` : '/api/admin/stats/daily';
+  return authorizedRequest(path, session);
 }
