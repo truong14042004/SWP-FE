@@ -331,6 +331,49 @@
     font-weight: 900;
 }
 
+.portfolio-image-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+}
+
+.portfolio-image-actions button,
+.portfolio-image-upload {
+    min-height: 42px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #fff;
+    color: #0f172a;
+    display: grid;
+    place-items: center;
+    padding: 0 12px;
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.portfolio-image-upload input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.portfolio-image-actions button:disabled,
+.portfolio-image-upload.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.portfolio-image-actions small {
+    grid-column: 1 / -1;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
 .portfolio-theme-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

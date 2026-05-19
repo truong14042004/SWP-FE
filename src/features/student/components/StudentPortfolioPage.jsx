@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
 import '../../../styles/portfolio.css'
+import { apiUrl } from '../../../config';
 import {
   createPortfolio,
   getMyPortfolio,
+  importPortfolioProjectImageFromUrl,
   publishPortfolio,
   updatePortfolio,
+  uploadPortfolioProjectImage,
 } from '../portfolioApi';
 
 const EMPTY_PROJECT = {
@@ -132,6 +136,38 @@ function getPublicUrl(slug) {
   return `${window.location.origin}/portfolio/${slug}`;
 }
 
+function getFileNameFromUrl(url) {
+  return url.split('/').pop()?.split('?')[0] || 'project-image';
+}
+
+function getStorageValue(fileInfo, fallback = '') {
+  return fileInfo?.downloadPath || fileInfo?.objectName || fallback;
+}
+
+function resolveStorageUrl(value) {
+  if (!value) return '';
+
+  const normalized = String(value).trim();
+
+  if (/^https?:\/\//i.test(normalized)) {
+    return normalized;
+  }
+
+  if (!apiUrl) {
+    return normalized;
+  }
+
+  if (normalized.startsWith('/api/storage/public/')) {
+    return `${apiUrl}${normalized}`;
+  }
+
+  if (normalized.startsWith('api/storage/public/')) {
+    return `${apiUrl}/${normalized}`;
+  }
+
+  return `${apiUrl}/api/storage/public/${normalized.replace(/^\/+/, '')}/download`;
+}
+
 export function StudentPortfolioPage({ session }) {
   const [activeTab, setActiveTab] = useState('edit');
   const [form, setForm] = useState(EMPTY_PORTFOLIO);
@@ -139,6 +175,7 @@ export function StudentPortfolioPage({ session }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [uploadingProjectId, setUploadingProjectId] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
@@ -162,7 +199,9 @@ export function StudentPortfolioPage({ session }) {
         setForm(EMPTY_PORTFOLIO);
         setHasPortfolio(false);
       } else {
-        setError(requestError.message || 'Không tải được portfolio.');
+        const message = requestError.message || 'Không tải được portfolio.';
+        setError(message);
+        toast.error(message);
       }
     } finally {
       setLoading(false);
@@ -236,6 +275,58 @@ export function StudentPortfolioPage({ session }) {
     });
   }
 
+  async function handleProjectImageFileChange(project, event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file || !project.id) {
+      return;
+    }
+
+    setUploadingProjectId(project.localId);
+    setError('');
+    setNotice('');
+    try {
+      const uploaded = await uploadPortfolioProjectImage(session, project.id, file);
+      updateProject(project.localId, 'imageUrl', getStorageValue(uploaded, project.imageUrl));
+      setNotice('Da upload anh du an.');
+      toast.success('Da upload anh du an.');
+    } catch (requestError) {
+      const message = requestError.message || 'Khong upload duoc anh du an.';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setUploadingProjectId('');
+    }
+  }
+
+  async function handleProjectImageImport(project) {
+    const url = project.imageUrl.trim();
+
+    if (!project.id || !url) {
+      return;
+    }
+
+    setUploadingProjectId(project.localId);
+    setError('');
+    setNotice('');
+    try {
+      const imported = await importPortfolioProjectImageFromUrl(session, project.id, {
+        url,
+        fileName: getFileNameFromUrl(url),
+      });
+      updateProject(project.localId, 'imageUrl', getStorageValue(imported, url));
+      setNotice('Da import anh du an tu URL.');
+      toast.success('Da import anh du an tu URL.');
+    } catch (requestError) {
+      const message = requestError.message || 'Khong import duoc anh du an.';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setUploadingProjectId('');
+    }
+  }
+
   async function handleSave() {
     setSaving(true);
     setError('');
@@ -250,8 +341,11 @@ export function StudentPortfolioPage({ session }) {
       setForm(normalizePortfolio(saved));
       setHasPortfolio(true);
       setNotice(hasPortfolio ? 'Đã cập nhật portfolio.' : 'Đã tạo portfolio.');
+      toast.success(hasPortfolio ? 'Đã cập nhật portfolio.' : 'Đã tạo portfolio.');
     } catch (requestError) {
-      setError(requestError.message || 'Không lưu được portfolio.');
+      const message = requestError.message || 'Không lưu được portfolio.';
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -272,9 +366,12 @@ export function StudentPortfolioPage({ session }) {
       const published = await publishPortfolio(session);
       setForm(normalizePortfolio(published));
       setNotice('Đã xuất bản portfolio.');
+      toast.success('Đã xuất bản portfolio.');
       setActiveTab('share');
     } catch (requestError) {
-      setError(requestError.message || 'Không xuất bản được portfolio.');
+      const message = requestError.message || 'Không xuất bản được portfolio.';
+      setError(message);
+      toast.error(message);
     } finally {
       setPublishing(false);
     }
@@ -285,6 +382,7 @@ export function StudentPortfolioPage({ session }) {
 
     await navigator.clipboard?.writeText(publicUrl);
     setNotice('Đã copy link portfolio.');
+    toast.success('Đã copy link portfolio.');
   }
 
   return (
@@ -438,6 +536,9 @@ export function StudentPortfolioPage({ session }) {
                     onChange={updateProject}
                     onRemove={removeProject}
                     onMove={moveProject}
+                    onImageFileChange={handleProjectImageFileChange}
+                    onImageImport={handleProjectImageImport}
+                    uploadingImage={uploadingProjectId === project.localId}
                   />
                 ))}
               </div>
@@ -530,8 +631,12 @@ function ProjectEditor({
   onChange,
   onRemove,
   onMove,
+  onImageFileChange,
+  onImageImport,
+  uploadingImage,
 }) {
   const tags = parseTechStack(project.techStack);
+  const hasProjectId = Boolean(project.id);
 
   return (
     <article className="portfolio-project-editor">
@@ -611,6 +716,28 @@ function ProjectEditor({
           />
         </label>
 
+        <div className="portfolio-image-actions span-2">
+          <label className={hasProjectId ? 'portfolio-image-upload' : 'portfolio-image-upload disabled'}>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={(event) => onImageFileChange(project, event)}
+              disabled={!hasProjectId || uploadingImage}
+            />
+            {uploadingImage ? 'Đang tải...' : 'Upload ảnh'}
+          </label>
+          <button
+            type="button"
+            onClick={() => onImageImport(project)}
+            disabled={!hasProjectId || uploadingImage || !project.imageUrl.trim()}
+          >
+            Import URL
+          </button>
+          {!hasProjectId && (
+            <small>Lưu portfolio trước để project có ID, sau đó có thể upload ảnh.</small>
+          )}
+        </div>
+
         <label className="portfolio-field">
           <span>Demo URL</span>
           <input
@@ -666,9 +793,9 @@ function PortfolioPreview({ form }) {
       <div className="portfolio-preview-projects">
         {projects.map((project) => (
           <article key={project.localId} className="portfolio-preview-project">
-            <img
+              <img
               src={
-                project.imageUrl ||
+                resolveStorageUrl(project.imageUrl) ||
                 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80'
               }
               alt={project.title || 'Project'}

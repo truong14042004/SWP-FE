@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
+import { apiUrl } from '../../../config';
 import '../../../styles/skills.css';
 import {
  analyzeSkillGap,
@@ -9,7 +10,9 @@ import {
   getSkillGapById,
   getSkills,
   getUserSkills,
+  importUserSkillEvidenceFromUrl,
   updateUserSkill,
+  uploadUserSkillEvidence,
 } from '../skillsApi';
 import { getStudentProfile } from '../studentApi';
 const EMPTY_FORM = {
@@ -65,6 +68,30 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
+function resolveStorageUrl(value) {
+  if (!value) return '';
+
+  const normalized = String(value).trim();
+
+  if (/^https?:\/\//i.test(normalized)) {
+    return normalized;
+  }
+
+  if (!apiUrl) {
+    return normalized;
+  }
+
+  if (normalized.startsWith('/api/storage/public/')) {
+    return `${apiUrl}${normalized}`;
+  }
+
+  if (normalized.startsWith('api/storage/public/')) {
+    return `${apiUrl}/${normalized}`;
+  }
+
+  return `${apiUrl}/api/storage/public/${normalized.replace(/^\/+/, '')}/download`;
+}
+
 function getSkillName(skill) {
   return skill?.name || skill?.skillName || 'Kỹ năng chưa đặt tên';
 }
@@ -98,6 +125,7 @@ export function StudentSkillsPage({ session }) {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingEvidence, setUploadingEvidence] = useState(false);
 
 const [profile, setProfile] = useState(null);
 const [skillGapReport, setSkillGapReport] = useState(null);
@@ -244,6 +272,71 @@ async function loadData() {
   function cancelEdit() {
     setEditingId('');
     setForm(EMPTY_FORM);
+  }
+
+  function getFileNameFromUrl(url) {
+    return url.split('/').pop()?.split('?')[0] || 'evidence';
+  }
+
+  function getStorageValue(fileInfo, fallback = '') {
+    return fileInfo?.downloadPath || fileInfo?.objectName || fallback;
+  }
+
+  function isHttpUrl(value) {
+    return /^https?:\/\//i.test(String(value || '').trim());
+  }
+
+  async function handleEvidenceFileChange(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file || !editingId) {
+      return;
+    }
+
+    setUploadingEvidence(true);
+    try {
+      const uploaded = await uploadUserSkillEvidence(session, editingId, file);
+      setForm((current) => ({
+        ...current,
+        evidenceUrl: getStorageValue(uploaded, current.evidenceUrl),
+      }));
+      toast.success('Da upload minh chung.');
+    } catch (requestError) {
+      toast.error(requestError.message || 'Khong upload duoc minh chung.');
+    } finally {
+      setUploadingEvidence(false);
+    }
+  }
+
+  async function handleEvidenceImport() {
+    const url = form.evidenceUrl.trim();
+
+    if (!editingId || !url) {
+      return;
+    }
+
+    if (!isHttpUrl(url)) {
+      toast.warn('URL import phai bat dau bang http:// hoac https://.');
+      return;
+    }
+
+    setUploadingEvidence(true);
+    try {
+      const imported = await importUserSkillEvidenceFromUrl(session, editingId, {
+        url,
+        fileName: getFileNameFromUrl(url),
+      });
+      setForm((current) => ({
+        ...current,
+        evidenceUrl: getStorageValue(imported, url),
+      }));
+      toast.success('Da import minh chung tu URL.');
+    } catch (requestError) {
+      toast.error(requestError.message || 'Khong import duoc minh chung.');
+    } finally {
+      setUploadingEvidence(false);
+    }
   }
 
   async function handleSubmit(event) {
@@ -458,6 +551,35 @@ async function handleLoadSkillGapById(event) {
               />
             </label>
 
+            <div className="skills-evidence-actions">
+              <label className={editingId ? 'skills-file-action' : 'skills-file-action disabled'}>
+                <input
+                  type="file"
+                  onChange={handleEvidenceFileChange}
+                  disabled={!editingId || uploadingEvidence || saving}
+                />
+                {uploadingEvidence ? 'Đang tải...' : 'Upload file'}
+              </label>
+              <button
+                type="button"
+                onClick={handleEvidenceImport}
+                disabled={!editingId || uploadingEvidence || saving || !isHttpUrl(form.evidenceUrl)}
+              >
+                Import URL
+              </button>
+            </div>
+
+            {!editingId && (
+              <small className="skills-evidence-hint">
+                Lưu kỹ năng trước, sau đó chỉnh sửa để upload file minh chứng.
+              </small>
+            )}
+            {editingId && form.evidenceUrl.trim() && !isHttpUrl(form.evidenceUrl) && (
+              <small className="skills-evidence-hint">
+                Link hiện tại là đường dẫn storage nội bộ. Dùng “Xem minh chứng” sau khi lưu, hoặc nhập URL http/https để import file mới.
+              </small>
+            )}
+
             <div className="skills-form-actions">
               <button type="submit" disabled={saving || !form.skillId}>
                 {saving ? 'Đang lưu...' : editingId ? 'Lưu cập nhật' : 'Thêm kỹ năng'}
@@ -605,7 +727,7 @@ function UserSkillCard({ userSkill, onEdit, onDelete }) {
 
       {userSkill.evidenceUrl && (
         <a
-          href={userSkill.evidenceUrl}
+          href={resolveStorageUrl(userSkill.evidenceUrl)}
           target="_blank"
           rel="noreferrer"
           className="user-skill-evidence"
