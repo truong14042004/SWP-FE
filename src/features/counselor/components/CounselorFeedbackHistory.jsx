@@ -1,4 +1,4 @@
-﻿import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 
 function getInitials(name = '') {
   return (
@@ -13,7 +13,7 @@ function getInitials(name = '') {
 }
 
 function formatDate(date) {
-  if (!date) return 'â€”';
+  if (!date) return '—';
   return new Date(date).toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -27,7 +27,7 @@ function renderStars(rating = 0) {
       key={i}
       className={`counselor-feedback-star ${i < (rating || 0) ? '' : 'empty'}`}
     >
-      â˜…
+      ★
     </span>
   ));
 }
@@ -55,7 +55,7 @@ export function CounselorFeedbackHistory({
   }, [students]);
 
   function getStudentName(studentId, fallback) {
-    return studentMap.get(studentId)?.fullName || fallback || 'Sinh viĂªn';
+    return studentMap.get(studentId)?.fullName || fallback || 'Sinh viên';
   }
 
   const filteredFeedbacks = useMemo(() => {
@@ -65,18 +65,17 @@ export function CounselorFeedbackHistory({
       const name = getStudentName(fb.studentId, fb.studentFullName);
       return name.toLowerCase().includes(q);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedbacks, filterStudent, studentMap]);
 
   if (feedbacks.length === 0) {
     return (
-      <section className="counselor-section">
+      <section className="counselor-section counselor-section--tight">
         <div className="counselor-section-inner">
-          <div className="counselor-hero" style={{ marginBottom: 32 }}>
-            <span className="counselor-hero-eyebrow">Lá»‹ch sá»­ feedback</span>
-            <h1>ChÆ°a cĂ³ feedback nĂ o</h1>
-            <p className="counselor-hero-lead">
-              Gá»­i feedback Ä‘áº§u tiĂªn cho sinh viĂªn Ä‘á»ƒ báº¯t Ä‘áº§u xĂ¢y dá»±ng kho pháº£n há»“i.
-            </p>
+          <div className="counselor-empty">
+            <div className="counselor-empty-icon" aria-hidden>◈</div>
+            <h3>Chưa có feedback</h3>
+            <p>Gửi feedback đầu tiên cho sinh viên để bắt đầu.</p>
           </div>
         </div>
       </section>
@@ -84,28 +83,18 @@ export function CounselorFeedbackHistory({
   }
 
   return (
-    <section className="counselor-section">
-      <div className="counselor-section-inner">
-        <div className="counselor-hero" style={{ marginBottom: 32 }}>
-          <span className="counselor-hero-eyebrow">Lá»‹ch sá»­ feedback</span>
-          <h1>{feedbacks.length} pháº£n há»“i Ä‘Ă£ gá»­i</h1>
-          <p className="counselor-hero-lead">
-            Xem láº¡i cĂ¡c feedback báº¡n Ä‘Ă£ gá»­i cho sinh viĂªn, kĂ¨m liĂªn káº¿t Roadmap vĂ  Skill Gap.
-          </p>
-        </div>
-
+    <section className="counselor-section counselor-section--tight">
+      <div className="counselor-section-inner counselor-section-inner--wide">
         <div className="counselor-toolbar">
           <div className="counselor-search">
-            <span className="counselor-search-icon" aria-hidden>
-              đŸ”
-            </span>
+            <span className="counselor-search-icon" aria-hidden>⌕</span>
             <input
               type="search"
               className="counselor-search-input"
-              placeholder="Lá»c theo tĂªn sinh viĂªn..."
+              placeholder="Lọc theo tên sinh viên..."
               value={filterStudent}
               onChange={(e) => setFilterStudent(e.target.value)}
-              aria-label="TĂ¬m kiáº¿m theo sinh viĂªn"
+              aria-label="Tìm kiếm theo sinh viên"
             />
           </div>
         </div>
@@ -114,12 +103,12 @@ export function CounselorFeedbackHistory({
           <table className="counselor-feedback-table">
             <thead>
               <tr>
-                <th>NgĂ y</th>
-                <th>Sinh viĂªn</th>
+                <th>Ngày</th>
+                <th>Sinh viên</th>
                 <th>Rating</th>
-                <th>Loáº¡i</th>
-                <th>Ná»™i dung</th>
-                <th aria-label="HĂ nh Ä‘á»™ng" />
+                <th>Loại</th>
+                <th>Nội dung</th>
+                <th aria-label="Hành động" />
               </tr>
             </thead>
             <tbody>
@@ -154,7 +143,7 @@ export function CounselorFeedbackHistory({
                             {typeBadge}
                           </span>
                         ) : (
-                          'â€”'
+                          '—'
                         )}
                       </td>
                       <td>
@@ -163,13 +152,13 @@ export function CounselorFeedbackHistory({
                       <td>
                         <button
                           type="button"
-                          className="counselor-btn counselor-btn-text"
+                          className="counselor-btn counselor-btn-link"
                           onClick={(e) => {
                             e.stopPropagation();
                             onSelectStudent(fb.studentId);
                           }}
                         >
-                          Xem SV
+                          Xem
                         </button>
                       </td>
                     </tr>
@@ -178,21 +167,19 @@ export function CounselorFeedbackHistory({
                       <tr className="row-expanded">
                         <td colSpan={6}>
                           <div className="counselor-feedback-expanded">
-                            <h5>Ná»™i dung feedback</h5>
+                            <h5>Nội dung feedback</h5>
                             <p>{fb.feedbackText}</p>
 
                             {fb.recommendations && (
                               <>
-                                <h5>Khuyáº¿n nghá»‹</h5>
+                                <h5>Khuyến nghị</h5>
                                 <p>{fb.recommendations}</p>
                               </>
                             )}
 
                             {fb.privateNotes && (
                               <div className="counselor-feedback-private">
-                                <div className="counselor-feedback-section-title">
-                                  Ghi chĂº riĂªng (chá»‰ báº¡n tháº¥y)
-                                </div>
+                                <h5>Ghi chú riêng (chỉ bạn thấy)</h5>
                                 <p>{fb.privateNotes}</p>
                               </div>
                             )}
