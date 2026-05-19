@@ -28,6 +28,23 @@ export function deleteUserSkill(session, id) {
     });
 }
 
+export function uploadUserSkillEvidence(session, userSkillId, file) {
+    const formData = new FormData();
+    formData.append('File', file);
+
+    return authorizedRequest(`/api/storage/user-skills/${userSkillId}/evidence`, session, {
+        method: 'POST',
+        body: formData,
+    });
+}
+
+export function importUserSkillEvidenceFromUrl(session, userSkillId, payload) {
+    return authorizedRequest(`/api/storage/user-skills/${userSkillId}/evidence/import-url`, session, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}
+
 /* Skill Gap APIs */
 
 export function analyzeSkillGap(session, careerRoleId) {

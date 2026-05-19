@@ -1,16 +1,28 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
+import { apiUrl } from '../../config';
 import '../../styles.css';
 import { StudentProfileForm } from './components/StudentProfileForm';
-import { createStudentProfile, getCareerRoles, getStudentProfile, updateStudentProfile } from './studentApi';
+import {
+  createStudentProfile,
+  getCareerRoles,
+  getStudentProfile,
+  importStudentAvatarFromUrl,
+  updateStudentProfile,
+  uploadStudentAvatar,
+} from './studentApi';
 import { StudentPortfolioPage } from './components/StudentPortfolioPage';
 import { StudentRoadmapPage } from './components/StudentRoadmapPage';
 import { StudentSkillsPage } from './components/StudentSkillsPage';
+import { StudentGithubPage } from './components/StudentGithubPage';
+import { StudentMentorPage } from './components/StudentMentorPage';
 const STUDENT_SECTIONS = [
   { id: 'overview', label: 'Bảng điều khiển' },
   { id: 'roadmap', label: 'Lộ trình nghề nghiệp' },
-  { id: 'skills', label: 'Kỹ năng và khóa học' },
-   { id: 'portfolio', label: 'Xây dựng Portfolio' },
+  { id: 'skills', label: 'Kỹ năng & Phân tích' },
+  { id: 'github', label: 'Tích hợp GitHub' },
+  { id: 'portfolio', label: 'Xây dựng Portfolio' },
+  { id: 'mentors', label:'AI tư vấn'},
   { id: 'settings', label: 'Cài đặt' },
 ];
 
@@ -97,6 +109,7 @@ const emptyProfile = {
   major: '',
   year: '',
   gpa: '',
+  avatarUrl: '',
   targetRoleId: '',
   githubUsername: '',
   careerGoal: '',
@@ -118,6 +131,7 @@ function normalizeProfile(profile) {
     major: profile.major || '',
     year: profile.year ?? '',
     gpa: profile.gpa ?? '',
+    avatarUrl: profile.avatarUrl || '',
     targetRoleId: profile.targetRoleId || '',
     githubUsername: profile.githubUsername || '',
     careerGoal: profile.careerGoal || '',
@@ -131,6 +145,7 @@ function profilePayload(form) {
     major: form.major.trim(),
     year: Number(form.year),
     gpa: Number(form.gpa),
+    avatarUrl: form.avatarUrl.trim() || null,
     targetRoleId: form.targetRoleId,
     githubUsername: form.githubUsername.trim() || null,
     careerGoal: form.careerGoal.trim(),
@@ -146,17 +161,67 @@ function getRoleName(role) {
   return role?.name || role?.title || role?.roleName || role?.label;
 }
 
+function resolveAvatarSrc(avatarUrl, userId) {
+  if (!avatarUrl) {
+    return '';
+  }
+
+  const normalizedAvatarUrl = avatarUrl.trim();
+
+  if (/^https?:\/\//i.test(normalizedAvatarUrl)) {
+    return normalizedAvatarUrl;
+  }
+
+  if (!apiUrl) {
+    return '';
+  }
+
+  if (normalizedAvatarUrl.startsWith('/api/storage/public/')) {
+    return `${apiUrl}${normalizedAvatarUrl}`;
+  }
+
+  if (normalizedAvatarUrl.startsWith('api/storage/public/')) {
+    return `${apiUrl}/${normalizedAvatarUrl}`;
+  }
+
+  const objectPath = normalizedAvatarUrl.replace(/^\/+/, '');
+  const avatarFolderMatch = objectPath.match(/^(users\/[^/]+\/avatar)(?:\/.*)?$/i);
+
+  if (avatarFolderMatch) {
+    return `${apiUrl}/api/storage/public/${avatarFolderMatch[1]}/download`;
+  }
+
+  if (userId) {
+    return `${apiUrl}/api/storage/public/users/${userId}/avatar/download`;
+  }
+
+  return `${apiUrl}/api/storage/public/${objectPath}/download`;
+}
+
 export function StudentDashboard({ session, onSignOut, onNavigateHome }) {
-  const [activeSection, setActiveSection] = useState('overview');
+  function getInitialStudentSection() {
+  const hashSection = window.location.hash.replace('#', '');
+
+  return STUDENT_SECTIONS.some((section) => section.id === hashSection)
+    ? hashSection
+    : 'overview';
+}
+
+const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   const [activeTab, setActiveTab] = useState('all');
   const [form, setForm] = useState(emptyProfile);
   const [careerRoles, setCareerRoles] = useState([]);
   const [hasProfile, setHasProfile] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const initials = getInitials(session?.user?.fullName);
   const firstName = session?.user?.fullName?.split(' ')?.slice(-1)?.[0] || 'bạn';
   const sectionMeta = SECTION_META[activeSection] || SECTION_META.overview;
+  const avatarSrc = useMemo(
+    () => resolveAvatarSrc(session?.user?.avatarUrl || form.avatarUrl, session?.user?.id),
+    [form.avatarUrl, session?.user?.avatarUrl, session?.user?.id],
+  );
 
   useEffect(() => {
     loadProfile();
@@ -200,8 +265,53 @@ export function StudentDashboard({ session, onSignOut, onNavigateHome }) {
   }
 
   function updateField(event) {
-    const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
+    const { name, value, type, files } = event.target;
+    setForm((current) => ({
+      ...current,
+      [name]: type === 'file' ? files?.[0] || null : value,
+    }));
+  }
+
+  async function handleAvatarFileChange(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const uploaded = await uploadStudentAvatar(session, file);
+      const nextAvatarUrl = uploaded?.downloadPath || uploaded?.objectName || '';
+      setForm((current) => ({ ...current, avatarUrl: nextAvatarUrl }));
+      toast.success('Da upload avatar.');
+    } catch (requestError) {
+      toast.error(requestError.message || 'Khong upload duoc avatar.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
+  async function handleAvatarImport() {
+    const avatarUrl = form.avatarUrl.trim();
+    if (!avatarUrl) {
+      toast.error('Vui long nhap URL avatar.');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const fileName = avatarUrl.split('/').pop()?.split('?')[0] || 'avatar';
+      const imported = await importStudentAvatarFromUrl(session, { url: avatarUrl, fileName });
+      const nextAvatarUrl = imported?.downloadPath || imported?.objectName || avatarUrl;
+      setForm((current) => ({ ...current, avatarUrl: nextAvatarUrl }));
+      toast.success('Da import avatar tu URL.');
+    } catch (requestError) {
+      toast.error(requestError.message || 'Khong import duoc avatar tu URL.');
+    } finally {
+      setUploadingAvatar(false);
+    }
   }
 
   async function handleSaveProfile(event) {
@@ -240,7 +350,10 @@ export function StudentDashboard({ session, onSignOut, onNavigateHome }) {
               key={section.id}
               type="button"
               className={activeSection === section.id ? 'active' : ''}
-              onClick={() => setActiveSection(section.id)}
+              onClick={() => {
+                setActiveSection(section.id);
+                window.history.replaceState({}, '', `#${section.id}`);
+              }}
             >
               <span className="student-nav-dot" />
               {section.label}
@@ -252,7 +365,11 @@ export function StudentDashboard({ session, onSignOut, onNavigateHome }) {
           <button type="button" className="student-upgrade-btn">Nâng cấp tài khoản</button>
           <div className="admin-account">
             <div className="admin-account-info">
-              <span className="admin-account-avatar">{initials}</span>
+              {avatarSrc ? (
+                <img className="admin-account-avatar" src={avatarSrc} alt="Student avatar" />
+              ) : (
+                <span className="admin-account-avatar">{initials}</span>
+              )}
               <div>
                 <strong>{session?.user?.fullName}</strong>
                 <small>{session?.user?.email}</small>
@@ -264,7 +381,7 @@ export function StudentDashboard({ session, onSignOut, onNavigateHome }) {
       </aside>
 
       <section className="admin-main student-main">
-       {!['portfolio', 'roadmap','skills'].includes(activeSection) && (
+       {!['portfolio', 'roadmap','skills','github','mentors'].includes(activeSection) && (
   <header className="student-header-bar">
     <button type="button" className="student-search-bar" onClick={() => setActiveSection('skills')}>
       <span>⌕</span>
@@ -274,18 +391,22 @@ export function StudentDashboard({ session, onSignOut, onNavigateHome }) {
     <div className="student-header-actions">
       <button type="button" className="student-icon-btn" aria-label="Thông báo">🔔</button>
       <button type="button" className="student-avatar-chip" onClick={() => setActiveSection('settings')}>
-        {initials}
+        {avatarSrc ? <img src={avatarSrc} alt="Student avatar" /> : initials}
       </button>
     </div>
   </header>
 )}
 
-      {activeSection === 'portfolio' ? (
+     {activeSection === 'portfolio' ? (
   <StudentPortfolioPage session={session} />
 ) : activeSection === 'roadmap' ? (
   <StudentRoadmapPage session={session} />
 ) : activeSection === 'skills' ? (
   <StudentSkillsPage session={session} />
+) : activeSection === 'github' ? (
+  <StudentGithubPage session={session} />
+) : activeSection === 'mentors' ? (
+  <StudentMentorPage session={session} />
 ) : activeSection === 'settings' ? (
           <section className="student-profile-page">
             <div className="student-profile-heading">
@@ -296,12 +417,16 @@ export function StudentDashboard({ session, onSignOut, onNavigateHome }) {
 
             <StudentProfileForm
               initials={initials}
+              avatarSrc={avatarSrc}
               form={form}
               careerRoles={careerRoles}
               loadingProfile={loadingProfile}
               savingProfile={savingProfile}
+              uploadingAvatar={uploadingAvatar}
               hasProfile={hasProfile}
               onChange={updateField}
+              onAvatarFileChange={handleAvatarFileChange}
+              onAvatarImport={handleAvatarImport}
               onReload={loadProfile}
               onSubmit={handleSaveProfile}
             />

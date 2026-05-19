@@ -194,6 +194,51 @@
     margin-top: 18px;
 }
 
+.skills-evidence-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.skills-evidence-actions button,
+.skills-file-action {
+    min-height: 42px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #fff;
+    color: #0f172a;
+    display: grid;
+    place-items: center;
+    padding: 0 12px;
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.skills-file-action input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.skills-evidence-actions button:disabled,
+.skills-file-action.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.skills-evidence-hint {
+    display: block;
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
 .skills-form-actions button {
     width: 100%;
     min-height: 46px;
