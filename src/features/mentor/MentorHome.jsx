@@ -5,6 +5,8 @@ import { MentorReviewQueue } from './components/MentorReviewQueue';
 import { MentorStudentDetail } from './components/MentorStudentDetail';
 import { MentorFeedbackHistory } from './components/MentorFeedbackHistory';
 import { MentorWriteFeedbackModal } from './components/MentorWriteFeedbackModal';
+import { RoadmapReviewQueue } from '../roadmap-review/RoadmapReviewQueue';
+import { NotificationBell } from '../notifications/NotificationBell';
 import {
   getReviewQueue,
   getMyMentorFeedbacks,
@@ -14,6 +16,7 @@ import {
 const NAV_ITEMS = [
   { id: 'overview', label: 'Tổng quan' },
   { id: 'queue', label: 'Review queue' },
+  { id: 'roadmap-reviews', label: 'Roadmap reviews' },
   { id: 'feedback', label: 'Lịch sử feedback' },
 ];
 
@@ -102,6 +105,7 @@ export function MentorHome({ session, onSignOut }) {
           <span className="imentor-globalnav-meta">
             Đăng nhập:<strong>{mentorName}</strong>
           </span>
+          <NotificationBell session={session} />
           <button
             type="button"
             className="imentor-globalnav-action"
@@ -182,6 +186,10 @@ export function MentorHome({ session, onSignOut }) {
             onBack={handleBack}
             onWriteFeedback={handleOpenFeedbackModal}
           />
+        )}
+
+        {currentView === 'roadmap-reviews' && (
+          <RoadmapReviewQueue session={session} role="IndustryMentor" />
         )}
 
         {currentView === 'feedback' && !selectedStudentId && (

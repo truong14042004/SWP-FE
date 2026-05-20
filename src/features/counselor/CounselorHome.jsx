@@ -5,6 +5,8 @@ import { CounselorStudentList } from './components/CounselorStudentList';
 import { CounselorStudentDetail } from './components/CounselorStudentDetail';
 import { CounselorFeedbackHistory } from './components/CounselorFeedbackHistory';
 import { CounselorWriteFeedbackModal } from './components/CounselorWriteFeedbackModal';
+import { RoadmapReviewQueue } from '../roadmap-review/RoadmapReviewQueue';
+import { NotificationBell } from '../notifications/NotificationBell';
 import {
   getCounselorStudents,
   getMyFeedbacks,
@@ -14,6 +16,7 @@ import {
 const NAV_ITEMS = [
   { id: 'overview', label: 'Tổng quan' },
   { id: 'students', label: 'Sinh viên' },
+  { id: 'roadmap-reviews', label: 'Roadmap reviews' },
   { id: 'feedback', label: 'Lịch sử feedback' },
 ];
 
@@ -97,6 +100,7 @@ export function CounselorHome({ session, onSignOut }) {
           <span className="counselor-globalnav-meta">
             Đăng nhập:<strong>{counselorName}</strong>
           </span>
+          <NotificationBell session={session} />
           <button
             type="button"
             className="counselor-globalnav-action"
@@ -179,6 +183,10 @@ export function CounselorHome({ session, onSignOut }) {
             onBack={handleBack}
             onOpenFeedbackModal={handleOpenFeedbackModal}
           />
+        )}
+
+        {currentView === 'roadmap-reviews' && (
+          <RoadmapReviewQueue session={session} role="AcademicCounselor" />
         )}
 
         {currentView === 'feedback' && !selectedStudentId && (

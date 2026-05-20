@@ -9,6 +9,7 @@ import {
 } from '../roadmapApi';
 import { getCareerRoles } from '../studentApi';
 import { getLatestSkillGap } from '../skillsApi';
+import { NodeReviewRequestModal } from './NodeReviewRequestModal';
 
 const EMPTY_FORM = {
   careerRoleId: '',
@@ -256,6 +257,8 @@ export function StudentRoadmapPage({ session }) {
   const [listError, setListError] = useState(false);
   const detailRequestRef = useRef(0);
 
+  const [reviewModalNode, setReviewModalNode] = useState(null);
+
   useEffect(() => {
     loadRoadmaps();
     loadFormReferences();
@@ -418,6 +421,12 @@ export function StudentRoadmapPage({ session }) {
       });
       setNotice('Đã cập nhật trạng thái module.');
       toast.success('Đã cập nhật trạng thái module.');
+
+      // If student moved this node into NeedReview, auto-open the modal
+      // so they can pick a reviewer and attach evidence right away.
+      if (status === 'NeedReview') {
+        setReviewModalNode({ ...node, status: 'NeedReview' });
+      }
     } catch (requestError) {
       const message = requestError.message || 'Không cập nhật được trạng thái module.';
       setRoadmap(previousRoadmap);
@@ -429,6 +438,7 @@ export function StudentRoadmapPage({ session }) {
   }
 
   return (
+    <>
     <section className="roadmap-page">
       <header className="roadmap-hero">
         <div>
@@ -645,6 +655,21 @@ export function StudentRoadmapPage({ session }) {
         </div>
       </section>
     </section>
+
+      {reviewModalNode && (
+        <NodeReviewRequestModal
+          session={session}
+          node={reviewModalNode}
+          onClose={() => setReviewModalNode(null)}
+          onSubmitted={() => {
+            // Refresh roadmap detail để lấy node status mới (NeedReview).
+            if (selectedRoadmapId) {
+              loadRoadmapDetail(selectedRoadmapId);
+            }
+          }}
+        />
+      )}
+    </>
   );
 }
 
