@@ -477,6 +477,24 @@
     cursor: not-allowed;
 }
 
+.roadmap-status-control.verified {
+    margin: -4px 0 16px;
+}
+
+.roadmap-status-locked {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    background: rgba(0, 102, 204, 0.08);
+    color: var(--student-primary, #0066cc);
+    border: 1px solid rgba(0, 102, 204, 0.22);
+    font-size: 12px;
+    font-weight: 600;
+}
+
 .roadmap-node-main small {
     color: var(--student-primary, #0066cc);
     font-size: 12px;
