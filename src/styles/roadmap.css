@@ -280,6 +280,8 @@
 .roadmap-status {
     display: inline-flex;
     align-items: center;
+    width: fit-content;
+    max-width: 100%;
     min-height: 30px;
     border-radius: 999px;
     padding: 0 10px;
@@ -312,6 +314,7 @@
 }
 
 .roadmap-node-meta span {
+    width: fit-content;
     min-height: 32px;
     display: inline-flex;
     align-items: center;
@@ -324,9 +327,48 @@
     font-weight: 800;
 }
 
+.roadmap-status-control {
+    margin: -4px 0 16px;
+}
+
+.roadmap-status-control label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 100%;
+}
+
+.roadmap-status-control span {
+    color: #475569;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.roadmap-status-control select {
+    width: auto;
+    min-width: 190px;
+    min-height: 40px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #fff;
+    color: #0f172a;
+    padding: 0 12px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    outline: none;
+}
+
+.roadmap-status-control select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .roadmap-node-main {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
     gap: 18px;
     min-width: 0;
 }
@@ -344,7 +386,7 @@
     font-size: clamp(1.45rem, 2.5vw, 2rem);
     line-height: 1.15;
     letter-spacing: -0.5px;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
 }
 
 .roadmap-node-main p {
@@ -352,11 +394,12 @@
     color: #334155;
     font-size: 16px;
     line-height: 1.65;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
 }
 
 .roadmap-node-type {
     flex: 0 0 auto;
+    width: fit-content;
     max-width: 100%;
     min-height: 34px;
     border-radius: 999px;
@@ -366,7 +409,7 @@
     font-size: 12px;
     font-weight: 900;
     text-transform: uppercase;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
 }
 
 .roadmap-node-progress {
@@ -584,10 +627,24 @@
 
 .roadmap-layout {
     display: grid;
-    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-columns: minmax(260px, 320px) minmax(520px, 1fr);
     gap: 24px;
     align-items: start;
     min-width: 0;
+}
+
+@media (max-width: 1280px) {
+    .roadmap-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .roadmap-list-card {
+        position: static;
+    }
+
+    .roadmap-list {
+        max-height: none;
+    }
 }
 
 .roadmap-list-card {
@@ -719,7 +776,7 @@
 .roadmap-node-main p,
 .roadmap-resource strong,
 .roadmap-resource small {
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     word-break: normal;
 }
 
