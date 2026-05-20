@@ -7,6 +7,9 @@ import {
   getRoadmaps,
   updateRoadmapNodeStatus,
 } from '../roadmapApi';
+import { getCareerRoles } from '../studentApi';
+import { getLatestSkillGap } from '../skillsApi';
+import { NodeReviewRequestModal } from './NodeReviewRequestModal';
 
 const EMPTY_FORM = {
   careerRoleId: '',
@@ -79,10 +82,10 @@ const STATUS_META = {
 };
 
 const ROADMAP_STATUS_OPTIONS = [
+  { value: 'NotStarted', label: 'Chưa bắt đầu' },
   { value: 'InProgress', label: 'Đang tiến hành' },
   { value: 'Completed', label: 'Đã hoàn thành' },
-  { value: 'Verified', label: 'Đã xác minh' },
-  { value: 'NeedReview', label: 'Cần review' },
+  { value: 'NeedReview', label: 'Cần mentor review' },
 ];
 
 function safeArray(value) {
@@ -282,6 +285,8 @@ export function StudentRoadmapPage({ session }) {
   const [selectedRoadmapId, setSelectedRoadmapId] = useState('');
   const [roadmap, setRoadmap] = useState(null);
   const [showGenerateForm, setShowGenerateForm] = useState(false);
+  const [careerRoles, setCareerRoles] = useState([]);
+  const [latestSkillGap, setLatestSkillGap] = useState(null);
 
   const [loadingList, setLoadingList] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -293,7 +298,23 @@ export function StudentRoadmapPage({ session }) {
 
   useEffect(() => {
     loadRoadmaps();
+    loadFormReferences();
   }, []);
+
+  async function loadFormReferences() {
+    try {
+      const [roles, latestGap] = await Promise.all([
+        getCareerRoles().catch(() => []),
+        getLatestSkillGap(session).catch(() => null),
+      ]);
+      setCareerRoles(
+        Array.isArray(roles) ? roles.filter((role) => role?.isActive !== false) : [],
+      );
+      setLatestSkillGap(latestGap);
+    } catch {
+      // ignore — references là optional
+    }
+  }
 
   const roadmapNodes = useMemo(() => getRoadmapNodes(roadmap), [roadmap]);
   const flatNodes = useMemo(() => flattenNodes(roadmapNodes), [roadmapNodes]);
@@ -334,6 +355,7 @@ export function StudentRoadmapPage({ session }) {
     } catch (requestError) {
       const message = requestError.message || 'Không tải được danh sách lộ trình.';
       setError(message);
+      setListError(true);
       toast.error(message);
     } finally {
       setLoadingList(false);
@@ -380,9 +402,9 @@ export function StudentRoadmapPage({ session }) {
     try {
       const payload = {
         careerRoleId: form.careerRoleId.trim(),
-        skillGapReportId: form.skillGapReportId.trim(),
-        title: form.title.trim(),
-        description: form.description.trim(),
+        skillGapReportId: latestSkillGap?.id || null,
+        title: form.title.trim() || null,
+        description: form.description.trim() || null,
       };
 
       const result = await generateRoadmap(session, payload);
@@ -422,6 +444,9 @@ export function StudentRoadmapPage({ session }) {
     try {
       const updated = await updateRoadmapNodeStatus(session, node.id, status);
       setRoadmap((current) => {
+        // Only merge primitive fields; never spread the whole node response
+        // because BE returns Children = empty for single-node update,
+        // which would erase children in the local tree.
         const next = updateRoadmapNode(current, node.id, (item) => ({
           ...item,
           ...(isNodeUpdateResponse(updated) ? updated : {}),
@@ -430,6 +455,12 @@ export function StudentRoadmapPage({ session }) {
         return next ? { ...next, progress: calculateProgressFromNodes(getRoadmapNodes(next)) } : next;
       });
       toast.success('Đã cập nhật trạng thái module.');
+
+      // If student moved this node into NeedReview, auto-open the modal
+      // so they can pick a reviewer and attach evidence right away.
+      if (status === 'NeedReview') {
+        setReviewModalNode({ ...node, status: 'NeedReview' });
+      }
     } catch (requestError) {
       const message = requestError.message || 'Không cập nhật được trạng thái module.';
       setRoadmap(previousRoadmap);
@@ -441,6 +472,7 @@ export function StudentRoadmapPage({ session }) {
   }
 
   return (
+    <>
     <section className="roadmap-page">
       <header className="roadmap-hero">
         <div>
@@ -474,29 +506,48 @@ export function StudentRoadmapPage({ session }) {
         </div>
       </header>
 
+      {error && <div className="roadmap-alert error">{error}</div>}
+      {notice && <div className="roadmap-alert success">{notice}</div>}
+
       {showGenerateForm && (
         <form className="roadmap-generate-card" onSubmit={handleGenerate}>
           <div className="roadmap-form-grid">
             <label>
-              <span>Career Role ID</span>
-              <input
+              <span>Vai trò nghề nghiệp</span>
+              <select
                 name="careerRoleId"
                 value={form.careerRoleId}
                 onChange={updateField}
-                placeholder="UUID career role"
                 required
-              />
+              >
+                <option value="">Chọn vai trò mục tiêu</option>
+                {careerRoles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                    {role.level ? ` · ${role.level}` : ''}
+                  </option>
+                ))}
+              </select>
+              <small>
+                Hệ thống sẽ tạo lộ trình dựa trên yêu cầu của vai trò này.
+              </small>
             </label>
 
             <label>
-              <span>Skill Gap Report ID</span>
+              <span>Báo cáo skill gap (tự động)</span>
               <input
-                name="skillGapReportId"
-                value={form.skillGapReportId}
-                onChange={updateField}
-                placeholder="UUID skill gap report"
-                required
+                type="text"
+                value={
+                  latestSkillGap
+                    ? `Báo cáo gần nhất · ${formatDate(latestSkillGap.createdAt || latestSkillGap.updatedAt)}`
+                    : 'Chưa có báo cáo — sẽ dùng yêu cầu chung của vai trò'
+                }
+                disabled
+                readOnly
               />
+              <small>
+                Backend tự dùng báo cáo skill gap mới nhất nếu có. Bạn không cần nhập ID.
+              </small>
             </label>
 
             <label>
@@ -506,7 +557,6 @@ export function StudentRoadmapPage({ session }) {
                 value={form.title}
                 onChange={updateField}
                 placeholder="Ví dụ: Lộ trình trở thành Backend Developer"
-                required
               />
             </label>
 
@@ -521,7 +571,7 @@ export function StudentRoadmapPage({ session }) {
             </label>
           </div>
 
-          <button type="submit" disabled={generating}>
+          <button type="submit" disabled={generating || !form.careerRoleId}>
             {generating ? 'Đang tạo lộ trình...' : 'Tạo lộ trình'}
           </button>
         </form>
@@ -635,6 +685,7 @@ export function StudentRoadmapPage({ session }) {
                         index={index}
                         updatingNodeId={updatingNodeId}
                         onStatusChange={handleNodeStatusChange}
+                        onRequestGroupReview={(groupNode) => setReviewModalNode(groupNode)}
                       />
                     ))}
                   </div>
@@ -645,10 +696,25 @@ export function StudentRoadmapPage({ session }) {
         </div>
       </section>
     </section>
+
+      {reviewModalNode && (
+        <NodeReviewRequestModal
+          session={session}
+          node={reviewModalNode}
+          onClose={() => setReviewModalNode(null)}
+          onSubmitted={() => {
+            // Refresh roadmap detail để lấy node status mới (NeedReview).
+            if (selectedRoadmapId) {
+              loadRoadmapDetail(selectedRoadmapId);
+            }
+          }}
+        />
+      )}
+    </>
   );
 }
 
-function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatusChange }) {
+function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatusChange, onRequestGroupReview }) {
   const statusMeta = getStatusMeta(node.status);
   const resources = getNodeResources(node);
   const children = getChildren(node);
@@ -698,7 +764,7 @@ function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatus
 
         <div className="roadmap-node-main">
           <div>
-            <small>Module #{index + 1}</small>
+            <small>{isGroup ? `Nhóm #${index + 1}` : `Module #${index + 1}`}</small>
             <h2>{node.title || 'Chưa có tiêu đề'}</h2>
             <p>{node.description || 'Chưa có mô tả cho module này.'}</p>
           </div>
@@ -744,6 +810,7 @@ function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatus
                 level={level + 1}
                 updatingNodeId={updatingNodeId}
                 onStatusChange={onStatusChange}
+                onRequestGroupReview={onRequestGroupReview}
               />
             ))}
           </div>
@@ -779,6 +846,7 @@ function ResourceButton({ resource }) {
         rel="noreferrer"
       >
         {content}
+        <span className="roadmap-resource-icon" aria-hidden="true">↗</span>
       </a>
     );
   }

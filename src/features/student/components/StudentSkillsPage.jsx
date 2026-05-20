@@ -7,7 +7,6 @@ import {
   createUserSkill,
   deleteUserSkill,
   getLatestSkillGap,
-  getSkillGapById,
   getSkills,
   getUserSkills,
   importUserSkillEvidenceFromUrl,
@@ -129,7 +128,6 @@ export function StudentSkillsPage({ session }) {
 
 const [profile, setProfile] = useState(null);
 const [skillGapReport, setSkillGapReport] = useState(null);
-const [gapIdInput, setGapIdInput] = useState('');
 const [loadingSkillGap, setLoadingSkillGap] = useState(false);
 const [analyzingSkillGap, setAnalyzingSkillGap] = useState(false);
   useEffect(() => {
@@ -200,18 +198,22 @@ const [analyzingSkillGap, setAnalyzingSkillGap] = useState(false);
     const totalUser = enrichedUserSkills.length;
     const verified = enrichedUserSkills.filter((item) => item.isVerified).length;
 
-    const average =
-      totalUser > 0
-        ? Math.round(
-            enrichedUserSkills.reduce((sum, item) => sum + getLevelScore(item.level), 0) / totalUser
-          )
-        : 0;
+    const levelOrder = ['Beginner', 'Intermediate', 'Advanced', 'Verified'];
+    let topLevel = '—';
+    let topRank = -1;
+    enrichedUserSkills.forEach((item) => {
+      const idx = levelOrder.indexOf(item.level);
+      if (idx > topRank) {
+        topRank = idx;
+        topLevel = item.level;
+      }
+    });
 
     return {
       totalCatalog,
       totalUser,
       verified,
-      average,
+      topLevel,
     };
   }, [skills, enrichedUserSkills]);
 
@@ -402,28 +404,6 @@ async function loadData() {
     setAnalyzingSkillGap(false);
   }
 }
-
-async function handleLoadSkillGapById(event) {
-  event.preventDefault();
-
-  const id = gapIdInput.trim();
-
-  if (!id) {
-    toast.warn('Vui long nhap Skill Gap Report ID.');
-    return;
-  }
-
-  setLoadingSkillGap(true);
-  try {
-    const result = await getSkillGapById(session, id);
-    setSkillGapReport(result);
-    toast.success('Da tai bao cao skill gap.');
-  } catch (requestError) {
-    toast.error(requestError.message || 'Khong tai duoc bao cao skill gap.');
-  } finally {
-    setLoadingSkillGap(false);
-  }
-}
   return (
     <section className="skills-page">
       <header className="skills-hero">
@@ -475,9 +455,9 @@ async function handleLoadSkillGapById(event) {
   </article>
 
   <article>
-    <span>Điểm trung bình</span>
-    <strong>{stats.average}%</strong>
-    <small>dựa trên level hiện tại</small>
+    <span>Level cao nhất</span>
+    <strong>{stats.topLevel}</strong>
+    <small>trong các kỹ năng đã thêm</small>
   </article>
 
   <article>
@@ -492,10 +472,7 @@ async function handleLoadSkillGapById(event) {
   report={skillGapReport}
   loading={loadingSkillGap}
   analyzing={analyzingSkillGap}
-  gapIdInput={gapIdInput}
-  onGapIdChange={setGapIdInput}
   onAnalyze={handleAnalyzeSkillGap}
-  onLoadById={handleLoadSkillGapById}
 />
 
       <section className="skills-layout">
@@ -698,8 +675,8 @@ async function handleLoadSkillGapById(event) {
 }
 
 function UserSkillCard({ userSkill, onEdit, onDelete }) {
-  const score = getLevelScore(userSkill.level);
   const levelClass = getLevelClass(userSkill.level);
+  const levelLabel = userSkill.level || 'Chưa có';
 
   return (
     <article className={`user-skill-card ${levelClass}`}>
@@ -709,15 +686,10 @@ function UserSkillCard({ userSkill, onEdit, onDelete }) {
           <h3>{userSkill.skillName || 'Kỹ năng chưa xác định'}</h3>
         </div>
 
-        <strong>{score}%</strong>
-      </div>
-
-      <div className="user-skill-progress">
-        <span style={{ width: `${score}%` }} />
+        <span className={`user-skill-level-badge ${levelClass}`}>{levelLabel}</span>
       </div>
 
       <div className="user-skill-meta">
-        <span>Level: <b>{userSkill.level || 'Chưa có'}</b></span>
         <span>
           Trạng thái:{' '}
           <b>{userSkill.isVerified ? 'Đã xác minh' : 'Chưa xác minh'}</b>
@@ -780,14 +752,13 @@ function SkillGapPanel({
   report,
   loading,
   analyzing,
-  gapIdInput,
-  onGapIdChange,
   onAnalyze,
-  onLoadById,
 }) {
   const items = getSkillGapItems(report);
   const score = Number(getReportScore(report) || 0);
   const targetRoleId = profile?.targetRoleId;
+  const targetRoleName = profile?.targetRoleName;
+  const reportRoleName = report?.careerRoleName;
 
   return (
     <section className="skill-gap-panel">
@@ -806,26 +777,18 @@ function SkillGapPanel({
             onClick={onAnalyze}
             disabled={analyzing || loading || !targetRoleId}
           >
-            {analyzing ? 'Đang phân tích...' : 'Phân tích Skill Gap'}
+            {analyzing ? 'Đang phân tích...' : 'Phân tích lại'}
           </button>
         </div>
       </div>
 
       <div className="skill-gap-target">
-        <span>Target Role ID</span>
-        <strong>{targetRoleId || 'Chưa có targetRoleId'}</strong>
+        <span>Vai trò mục tiêu</span>
+        <strong>
+          {targetRoleName ||
+            (targetRoleId ? 'Vai trò chưa có tên' : 'Chưa chọn vai trò trong hồ sơ')}
+        </strong>
       </div>
-
-      <form className="skill-gap-load-form" onSubmit={onLoadById}>
-        <input
-          value={gapIdInput}
-          onChange={(event) => onGapIdChange(event.target.value)}
-          placeholder="Nhập Skill Gap Report ID để xem lại báo cáo cũ"
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? 'Đang tải...' : 'Tải theo ID'}
-        </button>
-      </form>
 
       {loading ? (
         <div className="skill-gap-empty">
@@ -837,7 +800,11 @@ function SkillGapPanel({
         <div className="skill-gap-empty">
           <span>📊</span>
           <h3>Chưa có báo cáo skill gap</h3>
-          <p>Bấm “Phân tích Skill Gap” để tạo báo cáo mới từ targetRoleId của profile.</p>
+          <p>
+            {targetRoleId
+              ? 'Bấm “Phân tích lại” để tạo báo cáo từ vai trò mục tiêu trong hồ sơ.'
+              : 'Cập nhật vai trò mục tiêu trong hồ sơ trước, sau đó quay lại phân tích.'}
+          </p>
         </div>
       ) : (
         <div className="skill-gap-result">
@@ -845,7 +812,9 @@ function SkillGapPanel({
             <div>
               <span>Điểm phù hợp</span>
               <strong>{score}%</strong>
-              <small>{report.status || 'Báo cáo mới nhất'}</small>
+              <small>
+                {reportRoleName ? `Vai trò: ${reportRoleName}` : 'Báo cáo gần nhất'}
+              </small>
             </div>
 
             <div className="skill-gap-score-line">
@@ -855,18 +824,13 @@ function SkillGapPanel({
 
           <div className="skill-gap-meta-grid">
             <div>
-              <span>Report ID</span>
-              <strong>{report.id || 'Không có'}</strong>
-            </div>
-
-            <div>
-              <span>Career Role</span>
-              <strong>{report.careerRoleName || report.careerRoleId || 'Không có'}</strong>
-            </div>
-
-            <div>
-              <span>Số gap</span>
+              <span>Số kỹ năng cần bổ sung</span>
               <strong>{items.length}</strong>
+            </div>
+
+            <div>
+              <span>Cập nhật</span>
+              <strong>{formatDate(report.updatedAt || report.createdAt)}</strong>
             </div>
           </div>
 
@@ -883,7 +847,7 @@ function SkillGapPanel({
                   <div className="skill-gap-levels">
                     <small>
                       Hiện tại:{' '}
-                      <b>{item.currentLevel || item.userLevel || item.level || 'N/A'}</b>
+                      <b>{item.currentLevel || item.userLevel || item.level || 'Chưa có'}</b>
                     </small>
                     <small>
                       Yêu cầu:{' '}
