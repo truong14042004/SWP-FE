@@ -5,6 +5,7 @@ import '../../styles.css';
 import '../../styles/admin.css';
 import '../../styles/student.css';
 import { StudentProfileForm } from './components/StudentProfileForm';
+import '../../styles/student-dashboard.css';
 import {
   createStudentProfile,
   getCareerRoles,
@@ -18,6 +19,10 @@ import { StudentRoadmapPage } from './components/StudentRoadmapPage';
 import { StudentSkillsPage } from './components/StudentSkillsPage';
 import { StudentGithubPage } from './components/StudentGithubPage';
 import { StudentMentorPage } from './components/StudentMentorPage';
+import { getGithubRepositories } from './githubApi';
+import { getMentorSessions } from './mentorApi';
+import { getRoadmapById, getRoadmaps } from './roadmapApi';
+import { getLatestSkillGap, getUserSkills } from './skillsApi';
 const STUDENT_SECTIONS = [
   { id: 'overview', label: 'Bảng điều khiển' },
   { id: 'roadmap', label: 'Lộ trình nghề nghiệp' },
@@ -55,56 +60,6 @@ const SECTION_META = {
     subtitle: 'Cập nhật thảo luận, tài nguyên và lời khuyên liên quan đến vai trò',
   },
 };
-
-const SKILL_TABS = [
-  { id: 'all', label: 'Tất cả kỹ năng (19)' },
-  { id: 'missing', label: 'Thiếu (3)' },
-  { id: 'weak', label: 'Còn yếu (4)' },
-  { id: 'done', label: 'Đã đạt (12)' },
-];
-
-const SKILL_GROUPS = {
-  missing: [
-    { name: 'Microservices Architecture', current: '0/5', target: '3/5', action: 'Học ngay' },
-    { name: 'Docker & Kubernetes', current: '0/5', target: '3/5', action: 'Học ngay' },
-  ],
-  weak: [
-    { name: 'Node.js Performance Tuning', current: '2/5', target: '4/5', action: 'Cải thiện', progress: 52 },
-  ],
-  done: [
-    { name: 'RESTful API Design', current: '4/5', target: '3/5', action: 'Đạt yêu cầu' },
-  ],
-};
-
-const DASHBOARD_METRICS = [
-  { label: 'Match score', value: '75%', caption: '+8% so với tuần trước', tone: 'primary' },
-  { label: 'Kỹ năng đạt', value: '12/19', caption: '3 kỹ năng cần ưu tiên', tone: 'success' },
-  { label: 'Giờ học tuần này', value: '18h', caption: 'Mục tiêu 20h/tuần', tone: 'warning' },
-  { label: 'Mentor session', value: '02', caption: '1 lịch hẹn hôm nay', tone: 'info' },
-];
-
-const ROADMAP_STEPS = [
-  { title: 'Nền tảng Backend', detail: 'RESTful API, authentication, database design', status: 'Hoàn thành', progress: 100 },
-  { title: 'Hiệu năng Node.js', detail: 'Caching, queue, profiling và tối ưu request', status: 'Đang học', progress: 52 },
-  { title: 'Microservices', detail: 'Service discovery, API gateway, event-driven design', status: 'Tiếp theo', progress: 18 },
-  { title: 'Triển khai production', detail: 'Docker, Kubernetes, logging và monitoring', status: 'Chưa bắt đầu', progress: 0 },
-];
-
-const LEARNING_QUEUE = [
-  { title: 'Docker căn bản đến thực chiến', duration: '6 giờ', level: 'Bắt buộc' },
-  { title: 'Node.js Performance Tuning', duration: '4 giờ', level: 'Nên học' },
-  { title: 'Microservices Architecture', duration: '8 giờ', level: 'Ưu tiên cao' },
-];
-
-const MENTOR_SESSIONS = [
-  { mentor: 'Anh Minh Nguyen', topic: 'Review lộ trình Backend', time: 'Hôm nay, 20:00' },
-  { mentor: 'Chị Linh Tran', topic: 'Mock interview API design', time: 'Thứ 6, 19:30' },
-];
-
-const COMMUNITY_ITEMS = [
-  { title: 'Checklist chuẩn bị phỏng vấn Backend Fresher', meta: '23 phản hồi' },
-  { title: 'Tài nguyên học Docker cho sinh viên năm cuối', meta: 'Mentor đề xuất' },
-];
 
 const emptyProfile = {
   school: '',
@@ -200,6 +155,307 @@ function resolveAvatarSrc(avatarUrl, userId) {
   return `${apiUrl}/api/storage/public/${objectPath}/download`;
 }
 
+const DEFAULT_DASHBOARD_OVERVIEW = {
+  metrics: [
+    { label: 'Match score', value: '0%', caption: 'Chưa có báo cáo skill gap', tone: 'primary' },
+    { label: 'Kỹ năng của tôi', value: '0', caption: 'Chưa thêm kỹ năng', tone: 'success' },
+    { label: 'Tiến độ roadmap', value: '0%', caption: 'Chưa có lộ trình', tone: 'warning' },
+    { label: 'GitHub repos', value: '0', caption: 'Chưa đồng bộ GitHub', tone: 'info' },
+  ],
+  score: 0,
+  scoreStats: {
+    done: 0,
+    weak: 0,
+    missing: 0,
+  },
+  roadmapSteps: [],
+  skillGroups: {
+    missing: [],
+    weak: [],
+    done: [],
+  },
+  learningQueue: [],
+  mentorSessions: [],
+  communityItems: [],
+};
+
+function safeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function clampPercent(value) {
+  const number = Math.round(Number(value) || 0);
+
+  if (number < 0) return 0;
+  if (number > 100) return 100;
+  return number;
+}
+
+function formatDashboardDate(value) {
+  if (!value) return 'Chưa cập nhật';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Chưa cập nhật';
+
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
+function normalizeStatus(status) {
+  return String(status || '')
+    .trim()
+    .toLowerCase()
+    .replaceAll(' ', '_');
+}
+
+function isCompletedStatus(status) {
+  const normalized = normalizeStatus(status);
+  return ['completed', 'verified', 'done', 'hoàn_thành', 'da_hoan_thanh'].includes(normalized);
+}
+
+function getLevelScore(level) {
+  const normalized = String(level || '').trim().toLowerCase();
+
+  if (normalized.includes('advanced') || normalized.includes('expert')) return 100;
+  if (normalized.includes('intermediate')) return 50;
+  if (normalized.includes('beginner')) return 25;
+
+  const number = Number(level);
+  return Number.isFinite(number) ? clampPercent(number) : 0;
+}
+
+function getSkillGapItems(report) {
+  if (!report) return [];
+
+  const possibleLists = [
+    report.gaps,
+    report.skillGaps,
+    report.items,
+    report.details,
+    report.missingSkills,
+    report.skillGapDetails,
+  ];
+
+  return possibleLists.find(Array.isArray) || [];
+}
+
+function getReportScore(report) {
+  const score =
+    report?.matchScore ??
+    report?.score ??
+    report?.overallScore ??
+    report?.readinessScore ??
+    report?.progress ??
+    0;
+
+  return clampPercent(score);
+}
+
+function sortLatest(items) {
+  return safeArray(items).slice().sort((a, b) => {
+    const dateA = new Date(a.updatedAt || a.createdAt || a.startTime || a.scheduledAt || 0).getTime();
+    const dateB = new Date(b.updatedAt || b.createdAt || b.startTime || b.scheduledAt || 0).getTime();
+
+    return dateB - dateA;
+  });
+}
+
+function getChildren(node) {
+  return safeArray(node?.children).filter((child) => typeof child === 'object');
+}
+
+function getRoadmapNodes(roadmap) {
+  const tree = safeArray(roadmap?.nodeTree);
+  if (tree.length > 0) return tree;
+
+  return safeArray(roadmap?.nodes)
+    .slice()
+    .sort((a, b) => {
+      const levelA = Number(a.level || 0);
+      const levelB = Number(b.level || 0);
+      const orderA = Number(a.orderIndex || 0);
+      const orderB = Number(b.orderIndex || 0);
+
+      if (levelA !== levelB) return levelA - levelB;
+      return orderA - orderB;
+    });
+}
+
+function flattenRoadmapNodes(nodes) {
+  return safeArray(nodes).flatMap((node) => [
+    node,
+    ...flattenRoadmapNodes(getChildren(node)),
+  ]);
+}
+
+function isProgressNode(node) {
+  return normalizeStatus(node?.nodeType) !== 'group';
+}
+
+function calculateRoadmapProgress(nodes) {
+  const flatNodes = flattenRoadmapNodes(nodes).filter(isProgressNode);
+
+  if (!flatNodes.length) return 0;
+
+  const completed = flatNodes.filter((node) => isCompletedStatus(node.status)).length;
+
+  return Math.round((completed / flatNodes.length) * 100);
+}
+
+function getRoadmapStatusLabel(status) {
+  const normalized = normalizeStatus(status);
+
+  if (['completed', 'verified', 'done'].includes(normalized)) return 'Đã hoàn thành';
+  if (['inprogress', 'in_progress', 'progressing', 'active'].includes(normalized)) return 'Đang học';
+  if (['needreview', 'need_review'].includes(normalized)) return 'Cần review';
+
+  return status || 'Chưa bắt đầu';
+}
+
+function mapRoadmapStep(node, index) {
+  const resources = [node?.learningResource, ...safeArray(node?.learningResources)].filter(Boolean);
+  const resource = resources[0];
+  const progress = isCompletedStatus(node?.status) ? 100 : clampPercent(node?.progress);
+
+  return {
+    title: node?.title || node?.name || resource?.title || `Giai đoạn ${index + 1}`,
+    detail:
+      node?.description ||
+      node?.note ||
+      resource?.description ||
+      resource?.url ||
+      'Chưa có mô tả chi tiết.',
+    status: getRoadmapStatusLabel(node?.status),
+    progress,
+  };
+}
+
+function mapGapToSkillCard(item) {
+  return {
+    name: item?.skillName || item?.name || item?.title || 'Kỹ năng chưa xác định',
+    current: item?.currentLevel || item?.userLevel || item?.level || 'N/A',
+    target: item?.requiredLevel || item?.targetLevel || item?.expectedLevel || 'N/A',
+    action: item?.recommendation ? 'Xem gợi ý' : 'Học ngay',
+    progress: 0,
+  };
+}
+
+function mapUserSkillToCard(item) {
+  const score = getLevelScore(item?.level);
+
+  return {
+    name: item?.skillName || item?.name || 'Kỹ năng chưa xác định',
+    current: item?.level || 'N/A',
+    target: item?.isVerified ? 'Verified' : 'Cần xác minh',
+    action: score >= 75 ? 'Đạt yêu cầu' : 'Cải thiện',
+    progress: score,
+  };
+}
+
+function buildDashboardOverview({
+  roadmap,
+  roadmaps,
+  userSkills,
+  skillGap,
+  repositories,
+  mentorSessions,
+}) {
+  const skills = safeArray(userSkills);
+  const repos = safeArray(repositories);
+  const mentors = safeArray(mentorSessions);
+  const gapItems = getSkillGapItems(skillGap);
+
+  const averageSkillScore = skills.length
+    ? Math.round(skills.reduce((sum, item) => sum + getLevelScore(item.level), 0) / skills.length)
+    : 0;
+
+  const matchScore = getReportScore(skillGap) || averageSkillScore;
+
+  const achievedSkills = skills.filter((item) => item.isVerified || getLevelScore(item.level) >= 75);
+  const weakSkills = skills.filter((item) => {
+    const score = getLevelScore(item.level);
+    return score > 0 && score < 75;
+  });
+
+  const roadmapNodes = getRoadmapNodes(roadmap);
+  const roadmapProgress = calculateRoadmapProgress(roadmapNodes);
+  const roadmapSteps = roadmapNodes.slice(0, 4).map(mapRoadmapStep);
+
+  const skillGroups = {
+    missing: gapItems.slice(0, 5).map(mapGapToSkillCard),
+    weak: weakSkills.slice(0, 5).map(mapUserSkillToCard),
+    done: achievedSkills.slice(0, 5).map(mapUserSkillToCard),
+  };
+
+  const learningQueue = gapItems.slice(0, 3).map((item) => ({
+    title: item.skillName || item.name || item.title || 'Kỹ năng cần bổ sung',
+    duration: item.estimatedHours ? `${item.estimatedHours} giờ` : 'Cần bổ sung',
+    level: item.priority || item.level || 'Ưu tiên',
+  }));
+
+  const mappedMentorSessions = sortLatest(mentors).slice(0, 3).map((item) => ({
+    mentor:
+      item.mentorName ||
+      item.mentor?.fullName ||
+      item.mentor?.name ||
+      item.mentor ||
+      'AI Mentor',
+    topic: item.topic || item.title || item.subject || item.question || 'Phiên tư vấn',
+    time: formatDashboardDate(item.startTime || item.scheduledAt || item.createdAt),
+  }));
+
+  const communityItems = repos.slice(0, 3).map((repo) => ({
+    title: repo.repoName || repo.name || repo.fullName || 'Repository GitHub',
+    meta: repo.mainLanguage || repo.language || repo.defaultBranch || 'GitHub',
+  }));
+
+  return {
+    metrics: [
+      {
+        label: 'Match score',
+        value: `${matchScore}%`,
+        caption: skillGap ? 'Từ báo cáo skill gap mới nhất' : 'Tính từ kỹ năng hiện tại',
+        tone: 'primary',
+      },
+      {
+        label: 'Kỹ năng của tôi',
+        value: `${skills.length}`,
+        caption: `${achievedSkills.length} kỹ năng đạt yêu cầu`,
+        tone: 'success',
+      },
+      {
+        label: 'Tiến độ roadmap',
+        value: `${roadmapProgress}%`,
+        caption: roadmaps?.length ? `${roadmaps.length} lộ trình đã tạo` : 'Chưa có lộ trình',
+        tone: 'warning',
+      },
+      {
+        label: 'GitHub repos',
+        value: `${repos.length}`,
+        caption: repos.length ? 'Repository đã đồng bộ' : 'Chưa đồng bộ GitHub',
+        tone: 'info',
+      },
+    ],
+    score: matchScore,
+    scoreStats: {
+      done: achievedSkills.length,
+      weak: weakSkills.length,
+      missing: gapItems.length,
+    },
+    roadmapSteps,
+    skillGroups,
+    learningQueue,
+    mentorSessions: mappedMentorSessions,
+    communityItems,
+  };
+}
+
+
 export function StudentDashboard({ session, onSignOut, onNavigateHome }) {
   function getInitialStudentSection() {
   const hashSection = window.location.hash.replace('#', '');
@@ -217,6 +473,8 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [dashboardOverview, setDashboardOverview] = useState(DEFAULT_DASHBOARD_OVERVIEW);
+  const [loadingOverview, setLoadingOverview] = useState(false);
   const initials = getInitials(session?.user?.fullName);
   const firstName = session?.user?.fullName?.split(' ')?.slice(-1)?.[0] || 'bạn';
   const sectionMeta = SECTION_META[activeSection] || SECTION_META.overview;
@@ -227,6 +485,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
 
   useEffect(() => {
     loadProfile();
+    loadDashboardOverview();
   }, []);
 
   const visibleGroups = useMemo(() => {
@@ -236,10 +495,62 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     return ['missing', 'weak', 'done'];
   }, [activeTab]);
 
+  const skillTabs = useMemo(() => {
+    const groups = dashboardOverview.skillGroups || DEFAULT_DASHBOARD_OVERVIEW.skillGroups;
+    const missingCount = safeArray(groups.missing).length;
+    const weakCount = safeArray(groups.weak).length;
+    const doneCount = safeArray(groups.done).length;
+    const total = missingCount + weakCount + doneCount;
+
+    return [
+      { id: 'all', label: `Tất cả kỹ năng (${total})` },
+      { id: 'missing', label: `Thiếu (${missingCount})` },
+      { id: 'weak', label: `Còn yếu (${weakCount})` },
+      { id: 'done', label: `Đã đạt (${doneCount})` },
+    ];
+  }, [dashboardOverview.skillGroups]);
+
   const targetRoleName = useMemo(() => {
     const selectedRole = careerRoles.find((role) => String(getRoleId(role)) === String(form.targetRoleId));
     return getRoleName(selectedRole) || 'Backend Developer';
   }, [careerRoles, form.targetRoleId]);
+
+  async function loadDashboardOverview() {
+    setLoadingOverview(true);
+
+    try {
+      const [roadmapListResult, userSkillResult, latestGapResult, repoResult, mentorSessionResult] =
+        await Promise.all([
+          getRoadmaps(session).catch(() => []),
+          getUserSkills(session).catch(() => []),
+          getLatestSkillGap(session).catch(() => null),
+          getGithubRepositories(session).catch(() => []),
+          getMentorSessions(session).catch(() => []),
+        ]);
+
+      const sortedRoadmaps = sortLatest(roadmapListResult);
+      const latestRoadmapSummary = sortedRoadmaps[0];
+
+      const latestRoadmap = latestRoadmapSummary?.id
+        ? await getRoadmapById(session, latestRoadmapSummary.id).catch(() => latestRoadmapSummary)
+        : null;
+
+      const overview = buildDashboardOverview({
+        roadmap: latestRoadmap,
+        roadmaps: sortedRoadmaps,
+        userSkills: userSkillResult,
+        skillGap: latestGapResult,
+        repositories: repoResult,
+        mentorSessions: mentorSessionResult,
+      });
+
+      setDashboardOverview(overview);
+    } catch (requestError) {
+      toast.error(requestError.message || 'Không tải được dữ liệu bảng điều khiển.');
+    } finally {
+      setLoadingOverview(false);
+    }
+  }
 
   async function loadProfile() {
     setLoadingProfile(true);
@@ -444,12 +755,16 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
               </div>
               <div className="student-topbar-actions">
                 <button type="button" className="student-secondary-btn" onClick={() => setActiveSection('settings')}>Cập nhật hồ sơ</button>
-                <button type="button" className="student-cta-btn">Tạo lộ trình cá nhân hóa</button>
+                <button type="button" className="student-cta-btn" onClick={() => setActiveSection('roadmap')}>Tạo lộ trình cá nhân hóa</button>
               </div>
             </header>
 
+            {loadingOverview && (
+              <p className="student-overview-loading">Đang tải dữ liệu bảng điều khiển...</p>
+            )}
+
             <section className="student-overview-grid" aria-label="Student metrics">
-              {DASHBOARD_METRICS.map((metric) => (
+              {dashboardOverview.metrics.map((metric) => (
                 <article key={metric.label} className={`student-metric-card ${metric.tone}`}>
                   <span>{metric.label}</span>
                   <strong>{metric.value}</strong>
@@ -468,22 +783,22 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
 
                 <div className="student-score-ring">
                   <div className="student-score-ring-inner">
-                    <strong>75%</strong>
+                    <strong>{dashboardOverview.score}%</strong>
                     <span>Match score</span>
                   </div>
                 </div>
 
                 <div className="student-score-stats">
                   <div>
-                    <strong>12</strong>
+                    <strong>{dashboardOverview.scoreStats.done}</strong>
                     <span>Đã đạt</span>
                   </div>
                   <div>
-                    <strong>4</strong>
+                    <strong>{dashboardOverview.scoreStats.weak}</strong>
                     <span>Còn yếu</span>
                   </div>
                   <div>
-                    <strong>3</strong>
+                    <strong>{dashboardOverview.scoreStats.missing}</strong>
                     <span>Thiếu</span>
                   </div>
                 </div>
@@ -499,7 +814,17 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                 </div>
 
                 <div className="student-roadmap-list">
-                  {ROADMAP_STEPS.map((step, index) => (
+                  {dashboardOverview.roadmapSteps.length === 0 && (
+                    <div className="student-compact-item static">
+                      <div>
+                        <strong>Chưa có lộ trình</strong>
+                        <small>Vào trang Lộ trình nghề nghiệp để tạo roadmap mới.</small>
+                      </div>
+                      <span>0%</span>
+                    </div>
+                  )}
+
+                  {dashboardOverview.roadmapSteps.map((step, index) => (
                     <div key={step.title} className="student-roadmap-step">
                       <span className="student-roadmap-index">{index + 1}</span>
                       <div>
@@ -528,7 +853,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                 </div>
 
                 <div className="student-skill-tabs">
-                  {SKILL_TABS.map((tab) => (
+                  {skillTabs.map((tab) => (
                     <button
                       key={tab.id}
                       type="button"
@@ -543,7 +868,10 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                 {visibleGroups.includes('missing') && (
                   <div className="student-group">
                     <h3 className="student-group-title danger">Kỹ năng đang thiếu</h3>
-                    {SKILL_GROUPS.missing.map((skill) => (
+                    {dashboardOverview.skillGroups.missing.length === 0 && (
+                      <p className="student-empty-note">Chưa có kỹ năng thiếu từ báo cáo skill gap.</p>
+                    )}
+                    {dashboardOverview.skillGroups.missing.map((skill) => (
                       <div key={skill.name} className="student-skill-card missing">
                         <div>
                           <div className="student-skill-title">
@@ -561,7 +889,10 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                 {visibleGroups.includes('weak') && (
                   <div className="student-group">
                     <h3 className="student-group-title warning">Kỹ năng cần cải thiện</h3>
-                    {SKILL_GROUPS.weak.map((skill) => (
+                    {dashboardOverview.skillGroups.weak.length === 0 && (
+                      <p className="student-empty-note">Chưa có kỹ năng yếu cần cải thiện.</p>
+                    )}
+                    {dashboardOverview.skillGroups.weak.map((skill) => (
                       <div key={skill.name} className="student-skill-card weak">
                         <div>
                           <div className="student-skill-title">
@@ -582,7 +913,10 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                 {visibleGroups.includes('done') && (
                   <div className="student-group">
                     <h3 className="student-group-title success">Kỹ năng đã đạt</h3>
-                    {SKILL_GROUPS.done.map((skill) => (
+                    {dashboardOverview.skillGroups.done.length === 0 && (
+                      <p className="student-empty-note">Chưa có kỹ năng đã đạt hoặc đã xác minh.</p>
+                    )}
+                    {dashboardOverview.skillGroups.done.map((skill) => (
                       <div key={skill.name} className="student-skill-card done">
                         <div>
                           <div className="student-skill-title">
@@ -604,7 +938,16 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                     <h2>Khóa học ưu tiên</h2>
                   </div>
                   <div className="student-compact-list">
-                    {LEARNING_QUEUE.map((item) => (
+                    {dashboardOverview.learningQueue.length === 0 && (
+                      <div className="student-compact-item static">
+                        <div>
+                          <strong>Chưa có khóa học ưu tiên</strong>
+                          <small>Phân tích skill gap để hệ thống gợi ý.</small>
+                        </div>
+                        <span>—</span>
+                      </div>
+                    )}
+                    {dashboardOverview.learningQueue.map((item) => (
                       <button key={item.title} type="button" className="student-compact-item">
                         <div>
                           <strong>{item.title}</strong>
@@ -622,7 +965,16 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                     <h2>Lịch tư vấn</h2>
                   </div>
                   <div className="student-compact-list">
-                    {MENTOR_SESSIONS.map((sessionItem) => (
+                    {dashboardOverview.mentorSessions.length === 0 && (
+                      <div className="student-compact-item static">
+                        <div>
+                          <strong>Chưa có lịch tư vấn</strong>
+                          <small>Vào AI tư vấn để bắt đầu phiên mới.</small>
+                        </div>
+                        <span>—</span>
+                      </div>
+                    )}
+                    {dashboardOverview.mentorSessions.map((sessionItem) => (
                       <div key={sessionItem.topic} className="student-compact-item static">
                         <div>
                           <strong>{sessionItem.topic}</strong>
@@ -636,11 +988,20 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
 
                 <article className="student-side-card">
                   <div className="student-panel-heading">
-                    <span>Community</span>
-                    <h2>Hoạt động mới</h2>
+                    <span>GitHub</span>
+                    <h2>Repository mới</h2>
                   </div>
                   <div className="student-compact-list">
-                    {COMMUNITY_ITEMS.map((item) => (
+                    {dashboardOverview.communityItems.length === 0 && (
+                      <div className="student-compact-item static">
+                        <div>
+                          <strong>Chưa có hoạt động GitHub</strong>
+                          <small>Đồng bộ GitHub để xem repository mới.</small>
+                        </div>
+                        <span>—</span>
+                      </div>
+                    )}
+                    {dashboardOverview.communityItems.map((item) => (
                       <button key={item.title} type="button" className="student-compact-item">
                         <div>
                           <strong>{item.title}</strong>
