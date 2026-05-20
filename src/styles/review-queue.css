@@ -275,6 +275,24 @@
     word-break: break-all;
 }
 
+.review-queue-evidence-file {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.review-queue-evidence-file > div {
+    min-width: 0;
+}
+
+.review-queue-evidence-file strong {
+    font-size: 13px;
+    overflow-wrap: break-word;
+    word-break: break-all;
+}
+
 .review-queue-actions {
     display: flex;
     gap: 10px;
@@ -316,6 +334,12 @@
 .review-queue-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.review-queue-btn.small {
+    padding: 6px 12px;
+    font-size: 12px;
+    flex: 0 0 auto;
 }
 
 .review-queue-reject-form {
