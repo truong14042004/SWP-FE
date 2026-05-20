@@ -7,6 +7,8 @@ import {
   getRoadmaps,
   updateRoadmapNodeStatus,
 } from '../roadmapApi';
+import { getCareerRoles } from '../studentApi';
+import { getLatestSkillGap } from '../skillsApi';
 
 const EMPTY_FORM = {
   careerRoleId: '',
@@ -241,6 +243,8 @@ export function StudentRoadmapPage({ session }) {
   const [selectedRoadmapId, setSelectedRoadmapId] = useState('');
   const [roadmap, setRoadmap] = useState(null);
   const [showGenerateForm, setShowGenerateForm] = useState(false);
+  const [careerRoles, setCareerRoles] = useState([]);
+  const [latestSkillGap, setLatestSkillGap] = useState(null);
 
   const [loadingList, setLoadingList] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -252,7 +256,23 @@ export function StudentRoadmapPage({ session }) {
 
   useEffect(() => {
     loadRoadmaps();
+    loadFormReferences();
   }, []);
+
+  async function loadFormReferences() {
+    try {
+      const [roles, latestGap] = await Promise.all([
+        getCareerRoles().catch(() => []),
+        getLatestSkillGap(session).catch(() => null),
+      ]);
+      setCareerRoles(
+        Array.isArray(roles) ? roles.filter((role) => role?.isActive !== false) : [],
+      );
+      setLatestSkillGap(latestGap);
+    } catch {
+      // ignore — references là optional
+    }
+  }
 
   const roadmapNodes = useMemo(() => getRoadmapNodes(roadmap), [roadmap]);
   const flatNodes = useMemo(() => flattenNodes(roadmapNodes), [roadmapNodes]);
@@ -336,9 +356,9 @@ export function StudentRoadmapPage({ session }) {
     try {
       const payload = {
         careerRoleId: form.careerRoleId.trim(),
-        skillGapReportId: form.skillGapReportId.trim(),
-        title: form.title.trim(),
-        description: form.description.trim(),
+        skillGapReportId: latestSkillGap?.id || null,
+        title: form.title.trim() || null,
+        description: form.description.trim() || null,
       };
 
       const result = await generateRoadmap(session, payload);
@@ -433,25 +453,41 @@ export function StudentRoadmapPage({ session }) {
         <form className="roadmap-generate-card" onSubmit={handleGenerate}>
           <div className="roadmap-form-grid">
             <label>
-              <span>Career Role ID</span>
-              <input
+              <span>Vai trò nghề nghiệp</span>
+              <select
                 name="careerRoleId"
                 value={form.careerRoleId}
                 onChange={updateField}
-                placeholder="UUID career role"
                 required
-              />
+              >
+                <option value="">Chọn vai trò mục tiêu</option>
+                {careerRoles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                    {role.level ? ` · ${role.level}` : ''}
+                  </option>
+                ))}
+              </select>
+              <small>
+                Hệ thống sẽ tạo lộ trình dựa trên yêu cầu của vai trò này.
+              </small>
             </label>
 
             <label>
-              <span>Skill Gap Report ID</span>
+              <span>Báo cáo skill gap (tự động)</span>
               <input
-                name="skillGapReportId"
-                value={form.skillGapReportId}
-                onChange={updateField}
-                placeholder="UUID skill gap report"
-                required
+                type="text"
+                value={
+                  latestSkillGap
+                    ? `Báo cáo gần nhất · ${formatDate(latestSkillGap.createdAt || latestSkillGap.updatedAt)}`
+                    : 'Chưa có báo cáo — sẽ dùng yêu cầu chung của vai trò'
+                }
+                disabled
+                readOnly
               />
+              <small>
+                Backend tự dùng báo cáo skill gap mới nhất nếu có. Bạn không cần nhập ID.
+              </small>
             </label>
 
             <label>
@@ -461,7 +497,6 @@ export function StudentRoadmapPage({ session }) {
                 value={form.title}
                 onChange={updateField}
                 placeholder="Ví dụ: Lộ trình trở thành Backend Developer"
-                required
               />
             </label>
 
@@ -476,7 +511,7 @@ export function StudentRoadmapPage({ session }) {
             </label>
           </div>
 
-          <button type="submit" disabled={generating}>
+          <button type="submit" disabled={generating || !form.careerRoleId}>
             {generating ? 'Đang tạo lộ trình...' : 'Tạo lộ trình'}
           </button>
         </form>

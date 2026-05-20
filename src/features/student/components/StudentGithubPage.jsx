@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import '../../../styles/github.css';
 import {
   analyzeGithubReadme,
+  getGithubConnection,
   getGithubRepositories,
   handleGithubCallback,
   startGithubLogin,
@@ -216,13 +217,18 @@ export function StudentGithubPage({ session }) {
     try {
       await handlePossibleCallback();
 
-      const [profileResult, repoResult] = await Promise.all([
+      const [profileResult, repoResult, connectionResult] = await Promise.all([
         getStudentProfile(session).catch(() => null),
         getGithubRepositories(session).catch(() => []),
+        getGithubConnection(session).catch(() => null),
       ]);
 
       setProfile(profileResult);
-      setUsername(profileResult?.githubUsername || '');
+      const resolvedUsername =
+        connectionResult?.githubUsername ||
+        profileResult?.githubUsername ||
+        '';
+      setUsername(resolvedUsername);
       setRepositories(safeArray(repoResult));
     } catch (requestError) {
       setError(requestError.message || 'Không tải được dữ liệu GitHub.');
