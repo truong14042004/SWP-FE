@@ -20,6 +20,7 @@ import { StudentSkillsPage } from './components/StudentSkillsPage';
 import { StudentGithubPage } from './components/StudentGithubPage';
 import { StudentMentorPage } from './components/StudentMentorPage';
 import { StudentSubscriptionPage } from './components/StudentSubscriptionPage';
+import { StudentFeedbacksPage } from './components/StudentFeedbacksPage';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { getGithubRepositories } from './githubApi';
 import { getMentorSessions } from './mentorApi';
@@ -32,6 +33,7 @@ const STUDENT_SECTIONS = [
   { id: 'github', label: 'Tích hợp GitHub' },
   { id: 'portfolio', label: 'Xây dựng Portfolio' },
   { id: 'mentors', label:'AI tư vấn'},
+  { id: 'feedbacks', label: 'Feedback nhận được' },
   { id: 'settings', label: 'Cài đặt' },
 ];
 
@@ -704,7 +706,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
       </aside>
 
       <section className="admin-main student-main">
-      {!['portfolio', 'roadmap','skills','github','mentors','subscription'].includes(activeSection) && (
+      {!['portfolio', 'roadmap','skills','github','mentors','subscription','feedbacks'].includes(activeSection) && (
   <header className="student-header-bar">
     <button type="button" className="student-search-bar" onClick={() => setActiveSection('skills')}>
       <span>⌕</span>
@@ -741,6 +743,8 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   <StudentMentorPage session={session} />
 ) : activeSection === 'subscription' ? (
   <StudentSubscriptionPage session={session} />
+) : activeSection === 'feedbacks' ? (
+  <StudentFeedbacksPage session={session} />
 ) : activeSection === 'settings' ? (
           <section className="student-profile-page">
             <div className="student-profile-heading">
