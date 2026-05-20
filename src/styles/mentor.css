@@ -408,7 +408,7 @@
     background: var(--student-parchment, #f5f5f7);
     padding: 14px 18px;
     display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) 52px;
+    grid-template-columns: minmax(0, 1fr) 52px;
     gap: 12px;
     align-items: end;
 }
@@ -422,7 +422,9 @@
     color: var(--student-ink, #1d1d1f);
     padding: 14px 16px;
     font: inherit;
-    resize: vertical;
+    width: 100%;
+    box-sizing: border-box;
+    resize: none;
     outline: none;
     box-shadow: none;
 }
