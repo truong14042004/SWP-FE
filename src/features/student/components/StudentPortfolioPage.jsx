@@ -399,7 +399,7 @@ export function StudentPortfolioPage({ session }) {
             className="portfolio-btn outline"
             onClick={() => setActiveTab('preview')}
           >
-            👁 Xem trước
+             Xem trước
           </button>
 
           <button
@@ -408,7 +408,7 @@ export function StudentPortfolioPage({ session }) {
             onClick={handlePublish}
             disabled={publishing || loading}
           >
-            🚀 {publishing ? 'Đang xuất bản...' : 'Xuất bản Portfolio'}
+             {publishing ? 'Đang xuất bản...' : 'Xuất bản Portfolio'}
           </button>
         </div>
       </header>
@@ -419,7 +419,7 @@ export function StudentPortfolioPage({ session }) {
           className={activeTab === 'edit' ? 'active' : ''}
           onClick={() => setActiveTab('edit')}
         >
-          ✎ Chỉnh sửa
+           Chỉnh sửa
         </button>
 
         <button
@@ -427,7 +427,7 @@ export function StudentPortfolioPage({ session }) {
           className={activeTab === 'theme' ? 'active' : ''}
           onClick={() => setActiveTab('theme')}
         >
-          🎨 Theme
+           Theme
         </button>
 
         <button
@@ -435,7 +435,7 @@ export function StudentPortfolioPage({ session }) {
           className={activeTab === 'share' ? 'active' : ''}
           onClick={() => setActiveTab('share')}
         >
-          🔗 Chia sẻ
+           Chia sẻ
         </button>
       </nav>
 
