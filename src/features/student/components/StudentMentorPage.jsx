@@ -9,24 +9,6 @@ import {
 import { getStudentProfile } from '../studentApi';
 import { getLatestSkillGap, getUserSkills } from '../skillsApi';
 
-const QUICK_PROMPTS = [
-  {
-    title: 'Phân tích kỹ năng',
-    question: 'Hãy phân tích kỹ năng hiện tại của tôi và chỉ ra 3 điểm cần cải thiện nhất.',
-  },
-  {
-    title: 'Gợi ý thực hành',
-    question: 'Hãy gợi ý cho tôi 3 dự án thực hành phù hợp với mục tiêu nghề nghiệp hiện tại.',
-  },
-  {
-    title: 'Chuẩn bị phỏng vấn',
-    question: 'Tôi nên chuẩn bị gì cho buổi phỏng vấn vị trí mục tiêu?',
-  },
-  {
-    title: 'Cải thiện portfolio',
-    question: 'Portfolio của tôi nên bổ sung những gì để tăng cơ hội được tuyển?',
-  },
-];
 
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
@@ -134,7 +116,6 @@ export function StudentMentorPage({ session }) {
   const [sending, setSending] = useState(false);
 
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
 
   const messagesEndRef = useRef(null);
 
@@ -180,7 +161,6 @@ export function StudentMentorPage({ session }) {
   async function loadInitialData() {
     setLoading(true);
     setError('');
-    setNotice('');
 
     try {
       const [profileResult, userSkillResult, latestGapResult, sessionResult] = await Promise.all([
@@ -249,7 +229,6 @@ export function StudentMentorPage({ session }) {
 
     setLoadingSessionId(id);
     setError('');
-    setNotice('');
 
     try {
       const result = await getMentorSessionById(session, id);
@@ -268,7 +247,6 @@ export function StudentMentorPage({ session }) {
     setSelectedSession(null);
     setQuestion('');
     setError('');
-    setNotice('');
     setMessages([
       {
         id: 'new-ai',
@@ -307,7 +285,6 @@ export function StudentMentorPage({ session }) {
     setQuestion('');
     setSending(true);
     setError('');
-    setNotice('');
 
     try {
       const result = await sendMentorMessage(session, {
@@ -336,7 +313,6 @@ export function StudentMentorPage({ session }) {
 
         return [result, ...current];
       });
-      setNotice('AI Mentor đã phản hồi.');
       toast.success('AI Mentor đã phản hồi.');
     } catch (requestError) {
       const message = requestError.message || 'Không gửi được câu hỏi cho AI Mentor.';
@@ -408,21 +384,6 @@ function cleanGithubUsername(value) {
           </button>
         </header>
 
-        {error && <div className="mentor-alert error">{error}</div>}
-        {notice && <div className="mentor-alert success">{notice}</div>}
-
-        <section className="mentor-quick-prompts">
-          {QUICK_PROMPTS.map((prompt) => (
-            <button
-              key={prompt.title}
-              type="button"
-              onClick={() => applyQuickPrompt(prompt)}
-            >
-              <strong>{prompt.title}</strong>
-              <span>{prompt.question}</span>
-            </button>
-          ))}
-        </section>
 
         <section className="mentor-message-list">
           {messages.map((message) => (
@@ -537,15 +498,6 @@ function cleanGithubUsername(value) {
           )}
         </section>
 
-        <section className="mentor-context-card warning">
-          <span>Gợi ý câu hỏi</span>
-          <button type="button" onClick={() => applyQuickPrompt(QUICK_PROMPTS[0])}>
-            Làm sao cải thiện skill gap?
-          </button>
-          <button type="button" onClick={() => applyQuickPrompt(QUICK_PROMPTS[1])}>
-            Tôi nên làm dự án nào?
-          </button>
-        </section>
       </aside>
     </section>
   );

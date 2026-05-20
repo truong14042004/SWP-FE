@@ -1,11 +1,35 @@
+/* ============================================================
+   PORTFOLIO PAGE - APPLE STYLE
+   File: src/styles/portfolio.css
+   Chỉ áp dụng cho trang Portfolio
+   ============================================================ */
+
 .portfolio-page {
     width: 100%;
     display: grid;
     gap: 24px;
-    color: #0f172a;
+    color: var(--student-ink, #1d1d1f);
+    background: var(--student-parchment, #f5f5f7);
+    font-family: var(--student-font-text,
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif);
 }
 
+/* =========================
+   HEADER
+   ========================= */
+
 .portfolio-header {
+    min-height: 280px;
+    padding: clamp(48px, 7vw, 80px);
+    border: 0;
+    border-radius: 0;
+    background: var(--student-dark, #272729);
+    color: #ffffff;
+    box-shadow: none;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -13,16 +37,27 @@
 }
 
 .portfolio-header h1 {
-    margin: 0 0 8px;
-    font-size: clamp(2rem, 4vw, 3.25rem);
-    line-height: 1.05;
-    letter-spacing: -1.2px;
+    margin: 0 0 10px;
+    color: #ffffff;
+    font-family: var(--student-font-display,
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif);
+    font-size: clamp(40px, 6vw, 56px);
+    font-weight: 600;
+    line-height: 1.07;
+    letter-spacing: -0.28px;
 }
 
 .portfolio-header p {
     margin: 0;
-    color: #475569;
-    font-size: 16px;
+    max-width: 720px;
+    color: var(--student-muted-dark, #cccccc);
+    font-size: 24px;
+    font-weight: 300;
+    line-height: 1.5;
 }
 
 .portfolio-header-actions {
@@ -31,103 +66,152 @@
     flex-wrap: wrap;
 }
 
-.portfolio-btn {
+/* =========================
+   BUTTONS
+   ========================= */
+
+.portfolio-btn,
+.portfolio-project-actions button,
+.portfolio-image-actions button,
+.portfolio-image-upload,
+.portfolio-context-card button {
     min-height: 44px;
-    border-radius: 12px;
-    padding: 0 16px;
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    color: #0f172a;
+    border-radius: 9999px;
+    padding: 0 18px;
+    border: 1px solid var(--student-primary, #0066cc);
+    background: var(--student-canvas, #ffffff);
+    color: var(--student-primary, #0066cc);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    font-size: 14px;
-    font-weight: 900;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 400;
     cursor: pointer;
+    box-shadow: none;
+    transition: 0.16s ease;
 }
 
 .portfolio-btn.primary {
-    border-color: #047857;
-    background: #047857;
-    color: #fff;
+    border: 0;
+    background: var(--student-primary, #0066cc);
+    color: #ffffff;
 }
 
-.portfolio-btn.outline {
-    background: transparent;
+.portfolio-btn.primary:hover {
+    background: var(--student-primary-focus, #0071e3);
 }
 
+.portfolio-btn.outline,
 .portfolio-btn.soft {
-    border-color: #bfdbfe;
-    background: #eff6ff;
-    color: #1d4ed8;
+    border-color: var(--student-primary, #0066cc);
+    background: var(--student-canvas, #ffffff);
+    color: var(--student-primary, #0066cc);
 }
 
 .portfolio-btn.full {
     width: 100%;
 }
 
-.portfolio-btn:disabled {
+.portfolio-btn:active,
+.portfolio-project-actions button:active,
+.portfolio-image-actions button:active,
+.portfolio-image-upload:active {
+    transform: scale(0.95);
+}
+
+.portfolio-btn:disabled,
+.portfolio-project-actions button:disabled,
+.portfolio-image-actions button:disabled,
+.portfolio-image-upload.disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
+/* =========================
+   TABS / ALERTS
+   ========================= */
+
 .portfolio-tabs {
     display: flex;
-    gap: 24px;
-    border-bottom: 1px solid #d1d5db;
+    gap: 10px;
     overflow-x: auto;
+    border-bottom: 0;
+    padding: 4px 0;
 }
 
 .portfolio-tabs button {
-    min-height: 52px;
-    border: 0;
-    border-bottom: 3px solid transparent;
-    background: transparent;
-    color: #334155;
-    padding: 0 4px;
-    font-size: 15px;
-    font-weight: 900;
+    min-height: 44px;
+    border: 1px solid var(--student-hairline, #e0e0e0);
+    border-radius: 9999px;
+    background: var(--student-canvas, #ffffff);
+    color: var(--student-ink, #1d1d1f);
+    padding: 0 18px;
+    font-size: 14px;
+    font-weight: 400;
     white-space: nowrap;
     cursor: pointer;
 }
 
 .portfolio-tabs button.active {
-    border-bottom-color: #0f172a;
-    color: #0f172a;
+    border-color: var(--student-primary, #0066cc);
+    background: var(--student-primary, #0066cc);
+    color: #ffffff;
 }
 
 .portfolio-alert {
-    border-radius: 14px;
+    border-radius: 18px;
+    border: 1px solid var(--student-hairline, #e0e0e0);
+    background: var(--student-canvas, #ffffff);
     padding: 14px 16px;
     font-size: 14px;
-    font-weight: 800;
+    font-weight: 600;
 }
 
 .portfolio-alert.error {
-    border: 1px solid #fecaca;
-    background: #fef2f2;
-    color: #b91c1c;
+    color: #b00020;
 }
 
 .portfolio-alert.success {
-    border: 1px solid #bbf7d0;
-    background: #f0fdf4;
-    color: #047857;
+    color: var(--student-primary, #0066cc);
+}
+
+/* =========================
+   CARDS
+   ========================= */
+
+.portfolio-card,
+.portfolio-public-box,
+.portfolio-project-editor,
+.portfolio-preview,
+.portfolio-theme-card,
+.portfolio-status-grid div {
+    border: 1px solid var(--student-hairline, #e0e0e0);
+    border-radius: 18px;
+    background: var(--student-canvas, #ffffff);
+    color: var(--student-ink, #1d1d1f);
+    box-shadow: none;
 }
 
 .portfolio-card {
-    border: 1px solid #d1d5db;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.95);
     padding: 24px;
-    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.06);
 }
 
-.portfolio-card h2 {
+.portfolio-card h2,
+.portfolio-card-head h2 {
     margin: 0 0 20px;
-    font-size: 24px;
-    letter-spacing: -0.5px;
+    color: var(--student-ink, #1d1d1f);
+    font-family: var(--student-font-display,
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif);
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.28px;
 }
 
 .portfolio-card-head {
@@ -144,8 +228,9 @@
 
 .portfolio-card-head p {
     margin: 0;
-    color: #64748b;
-    font-size: 14px;
+    color: var(--student-muted, #7a7a7a);
+    font-size: 15px;
+    line-height: 1.55;
 }
 
 .portfolio-editor-grid {
@@ -155,6 +240,10 @@
     align-items: start;
 }
 
+/* =========================
+   FORM
+   ========================= */
+
 .portfolio-field {
     display: grid;
     gap: 8px;
@@ -162,40 +251,41 @@
 }
 
 .portfolio-field span {
-    color: #334155;
+    color: var(--student-muted, #7a7a7a);
     font-size: 13px;
-    font-weight: 850;
+    font-weight: 600;
 }
 
 .portfolio-field input,
 .portfolio-field textarea,
 .portfolio-field select {
     width: 100%;
-    border: 1px solid #cbd5e1;
-    border-radius: 10px;
-    background: #fff;
-    color: #0f172a;
-    padding: 12px 14px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 18px;
+    background: var(--student-canvas, #ffffff);
+    color: var(--student-ink, #1d1d1f);
+    padding: 12px 16px;
     font: inherit;
-    font-size: 15px;
+    font-size: 17px;
+    line-height: 1.47;
     outline: none;
+    box-shadow: none;
 }
 
 .portfolio-field input,
 .portfolio-field select {
-    height: 48px;
+    height: 52px;
 }
 
 .portfolio-field textarea {
     resize: vertical;
-    line-height: 1.55;
 }
 
 .portfolio-field input:focus,
 .portfolio-field textarea:focus,
 .portfolio-field select:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    border-color: var(--student-primary, #0066cc);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.12);
 }
 
 .portfolio-slug-input {
@@ -203,40 +293,45 @@
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
     overflow: hidden;
-    border: 1px solid #cbd5e1;
-    border-radius: 10px;
-    background: #f8fafc;
+    border: 1px solid var(--student-hairline, #e0e0e0);
+    border-radius: 18px;
+    background: var(--student-pearl, #fafafc);
 }
 
 .portfolio-slug-input>span {
     padding: 0 12px;
-    color: #64748b;
+    color: var(--student-muted, #7a7a7a);
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 400;
 }
 
 .portfolio-slug-input input {
     border: 0;
-    border-left: 1px solid #e2e8f0;
+    border-left: 1px solid var(--student-hairline, #e0e0e0);
     border-radius: 0;
-    box-shadow: none !important;
+    box-shadow: none;
 }
+
+/* =========================
+   EMPTY
+   ========================= */
 
 .portfolio-empty {
     min-height: 220px;
-    border: 1px dashed #cbd5e1;
+    border: 1px solid var(--student-hairline, #e0e0e0);
     border-radius: 18px;
-    background: #f8fafc;
+    background: var(--student-pearl, #fafafc);
     display: grid;
     place-items: center;
     align-content: center;
     gap: 10px;
     text-align: center;
-    color: #475569;
+    color: var(--student-muted, #7a7a7a);
+    padding: 28px;
 }
 
 .portfolio-empty strong {
-    color: #0f172a;
+    color: var(--student-ink, #1d1d1f);
     font-size: 18px;
 }
 
@@ -244,15 +339,17 @@
     margin: 0;
 }
 
+/* =========================
+   PROJECT EDITOR
+   ========================= */
+
 .portfolio-project-list {
     display: grid;
     gap: 16px;
 }
 
 .portfolio-project-editor {
-    border: 1px solid #dbe3ef;
-    border-radius: 18px;
-    background: #f8fafc;
+    background: var(--student-pearl, #fafafc);
     padding: 18px;
 }
 
@@ -264,15 +361,17 @@
 }
 
 .portfolio-project-head span {
-    color: #2563eb;
+    color: var(--student-primary, #0066cc);
     font-size: 12px;
-    font-weight: 900;
-    text-transform: uppercase;
+    font-weight: 600;
+    text-transform: none;
 }
 
 .portfolio-project-head h3 {
     margin: 4px 0 0;
+    color: var(--student-ink, #1d1d1f);
     font-size: 18px;
+    font-weight: 600;
 }
 
 .portfolio-project-actions {
@@ -282,18 +381,9 @@
 }
 
 .portfolio-project-actions button {
-    min-height: 34px;
-    border: 1px solid #cbd5e1;
-    border-radius: 10px;
-    background: #fff;
-    padding: 0 10px;
-    font-weight: 900;
-    cursor: pointer;
-}
-
-.portfolio-project-actions button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+    min-height: 38px;
+    border-radius: 9999px;
+    padding: 0 14px;
 }
 
 .portfolio-project-actions .danger {
@@ -316,19 +406,27 @@
     grid-column: 1 / -1;
 }
 
-.portfolio-tag-preview {
+/* =========================
+   TAGS / IMAGE ACTIONS
+   ========================= */
+
+.portfolio-tag-preview,
+.portfolio-preview-tags,
+.portfolio-preview-links {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
 }
 
-.portfolio-tag-preview small {
-    border-radius: 999px;
+.portfolio-tag-preview small,
+.portfolio-preview-tags span {
+    border: 1px solid var(--student-hairline, #e0e0e0);
+    border-radius: 9999px;
     padding: 6px 10px;
-    background: #e0f2fe;
-    color: #0369a1;
+    background: var(--student-pearl, #fafafc);
+    color: var(--student-primary, #0066cc);
     font-size: 12px;
-    font-weight: 900;
+    font-weight: 400;
 }
 
 .portfolio-image-actions {
@@ -340,16 +438,7 @@
 .portfolio-image-actions button,
 .portfolio-image-upload {
     min-height: 42px;
-    border: 1px solid #cbd5e1;
-    border-radius: 10px;
-    background: #fff;
-    color: #0f172a;
-    display: grid;
-    place-items: center;
-    padding: 0 12px;
-    font-size: 13px;
-    font-weight: 900;
-    cursor: pointer;
+    border-radius: 9999px;
     position: relative;
     overflow: hidden;
 }
@@ -361,18 +450,16 @@
     cursor: pointer;
 }
 
-.portfolio-image-actions button:disabled,
-.portfolio-image-upload.disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
-
 .portfolio-image-actions small {
     grid-column: 1 / -1;
-    color: #64748b;
+    color: var(--student-muted, #7a7a7a);
     font-size: 12px;
     line-height: 1.45;
 }
+
+/* =========================
+   THEME
+   ========================= */
 
 .portfolio-theme-grid {
     display: grid;
@@ -382,9 +469,6 @@
 }
 
 .portfolio-theme-card {
-    border: 1px solid #dbe3ef;
-    border-radius: 18px;
-    background: #fff;
     padding: 14px;
     display: grid;
     gap: 10px;
@@ -393,57 +477,60 @@
 }
 
 .portfolio-theme-card.active {
-    border-color: #047857;
-    box-shadow: 0 0 0 4px rgba(4, 120, 87, 0.12);
+    border-color: var(--student-primary, #0066cc);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.12);
 }
 
 .portfolio-theme-preview {
     height: 120px;
     border-radius: 14px;
-    background: linear-gradient(135deg, #eff6ff, #ecfdf5);
+    background: var(--student-parchment, #f5f5f7);
+    border: 1px solid var(--student-hairline, #e0e0e0);
 }
 
 .portfolio-theme-preview.dark {
-    background: linear-gradient(135deg, #020617, #334155);
+    background: var(--student-dark, #272729);
 }
 
 .portfolio-theme-preview.minimal {
-    background: linear-gradient(135deg, #fff, #f8fafc);
-    border: 1px solid #e2e8f0;
+    background: var(--student-canvas, #ffffff);
 }
 
 .portfolio-theme-card strong {
     font-size: 16px;
+    color: var(--student-ink, #1d1d1f);
 }
 
 .portfolio-theme-card small {
-    color: #64748b;
+    color: var(--student-muted, #7a7a7a);
     line-height: 1.45;
 }
+
+/* =========================
+   PUBLIC / STATUS
+   ========================= */
 
 .portfolio-public-box {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 18px;
-    border: 1px solid #bfdbfe;
-    border-radius: 18px;
-    background: #eff6ff;
     padding: 18px;
 }
 
 .portfolio-public-box span,
 .portfolio-status-grid span {
     display: block;
-    color: #64748b;
+    color: var(--student-muted, #7a7a7a);
     font-size: 12px;
-    font-weight: 900;
-    text-transform: uppercase;
+    font-weight: 600;
+    text-transform: none;
 }
 
 .portfolio-public-box strong {
     display: block;
     margin-top: 6px;
+    color: var(--student-ink, #1d1d1f);
     font-size: 16px;
     word-break: break-all;
 }
@@ -456,50 +543,56 @@
 }
 
 .portfolio-status-grid div {
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    background: #fff;
     padding: 16px;
 }
 
 .portfolio-status-grid strong {
     display: block;
     margin-top: 8px;
+    color: var(--student-ink, #1d1d1f);
     font-size: 18px;
 }
+
+/* =========================
+   PREVIEW
+   ========================= */
 
 .portfolio-preview {
     border-radius: 28px;
     overflow: hidden;
-    background: #fff;
-    border: 1px solid #dbe3ef;
-    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.1);
 }
 
 .portfolio-preview-hero {
     padding: clamp(28px, 5vw, 56px);
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-    color: #fff;
+    background: var(--student-dark, #272729);
+    color: #ffffff;
 }
 
 .portfolio-preview-hero span {
-    color: #93c5fd;
+    color: var(--student-primary-on-dark, #2997ff);
     font-size: 12px;
-    font-weight: 900;
-    text-transform: uppercase;
+    font-weight: 600;
+    text-transform: none;
 }
 
 .portfolio-preview-hero h2 {
     margin: 12px 0;
-    color: #fff;
+    color: #ffffff;
+    font-family: var(--student-font-display,
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif);
     font-size: clamp(2.2rem, 5vw, 4.6rem);
+    font-weight: 600;
     line-height: 1;
 }
 
 .portfolio-preview-hero p {
     margin: 0;
     max-width: 720px;
-    color: rgba(255, 255, 255, 0.74);
+    color: var(--student-muted-dark, #cccccc);
     font-size: 17px;
     line-height: 1.7;
 }
@@ -514,10 +607,10 @@
     display: grid;
     grid-template-columns: 260px minmax(0, 1fr);
     gap: 22px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--student-hairline, #e0e0e0);
     border-radius: 20px;
     padding: 18px;
-    background: #f8fafc;
+    background: var(--student-pearl, #fafafc);
 }
 
 .portfolio-preview-project img {
@@ -525,62 +618,54 @@
     height: 180px;
     border-radius: 16px;
     object-fit: cover;
-    background: #e2e8f0;
+    background: var(--student-divider, #f0f0f0);
 }
 
 .portfolio-preview-project h3 {
     margin: 0;
+    color: var(--student-ink, #1d1d1f);
     font-size: 24px;
 }
 
 .portfolio-preview-project p {
     margin: 10px 0 0;
-    color: #475569;
+    color: var(--student-muted, #7a7a7a);
     font-size: 15px;
     line-height: 1.6;
 }
 
-.portfolio-preview-tags,
 .portfolio-preview-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
     margin-top: 14px;
 }
 
-.portfolio-preview-tags span {
-    border-radius: 999px;
-    padding: 6px 10px;
-    background: #e0f2fe;
-    color: #0369a1;
-    font-size: 12px;
-    font-weight: 900;
-}
-
 .portfolio-preview-links a {
-    color: #047857;
+    color: var(--student-primary, #0066cc);
     font-size: 13px;
-    font-weight: 900;
+    font-weight: 400;
     text-decoration: none;
 }
 
 .portfolio-preview-dark .portfolio-preview-hero {
-    background: linear-gradient(135deg, #020617, #111827);
+    background: var(--student-dark, #272729);
 }
 
 .portfolio-preview-minimal .portfolio-preview-hero {
-    background: #fff;
-    color: #0f172a;
-    border-bottom: 1px solid #e2e8f0;
+    background: var(--student-canvas, #ffffff);
+    color: var(--student-ink, #1d1d1f);
+    border-bottom: 1px solid var(--student-hairline, #e0e0e0);
 }
 
 .portfolio-preview-minimal .portfolio-preview-hero h2 {
-    color: #0f172a;
+    color: var(--student-ink, #1d1d1f);
 }
 
 .portfolio-preview-minimal .portfolio-preview-hero p {
-    color: #475569;
+    color: var(--student-muted, #7a7a7a);
 }
+
+/* =========================
+   RESPONSIVE
+   ========================= */
 
 @media (max-width: 1100px) {
     .portfolio-editor-grid {
@@ -601,6 +686,16 @@
         flex-direction: column;
     }
 
+    .portfolio-header {
+        min-height: 240px;
+        padding: 48px 24px;
+    }
+
+    .portfolio-header p {
+        font-size: 17px;
+        font-weight: 400;
+    }
+
     .portfolio-header-actions,
     .portfolio-header-actions .portfolio-btn {
         width: 100%;
@@ -614,6 +709,9 @@
 }
 
 @media (max-width: 560px) {
+    .portfolio-header h1 {
+        font-size: 34px;
+    }
 
     .portfolio-card,
     .portfolio-project-editor {
