@@ -19,6 +19,7 @@ import { StudentRoadmapPage } from './components/StudentRoadmapPage';
 import { StudentSkillsPage } from './components/StudentSkillsPage';
 import { StudentGithubPage } from './components/StudentGithubPage';
 import { StudentMentorPage } from './components/StudentMentorPage';
+import { NotificationBell } from '../notifications/NotificationBell';
 import { getGithubRepositories } from './githubApi';
 import { getMentorSessions } from './mentorApi';
 import { getRoadmapById, getRoadmaps } from './roadmapApi';
@@ -704,7 +705,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     </button>
 
     <div className="student-header-actions">
-      <button type="button" className="student-icon-btn" aria-label="Thông báo">🔔</button>
+      <NotificationBell session={session} />
       <button type="button" className="student-avatar-chip" onClick={() => setActiveSection('settings')}>
         {avatarSrc ? <img src={avatarSrc} alt="Student avatar" /> : initials}
       </button>
