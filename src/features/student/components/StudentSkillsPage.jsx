@@ -200,18 +200,22 @@ const [analyzingSkillGap, setAnalyzingSkillGap] = useState(false);
     const totalUser = enrichedUserSkills.length;
     const verified = enrichedUserSkills.filter((item) => item.isVerified).length;
 
-    const average =
-      totalUser > 0
-        ? Math.round(
-            enrichedUserSkills.reduce((sum, item) => sum + getLevelScore(item.level), 0) / totalUser
-          )
-        : 0;
+    const levelOrder = ['Beginner', 'Intermediate', 'Advanced', 'Verified'];
+    let topLevel = '—';
+    let topRank = -1;
+    enrichedUserSkills.forEach((item) => {
+      const idx = levelOrder.indexOf(item.level);
+      if (idx > topRank) {
+        topRank = idx;
+        topLevel = item.level;
+      }
+    });
 
     return {
       totalCatalog,
       totalUser,
       verified,
-      average,
+      topLevel,
     };
   }, [skills, enrichedUserSkills]);
 
@@ -468,9 +472,9 @@ async function handleLoadSkillGapById(event) {
   </article>
 
   <article>
-    <span>Điểm trung bình</span>
-    <strong>{stats.average}%</strong>
-    <small>dựa trên level hiện tại</small>
+    <span>Level cao nhất</span>
+    <strong>{stats.topLevel}</strong>
+    <small>trong các kỹ năng đã thêm</small>
   </article>
 
   <article>
@@ -698,8 +702,8 @@ async function handleLoadSkillGapById(event) {
 }
 
 function UserSkillCard({ userSkill, onEdit, onDelete }) {
-  const score = getLevelScore(userSkill.level);
   const levelClass = getLevelClass(userSkill.level);
+  const levelLabel = userSkill.level || 'Chưa có';
 
   return (
     <article className={`user-skill-card ${levelClass}`}>
@@ -709,15 +713,10 @@ function UserSkillCard({ userSkill, onEdit, onDelete }) {
           <h3>{userSkill.skillName || 'Kỹ năng chưa xác định'}</h3>
         </div>
 
-        <strong>{score}%</strong>
-      </div>
-
-      <div className="user-skill-progress">
-        <span style={{ width: `${score}%` }} />
+        <span className={`user-skill-level-badge ${levelClass}`}>{levelLabel}</span>
       </div>
 
       <div className="user-skill-meta">
-        <span>Level: <b>{userSkill.level || 'Chưa có'}</b></span>
         <span>
           Trạng thái:{' '}
           <b>{userSkill.isVerified ? 'Đã xác minh' : 'Chưa xác minh'}</b>

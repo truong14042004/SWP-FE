@@ -473,6 +473,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarImportDraft, setAvatarImportDraft] = useState('');
   const [dashboardOverview, setDashboardOverview] = useState(DEFAULT_DASHBOARD_OVERVIEW);
   const [loadingOverview, setLoadingOverview] = useState(false);
   const initials = getInitials(session?.user?.fullName);
@@ -607,7 +608,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   }
 
   async function handleAvatarImport() {
-    const avatarUrl = form.avatarUrl.trim();
+    const avatarUrl = avatarImportDraft.trim();
     if (!avatarUrl) {
       toast.error('Vui long nhap URL avatar.');
       return;
@@ -619,6 +620,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
       const imported = await importStudentAvatarFromUrl(session, { url: avatarUrl, fileName });
       const nextAvatarUrl = imported?.downloadPath || imported?.objectName || avatarUrl;
       setForm((current) => ({ ...current, avatarUrl: nextAvatarUrl }));
+      setAvatarImportDraft('');
       toast.success('Da import avatar tu URL.');
     } catch (requestError) {
       toast.error(requestError.message || 'Khong import duoc avatar tu URL.');
@@ -732,6 +734,8 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
               initials={initials}
               avatarSrc={avatarSrc}
               form={form}
+              avatarImportDraft={avatarImportDraft}
+              onAvatarImportDraftChange={(value) => setAvatarImportDraft(value)}
               careerRoles={careerRoles}
               loadingProfile={loadingProfile}
               savingProfile={savingProfile}
