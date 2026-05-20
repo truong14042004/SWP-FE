@@ -705,7 +705,16 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     </button>
 
     <div className="student-header-actions">
-      <NotificationBell session={session} />
+      <NotificationBell
+        session={session}
+        onNavigate={(target) => {
+          // Map BE link target to student section id
+          if (target === 'roadmap') setActiveSection('roadmap');
+          else if (target === 'skills') setActiveSection('skills');
+          else if (target === 'portfolio') setActiveSection('portfolio');
+          else setActiveSection('overview');
+        }}
+      />
       <button type="button" className="student-avatar-chip" onClick={() => setActiveSection('settings')}>
         {avatarSrc ? <img src={avatarSrc} alt="Student avatar" /> : initials}
       </button>
