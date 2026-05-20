@@ -17,6 +17,9 @@ import { StudentRoadmapPage } from './components/StudentRoadmapPage';
 import { StudentSkillsPage } from './components/StudentSkillsPage';
 import { StudentGithubPage } from './components/StudentGithubPage';
 import { StudentMentorPage } from './components/StudentMentorPage';
+import { StudentSubscriptionPage } from './components/StudentSubscriptionPage';
+import { StudentFeedbacksPage } from './components/StudentFeedbacksPage';
+import { NotificationBell } from '../notifications/NotificationBell';
 import { getGithubRepositories } from './githubApi';
 import { getMentorSessions } from './mentorApi';
 import { getRoadmapById, getRoadmaps } from './roadmapApi';
@@ -28,6 +31,7 @@ const STUDENT_SECTIONS = [
   { id: 'github', label: 'Tích hợp GitHub' },
   { id: 'portfolio', label: 'Xây dựng Portfolio' },
   { id: 'mentors', label:'AI tư vấn'},
+  { id: 'feedbacks', label: 'Feedback nhận được' },
   { id: 'settings', label: 'Cài đặt' },
 ];
 
@@ -495,6 +499,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarImportDraft, setAvatarImportDraft] = useState('');
   const [dashboardOverview, setDashboardOverview] = useState(DEFAULT_DASHBOARD_OVERVIEW);
   const [loadingOverview, setLoadingOverview] = useState(false);
   const initials = getInitials(session?.user?.fullName);
@@ -693,7 +698,13 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
         </nav>
 
         <div className="student-sidebar-footer">
-          <button type="button" className="student-upgrade-btn">Nâng cấp tài khoản</button>
+          <button
+            type="button"
+            className="student-upgrade-btn"
+            onClick={() => setActiveSection('subscription')}
+          >
+            Nâng cấp tài khoản
+          </button>
           <div className="admin-account">
             <div className="admin-account-info">
               {avatarSrc ? (
@@ -712,7 +723,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
       </aside>
 
       <section className="admin-main student-main">
-       {!['portfolio', 'roadmap','skills','github','mentors'].includes(activeSection) && (
+      {!['portfolio', 'roadmap','skills','github','mentors','subscription','feedbacks'].includes(activeSection) && (
   <header className="student-header-bar">
     <button type="button" className="student-search-bar" onClick={() => navigateStudentSection('skills')}>
       <span>⌕</span>
@@ -738,6 +749,10 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   <StudentGithubPage session={session} />
 ) : activeSection === 'mentors' ? (
   <StudentMentorPage session={session} />
+) : activeSection === 'subscription' ? (
+  <StudentSubscriptionPage session={session} />
+) : activeSection === 'feedbacks' ? (
+  <StudentFeedbacksPage session={session} />
 ) : activeSection === 'settings' ? (
           <section className="student-profile-page">
             <div className="student-profile-heading">
@@ -750,6 +765,8 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
               initials={initials}
               avatarSrc={avatarSrc}
               form={form}
+              avatarImportDraft={avatarImportDraft}
+              onAvatarImportDraftChange={(value) => setAvatarImportDraft(value)}
               careerRoles={careerRoles}
               loadingProfile={loadingProfile}
               savingProfile={savingProfile}

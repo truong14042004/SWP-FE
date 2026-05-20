@@ -29,6 +29,10 @@ export function getGithubRepositories(session) {
     return authorizedRequest('/api/github/repositories', session);
 }
 
+export function getGithubConnection(session) {
+    return authorizedRequest('/api/github/connection', session);
+}
+
 export function analyzeGithubReadme(session, payload) {
     return authorizedRequest('/api/github/analyze-readme', session, {
         method: 'POST',

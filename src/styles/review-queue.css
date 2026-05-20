@@ -1,0 +1,369 @@
+/* ============================================================
+   ROADMAP REVIEW QUEUE — Apple Style
+   ============================================================ */
+
+.review-queue-page {
+    width: 100%;
+    display: grid;
+    gap: 20px;
+    color: #1d1d1f;
+    font-family: var(--student-font-text, system-ui, -apple-system, BlinkMacSystemFont, sans-serif);
+}
+
+.review-queue-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.review-queue-eyebrow {
+    color: var(--student-primary, #0066cc);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.review-queue-head h1 {
+    margin: 6px 0 4px;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.28px;
+}
+
+.review-queue-head p {
+    margin: 0;
+    color: #6e6e73;
+}
+
+.review-queue-refresh {
+    border: 1px solid var(--student-primary, #0066cc);
+    background: #ffffff;
+    color: var(--student-primary, #0066cc);
+    border-radius: 9999px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.review-queue-refresh:disabled {
+    opacity: 0.5;
+}
+
+.review-queue-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.review-queue-filters button {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: #ffffff;
+    border-radius: 9999px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #6e6e73;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.review-queue-filters button.active {
+    background: var(--student-primary, #0066cc);
+    color: #ffffff;
+    border-color: var(--student-primary, #0066cc);
+    font-weight: 600;
+}
+
+.review-queue-filters button span {
+    background: rgba(0, 0, 0, 0.08);
+    color: inherit;
+    border-radius: 9999px;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.review-queue-filters button.active span {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.review-queue-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #8a8a8e;
+}
+
+.review-queue-empty span {
+    font-size: 36px;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.review-queue-list {
+    display: grid;
+    gap: 16px;
+}
+
+.review-queue-item {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 18px;
+    padding: 20px;
+    display: grid;
+    gap: 14px;
+    transition: 0.15s ease;
+}
+
+.review-queue-item.status-pending {
+    border-color: rgba(255, 149, 0, 0.4);
+    box-shadow: 0 0 0 1px rgba(255, 149, 0, 0.05);
+}
+
+.review-queue-item.status-approved {
+    background: rgba(52, 199, 89, 0.04);
+}
+
+.review-queue-item.status-rejected {
+    background: rgba(255, 59, 48, 0.04);
+}
+
+.review-queue-item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.review-queue-student {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.review-queue-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 9999px;
+    background: rgba(0, 102, 204, 0.12);
+    color: var(--student-primary, #0066cc);
+    display: grid;
+    place-items: center;
+    font-weight: 600;
+    overflow: hidden;
+}
+
+.review-queue-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.review-queue-student strong {
+    display: block;
+    font-size: 15px;
+}
+
+.review-queue-student small {
+    color: #8a8a8e;
+    font-size: 12px;
+}
+
+.review-queue-badge {
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.review-queue-badge.pending {
+    background: rgba(255, 149, 0, 0.14);
+    color: #b35900;
+}
+
+.review-queue-badge.approved {
+    background: rgba(52, 199, 89, 0.14);
+    color: #1f5e2c;
+}
+
+.review-queue-badge.rejected {
+    background: rgba(255, 59, 48, 0.14);
+    color: #a30005;
+}
+
+.review-queue-badge.cancelled {
+    background: rgba(142, 142, 147, 0.14);
+    color: #555558;
+}
+
+.review-queue-node small {
+    color: var(--student-primary, #0066cc);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.review-queue-node h3 {
+    margin: 4px 0 6px;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.review-queue-node p {
+    margin: 0;
+    color: #6e6e73;
+    line-height: 1.5;
+}
+
+.review-queue-meta {
+    display: flex;
+    gap: 20px;
+    color: #8a8a8e;
+    font-size: 12px;
+    flex-wrap: wrap;
+}
+
+.review-queue-note,
+.review-queue-evidence {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.review-queue-note small,
+.review-queue-evidence small {
+    color: #6e6e73;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.review-queue-note p {
+    margin: 0;
+    line-height: 1.5;
+    font-size: 14px;
+}
+
+.review-queue-note.reviewer {
+    background: rgba(0, 102, 204, 0.05);
+}
+
+.review-queue-evidence a {
+    color: var(--student-primary, #0066cc);
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.review-queue-evidence a:hover {
+    text-decoration: underline;
+}
+
+.review-queue-evidence code {
+    display: block;
+    margin-top: 4px;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    font-size: 11px;
+    word-break: break-all;
+}
+
+.review-queue-evidence-file {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.review-queue-evidence-file > div {
+    min-width: 0;
+}
+
+.review-queue-evidence-file strong {
+    font-size: 13px;
+    overflow-wrap: break-word;
+    word-break: break-all;
+}
+
+.review-queue-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    padding-top: 14px;
+}
+
+.review-queue-btn {
+    border: 0;
+    border-radius: 9999px;
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+.review-queue-btn.primary {
+    background: var(--student-primary, #0066cc);
+    color: #ffffff;
+}
+
+.review-queue-btn.primary:hover {
+    background: #0071e3;
+}
+
+.review-queue-btn.outline {
+    background: #ffffff;
+    color: #6e6e73;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.review-queue-btn.danger {
+    background: #ff3b30;
+    color: #ffffff;
+}
+
+.review-queue-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.review-queue-btn.small {
+    padding: 6px 12px;
+    font-size: 12px;
+    flex: 0 0 auto;
+}
+
+.review-queue-reject-form {
+    width: 100%;
+    display: grid;
+    gap: 10px;
+}
+
+.review-queue-reject-form textarea {
+    width: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font: inherit;
+    resize: vertical;
+    outline: none;
+}
+
+.review-queue-reject-form textarea:focus {
+    border-color: var(--student-primary, #0066cc);
+}
+
+.review-queue-reject-form > div {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}

@@ -1,13 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
+import ReactMarkdown from 'react-markdown';
 import '../../../styles/mentor.css';
+import '../../../styles/ai-mentor.css';
 import {
+  getMentorChatQuota,
   getMentorSessionById,
   getMentorSessions,
   sendMentorMessage,
 } from '../mentorApi';
 import { getStudentProfile } from '../studentApi';
 import { getLatestSkillGap, getUserSkills } from '../skillsApi';
+import { RoadmapPreviewCard } from './RoadmapPreviewCard';
+
+const QUICK_PROMPTS = [
+  { id: 'roadmap', label: '🗺️ Tạo lộ trình', question: 'Dựa trên hồ sơ của tôi, hãy tạo một lộ trình học tập 3 tháng để đạt mục tiêu nghề nghiệp.' },
+  { id: 'gap', label: '📊 Phân tích kỹ năng', question: 'Kỹ năng nào của tôi đang yếu nhất và tôi cần tập trung cải thiện như thế nào?' },
+  { id: 'project', label: '💡 Gợi ý dự án', question: 'Gợi ý 3 dỹ án thực hành phù hợp với level và mục tiêu của tôi.' },
+  { id: 'interview', label: '🎯 Chuẩn bị phỏng vấn', question: 'Tôi cần làm gì để chuẩn bị cho phỏng vấn vị trí mong muốn?' },
+];
 
 
 function safeArray(value) {
@@ -116,11 +127,14 @@ export function StudentMentorPage({ session }) {
   const [sending, setSending] = useState(false);
 
   const [error, setError] = useState('');
+  const [quota, setQuota] = useState(null);
 
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     loadInitialData();
+    refreshQuota();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -219,6 +233,8 @@ export function StudentMentorPage({ session }) {
         createdAt: item.createdAt,
         tokensUsed: item.tokensUsed,
         model: item.model,
+        intent: item.intent,
+        suggestions: item.suggestions,
         context: parseContextJson(item.contextJson),
       },
     ];
@@ -262,6 +278,15 @@ export function StudentMentorPage({ session }) {
     setQuestion(prompt.question);
   }
 
+  async function refreshQuota() {
+    try {
+      const result = await getMentorChatQuota(session);
+      setQuota(result);
+    } catch {
+      // ignore
+    }
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
 
@@ -299,6 +324,8 @@ export function StudentMentorPage({ session }) {
         createdAt: result.createdAt || new Date().toISOString(),
         tokensUsed: result.tokensUsed,
         model: result.model,
+        intent: result.intent,
+        suggestions: result.suggestions,
         context: parseContextJson(result.contextJson),
       };
 
@@ -313,6 +340,9 @@ export function StudentMentorPage({ session }) {
 
         return [result, ...current];
       });
+      if (result.quota) {
+        setQuota(result.quota);
+      }
       toast.success('AI Mentor đã phản hồi.');
     } catch (requestError) {
       const message = requestError.message || 'Không gửi được câu hỏi cho AI Mentor.';
@@ -379,9 +409,20 @@ function cleanGithubUsername(value) {
             </p>
           </div>
 
-          <button type="button" onClick={loadInitialData}>
-            Tải lại
-          </button>
+          <div className="mentor-chat-header-side">
+            {quota && quota.limit > 0 && (
+              <div className="ai-mentor-quota" title={`Plan ${quota.planName}`}>
+                <strong>{quota.remaining}</strong>
+                <small>/ {quota.limit} lượt còn lại</small>
+              </div>
+            )}
+            {quota && quota.limit < 0 && (
+              <div className="ai-mentor-quota unlimited">∞ Không giới hạn</div>
+            )}
+            <button type="button" onClick={loadInitialData}>
+              Tải lại
+            </button>
+          </div>
         </header>
 
 
@@ -391,6 +432,7 @@ function cleanGithubUsername(value) {
               key={message.id}
               message={message}
               userInitials={initials}
+              session={session}
             />
           ))}
 
@@ -406,11 +448,21 @@ function cleanGithubUsername(value) {
           <div ref={messagesEndRef} />
         </section>
 
-        <form className="mentor-input-bar" onSubmit={handleSubmit}>
-          <button type="button" className="mentor-attach-btn" title="Đính kèm">
-            📎
-          </button>
+        {!sending && messages.length <= 1 && (
+          <div className="ai-mentor-quick-prompts">
+            {QUICK_PROMPTS.map((prompt) => (
+              <button
+                key={prompt.id}
+                type="button"
+                onClick={() => applyQuickPrompt(prompt)}
+              >
+                {prompt.label}
+              </button>
+            ))}
+          </div>
+        )}
 
+        <form className="mentor-input-bar" onSubmit={handleSubmit}>
           <textarea
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
@@ -503,8 +555,9 @@ function cleanGithubUsername(value) {
   );
 }
 
-function ChatMessage({ message, userInitials }) {
+function ChatMessage({ message, userInitials, session }) {
   const isUser = message.role === 'user';
+  const suggestions = message.suggestions;
 
   return (
     <div className={isUser ? 'mentor-message-row user' : 'mentor-message-row assistant'}>
@@ -514,11 +567,47 @@ function ChatMessage({ message, userInitials }) {
         <div className="mentor-message-label">
           {isUser ? 'Bạn' : 'AI Mentor'}
           {message.createdAt && <span>{formatTime(message.createdAt)}</span>}
+          {message.intent && message.intent !== 'QnA' && (
+            <span className="ai-mentor-intent">{message.intent}</span>
+          )}
         </div>
 
-        <div className="mentor-message-bubble">
-          {message.content}
+        <div className={isUser ? 'mentor-message-bubble' : 'mentor-message-bubble markdown'}>
+          {isUser ? (
+            message.content
+          ) : (
+            <ReactMarkdown>{message.content || ''}</ReactMarkdown>
+          )}
         </div>
+
+        {!isUser && suggestions?.roadmap && (
+          <RoadmapPreviewCard
+            session={session}
+            roadmap={suggestions.roadmap}
+            onApplied={() => {
+              window.location.hash = 'roadmap';
+            }}
+          />
+        )}
+
+        {!isUser && Array.isArray(suggestions?.resources) && suggestions.resources.length > 0 && (
+          <div className="ai-mentor-resources">
+            <strong>Tài liệu tham khảo</strong>
+            <div>
+              {suggestions.resources.slice(0, 5).map((resource, idx) => (
+                <a
+                  key={idx}
+                  href={resource.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>{resource.type === 'Video' ? '▶' : resource.type === 'Course' ? '🎓' : resource.type === 'Book' ? '📖' : '📄'}</span>
+                  <small>{resource.title}</small>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         {!isUser && (message.model || message.tokensUsed) && (
           <div className="mentor-message-meta">

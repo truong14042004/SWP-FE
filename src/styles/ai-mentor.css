@@ -1,0 +1,359 @@
+/* ============================================================
+   AI MENTOR — Apple Style Enhancements
+   ============================================================ */
+
+.mentor-chat-header-side {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ai-mentor-quota {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    background: linear-gradient(135deg, rgba(0, 102, 204, 0.08), rgba(52, 199, 89, 0.06));
+    border: 1px solid rgba(0, 102, 204, 0.18);
+    border-radius: 9999px;
+    padding: 6px 14px;
+    font-family: var(--student-font-text, system-ui);
+}
+
+.ai-mentor-quota strong {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0066cc;
+}
+
+.ai-mentor-quota small {
+    font-size: 11px;
+    color: #6e6e73;
+}
+
+.ai-mentor-quota.unlimited {
+    color: #1f5e2c;
+    background: rgba(52, 199, 89, 0.12);
+    border-color: rgba(52, 199, 89, 0.25);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.ai-mentor-quick-prompts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 16px 12px;
+}
+
+.ai-mentor-quick-prompts button {
+    border: 1px solid rgba(0, 102, 204, 0.2);
+    background: #ffffff;
+    color: #0066cc;
+    border-radius: 9999px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.15s ease;
+    font-family: inherit;
+}
+
+.ai-mentor-quick-prompts button:hover {
+    background: rgba(0, 102, 204, 0.06);
+    transform: translateY(-1px);
+}
+
+.ai-mentor-intent {
+    background: rgba(0, 102, 204, 0.1);
+    color: #0066cc;
+    padding: 1px 8px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-left: 6px;
+}
+
+/* Markdown content inside bubble */
+
+.mentor-message-bubble.markdown {
+    background: rgba(0, 102, 204, 0.04);
+    border: 1px solid rgba(0, 102, 204, 0.08);
+}
+
+.mentor-message-bubble.markdown p {
+    margin: 0 0 8px;
+    line-height: 1.55;
+}
+
+.mentor-message-bubble.markdown p:last-child {
+    margin-bottom: 0;
+}
+
+.mentor-message-bubble.markdown ul,
+.mentor-message-bubble.markdown ol {
+    margin: 4px 0 8px;
+    padding-left: 20px;
+}
+
+.mentor-message-bubble.markdown li {
+    margin: 2px 0;
+    line-height: 1.5;
+}
+
+.mentor-message-bubble.markdown h1,
+.mentor-message-bubble.markdown h2,
+.mentor-message-bubble.markdown h3,
+.mentor-message-bubble.markdown h4 {
+    margin: 12px 0 6px;
+    font-weight: 600;
+}
+
+.mentor-message-bubble.markdown h1 { font-size: 18px; }
+.mentor-message-bubble.markdown h2 { font-size: 16px; }
+.mentor-message-bubble.markdown h3 { font-size: 14.5px; }
+
+.mentor-message-bubble.markdown code {
+    background: rgba(0, 0, 0, 0.06);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.mentor-message-bubble.markdown pre {
+    background: #1e1e2f;
+    color: #ffffff;
+    padding: 12px 14px;
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 8px 0;
+}
+
+.mentor-message-bubble.markdown pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.mentor-message-bubble.markdown a {
+    color: #0066cc;
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+}
+
+.mentor-message-bubble.markdown blockquote {
+    margin: 8px 0;
+    padding: 6px 12px;
+    border-left: 3px solid #0066cc;
+    background: rgba(0, 102, 204, 0.04);
+    color: #3a3a3c;
+}
+
+/* AI Roadmap preview card */
+
+.ai-roadmap-card {
+    margin-top: 12px;
+    background: linear-gradient(135deg, #ffffff, rgba(0, 102, 204, 0.03));
+    border: 1px solid rgba(0, 102, 204, 0.18);
+    border-radius: 18px;
+    padding: 18px 20px;
+    display: grid;
+    gap: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.ai-roadmap-card header {
+    display: grid;
+    gap: 4px;
+}
+
+.ai-roadmap-eyebrow {
+    color: #0066cc;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.ai-roadmap-card h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.ai-roadmap-card header p {
+    margin: 0;
+    color: #6e6e73;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.ai-roadmap-stats {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 12px;
+}
+
+.ai-roadmap-stats > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 80px;
+}
+
+.ai-roadmap-stats strong {
+    font-size: 18px;
+    color: #1d1d1f;
+    font-weight: 700;
+}
+
+.ai-roadmap-stats small {
+    color: #6e6e73;
+    font-size: 11px;
+}
+
+.ai-roadmap-toggle {
+    border: 0;
+    background: transparent;
+    color: #0066cc;
+    padding: 4px 0;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.ai-roadmap-toggle:hover {
+    text-decoration: underline;
+}
+
+.ai-roadmap-tree {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 10px;
+    padding: 10px 12px;
+    max-height: 320px;
+    overflow-y: auto;
+    display: grid;
+    gap: 6px;
+}
+
+.ai-roadmap-tree-node {
+    padding-left: calc(var(--depth, 0) * 14px);
+    border-left: 2px solid transparent;
+}
+
+.ai-roadmap-tree-node:has(.ai-roadmap-tree-node) {
+    border-left-color: rgba(0, 102, 204, 0.15);
+    padding-bottom: 2px;
+}
+
+.ai-roadmap-tree-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    justify-content: space-between;
+}
+
+.ai-roadmap-tree-row strong {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.ai-roadmap-tree-row small {
+    color: #8a8a8e;
+    font-size: 11px;
+    flex: 0 0 auto;
+}
+
+.ai-roadmap-tree-node p {
+    margin: 2px 0 6px;
+    color: #6e6e73;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.ai-roadmap-apply {
+    border: 0;
+    background: linear-gradient(135deg, #0066cc, #0071e3);
+    color: #ffffff;
+    border-radius: 9999px;
+    padding: 11px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: 0.15s ease;
+}
+
+.ai-roadmap-apply:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(0, 102, 204, 0.22);
+}
+
+.ai-roadmap-apply:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* AI Resources */
+
+.ai-mentor-resources {
+    margin-top: 10px;
+    background: rgba(255, 149, 0, 0.05);
+    border: 1px solid rgba(255, 149, 0, 0.18);
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.ai-mentor-resources > strong {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #b35900;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 6px;
+}
+
+.ai-mentor-resources > div {
+    display: grid;
+    gap: 4px;
+}
+
+.ai-mentor-resources a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #1d1d1f;
+    transition: 0.1s ease;
+}
+
+.ai-mentor-resources a:hover {
+    background: rgba(255, 149, 0, 0.08);
+}
+
+.ai-mentor-resources a span {
+    font-size: 14px;
+    flex: 0 0 auto;
+}
+
+.ai-mentor-resources a small {
+    font-size: 13px;
+    color: #1d1d1f;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
