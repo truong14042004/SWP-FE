@@ -1,3 +1,5 @@
+import '../../styles/member.css';
+
 export function StudentHome({ session, onSignOut }) {
   return (
     <RoleHome

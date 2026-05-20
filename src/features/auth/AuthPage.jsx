@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiUrl, googleClientId } from '../../config';
 import { apiRequest } from '../../api/http';
 import { persistSession } from '../../auth/session';
@@ -6,193 +6,436 @@ import '../../styles/auth.css';
 
 const INIT_LOGIN    = { username: '', password: '' };
 const INIT_REGISTER = { username: '', email: '', fullName: '', password: '', confirmPassword: '' };
-const INIT_OTP      = { email: '', otp: '' };
+const OTP_LENGTH    = 6;
 
+/* ────────────────────────────────────────────────────────────
+   Inline icons — small SVGs to avoid raster assets.
+   ──────────────────────────────────────────────────────────── */
+const Icon = {
+  user: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4.42 3.58-8 8-8s8 3.58 8 8" />
+    </svg>
+  ),
+  mail: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 7l9 6 9-6" />
+    </svg>
+  ),
+  lock: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 1 1 8 0v3" />
+    </svg>
+  ),
+  eye: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ),
+  eyeOff: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 3l18 18" />
+      <path d="M10.6 10.6a3 3 0 0 0 4.2 4.2" />
+      <path d="M9.9 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a17.4 17.4 0 0 1-3.3 4.4" />
+      <path d="M6.7 6.7A17.6 17.6 0 0 0 2 12s3.5 7 10 7a10.5 10.5 0 0 0 4.6-1.1" />
+    </svg>
+  ),
+  badge: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 7l8-4 8 4-8 4-8-4Z" />
+      <path d="M4 12l8 4 8-4" />
+      <path d="M4 17l8 4 8-4" />
+    </svg>
+  ),
+  check: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  ),
+  warn: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 9v4M12 17h.01" />
+      <path d="M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+    </svg>
+  ),
+};
+
+/* ────────────────────────────────────────────────────────────
+   Password strength estimator (0–4).
+   ──────────────────────────────────────────────────────────── */
+function scorePassword(value = '') {
+  if (!value) return 0;
+  let score = 0;
+  if (value.length >= 8) score += 1;
+  if (value.length >= 12) score += 1;
+  if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score += 1;
+  if (/\d/.test(value) && /[^A-Za-z0-9]/.test(value)) score += 1;
+  return Math.min(score, 4);
+}
+
+const STRENGTH_LABEL = ['Trống', 'Yếu', 'Trung bình', 'Khá', 'Mạnh'];
+
+/* ────────────────────────────────────────────────────────────
+   AuthPage — login / register / OTP confirmation.
+   ──────────────────────────────────────────────────────────── */
 export function AuthPage({ onAuthenticated, onBackHome }) {
-  const [mode, setMode]             = useState('login');   // 'login' | 'register' | 'otp'
-  const [loginForm, setLoginForm]   = useState(INIT_LOGIN);
-  const [regForm,   setRegForm]     = useState(INIT_REGISTER);
-  const [otpForm,   setOtpForm]     = useState(INIT_OTP);
-  const [status, setStatus]         = useState('idle');
-  const [message, setMessage]       = useState('');
+  const [mode, setMode]           = useState('login');         // 'login' | 'register' | 'otp'
+  const [loginForm, setLoginForm] = useState(INIT_LOGIN);
+  const [regForm, setRegForm]     = useState(INIT_REGISTER);
+  const [otpEmail, setOtpEmail]   = useState('');
+  const [otpDigits, setOtpDigits] = useState(() => Array(OTP_LENGTH).fill(''));
+  const [showLoginPwd, setShowLoginPwd]     = useState(false);
+  const [showRegPwd, setShowRegPwd]         = useState(false);
+  const [showRegConfirm, setShowRegConfirm] = useState(false);
+  const [status, setStatus]   = useState('idle');
+  const [message, setMessage] = useState('');
+  const [resendTimer, setResendTimer] = useState(0);
 
-  const isLoading        = status === 'loading';
-  const isGoogleEnabled  = Boolean(apiUrl && googleClientId);
+  const otpRefs = useRef([]);
+  const isLoading       = status === 'loading';
+  const isGoogleEnabled = Boolean(apiUrl && googleClientId);
+  const passwordScore   = useMemo(() => scorePassword(regForm.password), [regForm.password]);
 
-  /* ── Google button ── */
+  /* ── Resend countdown ── */
   useEffect(() => {
-    if (!isGoogleEnabled || mode === 'otp') return;
+    if (resendTimer <= 0) return undefined;
+    const id = setTimeout(() => setResendTimer((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [resendTimer]);
+
+  /* ── Google identity rendering ── */
+  useEffect(() => {
+    if (!isGoogleEnabled || mode === 'otp') return undefined;
+
     const render = () => {
       const el = document.getElementById('g-btn');
       if (!el || !window.google?.accounts?.id) return;
       el.replaceChildren();
       window.google.accounts.id.initialize({ client_id: googleClientId, callback: handleGoogle });
-      window.google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', width: 320, shape: 'pill' });
+      window.google.accounts.id.renderButton(el, {
+        theme: 'outline',
+        size: 'large',
+        width: 360,
+        shape: 'pill',
+        text: 'continue_with',
+      });
     };
-    if (window.google?.accounts?.id) { render(); return; }
+
+    if (window.google?.accounts?.id) { render(); return undefined; }
+
     let s = document.getElementById('gsi-script');
     if (!s) {
       s = Object.assign(document.createElement('script'), {
-        id: 'gsi-script', src: 'https://accounts.google.com/gsi/client', async: true, defer: true,
+        id: 'gsi-script',
+        src: 'https://accounts.google.com/gsi/client',
+        async: true,
+        defer: true,
       });
       document.body.appendChild(s);
     }
     s.addEventListener('load', render);
     return () => s.removeEventListener('load', render);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGoogleEnabled, mode]);
 
+  /* ── Helpers ── */
   function field(setter) {
     return (e) => setter((p) => ({ ...p, [e.target.name]: e.target.value }));
   }
 
   function switchMode(next) {
-    setMode(next); setStatus('idle'); setMessage('');
-    if (next !== 'otp') { setOtpForm(INIT_OTP); }
+    setMode(next);
+    setStatus('idle');
+    setMessage('');
+    if (next !== 'otp') {
+      setOtpEmail('');
+      setOtpDigits(Array(OTP_LENGTH).fill(''));
+    }
   }
 
+  /* ── OTP cell handlers ── */
+  function handleOtpChange(index, value) {
+    const v = value.replace(/\D/g, '').slice(0, 1);
+    setOtpDigits((prev) => {
+      const next = [...prev];
+      next[index] = v;
+      return next;
+    });
+    if (v && index < OTP_LENGTH - 1) {
+      otpRefs.current[index + 1]?.focus();
+    }
+  }
+
+  function handleOtpKeyDown(index, e) {
+    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+    if (e.key === 'ArrowLeft' && index > 0) otpRefs.current[index - 1]?.focus();
+    if (e.key === 'ArrowRight' && index < OTP_LENGTH - 1) otpRefs.current[index + 1]?.focus();
+  }
+
+  function handleOtpPaste(e) {
+    const pasted = (e.clipboardData?.getData('text') || '').replace(/\D/g, '').slice(0, OTP_LENGTH);
+    if (!pasted) return;
+    e.preventDefault();
+    const next = Array(OTP_LENGTH).fill('');
+    for (let i = 0; i < pasted.length; i += 1) next[i] = pasted[i];
+    setOtpDigits(next);
+    const focusIndex = Math.min(pasted.length, OTP_LENGTH - 1);
+    otpRefs.current[focusIndex]?.focus();
+  }
+
+  /* ── Auth submit (login + register) ── */
   async function submitAuth(e) {
-    e.preventDefault(); setStatus('loading'); setMessage('');
+    e.preventDefault();
+    setStatus('loading');
+    setMessage('');
     try {
-      if (mode === 'register' && regForm.password !== regForm.confirmPassword)
+      if (mode === 'register' && regForm.password !== regForm.confirmPassword) {
         throw new Error('Mật khẩu xác nhận không khớp.');
+      }
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
-      const body = mode === 'login' ? loginForm : regForm;
-      const payload = await apiRequest(endpoint, { method: 'POST', body: JSON.stringify(body) });
+      const body     = mode === 'login' ? loginForm : regForm;
+      const payload  = await apiRequest(endpoint, { method: 'POST', body: JSON.stringify(body) });
+
       if (mode === 'register') {
-        setOtpForm({ email: payload.email, otp: '' });
+        setOtpEmail(payload.email);
+        setOtpDigits(Array(OTP_LENGTH).fill(''));
         setStatus('success');
-        setMessage(payload.message || 'Mã OTP đã được gửi đến email của bạn.');
+        setMessage(payload.message || 'Mã xác thực đã được gửi đến email của bạn.');
         setMode('otp');
+        setResendTimer(60);
         return;
       }
-      persistSession(payload); onAuthenticated(payload);
-    } catch (err) { setStatus('error'); setMessage(err.message); }
+      persistSession(payload);
+      onAuthenticated(payload);
+    } catch (err) {
+      setStatus('error');
+      setMessage(err.message);
+    }
   }
 
+  /* ── OTP submit ── */
   async function submitOtp(e) {
-    e.preventDefault(); setStatus('loading'); setMessage('');
+    e.preventDefault();
+    const otp = otpDigits.join('');
+    if (otp.length !== OTP_LENGTH) {
+      setStatus('error');
+      setMessage(`Vui lòng nhập đủ ${OTP_LENGTH} chữ số.`);
+      return;
+    }
+    setStatus('loading');
+    setMessage('');
     try {
-      const payload = await apiRequest('/api/auth/verify-email', { method: 'POST', body: JSON.stringify(otpForm) });
-      persistSession(payload); onAuthenticated(payload);
-    } catch (err) { setStatus('error'); setMessage(err.message); }
+      const payload = await apiRequest('/api/auth/verify-email', {
+        method: 'POST',
+        body: JSON.stringify({ email: otpEmail, otp }),
+      });
+      persistSession(payload);
+      onAuthenticated(payload);
+    } catch (err) {
+      setStatus('error');
+      setMessage(err.message);
+    }
   }
 
+  /* ── Resend OTP ── */
+  async function resendOtp() {
+    if (resendTimer > 0) return;
+    setStatus('loading');
+    setMessage('');
+    try {
+      await apiRequest('/api/auth/resend-otp', {
+        method: 'POST',
+        body: JSON.stringify({ email: otpEmail }),
+      });
+      setResendTimer(60);
+      setStatus('success');
+      setMessage('Mã xác thực mới đã được gửi.');
+    } catch (err) {
+      setStatus('error');
+      setMessage(err.message);
+    }
+  }
+
+  /* ── Google sign-in ── */
   async function handleGoogle(res) {
-    setStatus('loading'); setMessage('');
+    setStatus('loading');
+    setMessage('');
     try {
-      const payload = await apiRequest('/api/auth/google', { method: 'POST', body: JSON.stringify({ idToken: res.credential }) });
-      persistSession(payload); onAuthenticated(payload);
-    } catch (err) { setStatus('error'); setMessage(err.message); }
+      const payload = await apiRequest('/api/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ idToken: res.credential }),
+      });
+      persistSession(payload);
+      onAuthenticated(payload);
+    } catch (err) {
+      setStatus('error');
+      setMessage(err.message);
+    }
   }
 
-  /* ── Shared status bar ── */
-  const StatusBar = () => (
-    <>
-      {status === 'error'   && <div className="auth-msg auth-msg--err">{message}</div>}
-      {status === 'success' && message && <div className="auth-msg auth-msg--ok">{message}</div>}
-    </>
-  );
+  /* ── Status banner ── */
+  function StatusBar() {
+    if (status === 'error') {
+      return (
+        <div className="auth-msg auth-msg--err" role="alert">
+          <span className="auth-msg-icon">{Icon.warn}</span>
+          <span>{message}</span>
+        </div>
+      );
+    }
+    if (status === 'success' && message) {
+      return (
+        <div className="auth-msg auth-msg--ok" role="status">
+          <span className="auth-msg-icon">{Icon.check}</span>
+          <span>{message}</span>
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div className="auth-page">
 
-      {/* Left — brand panel */}
-      <div className="auth-brand">
+      {/* ─────────── LEFT — DARK BRAND PANEL ─────────── */}
+      <aside className="auth-brand" aria-label="CareerMap">
         <div className="auth-brand-inner">
-          <button className="auth-back" onClick={onBackHome}>← Trang chủ</button>
+          <button type="button" className="auth-back" onClick={onBackHome}>
+            ← Trang chủ
+          </button>
+
           <div className="auth-brand-logo">
-            <span className="hp-logo-mark">CM</span>
-            <span>CareerMap</span>
+            <span className="auth-brand-mark">CM</span>
+            CareerMap
           </div>
+
           <div className="auth-brand-copy">
-            <h1>Lộ trình nghề<br />nghiệp của bạn,<br />rõ ràng hơn.</h1>
+            <h1>
+              Lộ trình <em>nghề nghiệp</em><br />
+              của bạn — rõ ràng hơn.
+            </h1>
             <p>
-              Từ phân tích skill gap đến mentor review — CareerMap xây dựng
-              lộ trình cá nhân hoá đến đúng mục tiêu của bạn.
+              Phân tích kỹ năng, sinh lộ trình học, và nhận đánh giá từ mentor đang
+              làm việc tại các công ty công nghệ — tất cả ở một nền tảng duy nhất.
             </p>
           </div>
+
+          <ul className="auth-brand-points">
+            <li>Skill gap analysis dựa trên dữ liệu thị trường</li>
+            <li>Lộ trình cá nhân hoá, cập nhật theo tuần</li>
+            <li>Mentor review portfolio trong 48 giờ</li>
+          </ul>
+
           <div className="auth-brand-chips">
             {['Student', 'Counselor', 'Mentor', 'Admin'].map((r) => (
               <span key={r} className="auth-chip">{r}</span>
             ))}
           </div>
-        </div>
-      </div>
 
-      {/* Right — form panel */}
-      <div className="auth-form-side">
+          <p className="auth-brand-foot">© {new Date().getFullYear()} CareerMap · Việt Nam</p>
+        </div>
+      </aside>
+
+      {/* ─────────── RIGHT — FORM PANEL ─────────── */}
+      <main className="auth-form-side">
         <div className="auth-form-wrap">
 
-          {/* ── OTP screen ── */}
+          {/* ============== OTP SCREEN ============== */}
           {mode === 'otp' ? (
-            <div className="auth-card">
-              <div className="auth-card-icon">📬</div>
-              <h2 className="auth-card-title">Kiểm tra email của bạn</h2>
-              <p className="auth-card-sub">
-                Chúng tôi đã gửi mã 6 chữ số tới <strong>{otpForm.email}</strong>
-              </p>
+            <section className="auth-card" aria-label="Xác thực OTP">
+              <header className="auth-card-head">
+                <span className="auth-card-eyebrow">Bước cuối cùng</span>
+                <h2 className="auth-card-title">Kiểm tra email của bạn</h2>
+                <p className="auth-card-sub">
+                  Chúng tôi đã gửi mã 6 chữ số tới <strong>{otpEmail}</strong>.
+                  Mã có hiệu lực trong 10 phút.
+                </p>
+              </header>
+
               <form onSubmit={submitOtp} className="auth-fields">
                 <div className="auth-field">
-                  <label htmlFor="otp-email">Email</label>
-                  <input
-                    id="otp-email"
-                    name="email"
-                    type="email"
-                    value={otpForm.email}
-                    onChange={field(setOtpForm)}
-                    readOnly
-                    required
-                  />
+                  <label>Mã xác thực</label>
+                  <div className="auth-otp-cells" onPaste={handleOtpPaste}>
+                    {otpDigits.map((digit, i) => (
+                      <input
+                        key={i}
+                        ref={(el) => { otpRefs.current[i] = el; }}
+                        className={digit ? 'filled' : ''}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={1}
+                        value={digit}
+                        autoFocus={i === 0}
+                        autoComplete={i === 0 ? 'one-time-code' : 'off'}
+                        aria-label={`Chữ số ${i + 1}`}
+                        onChange={(e) => handleOtpChange(i, e.target.value)}
+                        onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <div className="auth-field">
-                  <label htmlFor="otp-code">Mã OTP (6 chữ số)</label>
-                  <input
-                    id="otp-code"
-                    name="otp"
-                    className="auth-otp"
-                    value={otpForm.otp}
-                    onChange={field(setOtpForm)}
-                    inputMode="numeric"
-                    pattern="[0-9]{6}"
-                    minLength={6}
-                    maxLength={6}
-                    placeholder="000000"
-                    autoComplete="one-time-code"
-                    autoFocus
-                    required
-                  />
+
+                <div className="auth-otp-meta">
+                  <span>Không nhận được mã?</span>
+                  <button
+                    type="button"
+                    className="auth-text-btn"
+                    onClick={resendOtp}
+                    disabled={resendTimer > 0 || isLoading}
+                  >
+                    {resendTimer > 0 ? `Gửi lại sau ${resendTimer}s` : 'Gửi lại mã'}
+                  </button>
                 </div>
+
                 <StatusBar />
+
                 <button type="submit" className="auth-submit" disabled={isLoading}>
-                  {isLoading ? 'Đang xác nhận…' : 'Xác nhận OTP'}
+                  {isLoading ? <><span className="auth-spinner" />Đang xác nhận…</> : 'Xác nhận OTP'}
                 </button>
               </form>
-              <button className="auth-text-btn" onClick={() => switchMode('register')}>
+
+              <button type="button" className="auth-text-btn" onClick={() => switchMode('register')}>
                 ← Nhập lại thông tin đăng ký
               </button>
-            </div>
+            </section>
+          )
 
-          /* ── Login / Register screen ── */
-          ) : (
-            <div className="auth-card">
-              <h2 className="auth-card-title">
-                {mode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}
-              </h2>
-              <p className="auth-card-sub">
-                {mode === 'login'
-                  ? 'Chào mừng trở lại. Đăng nhập để tiếp tục.'
-                  : 'Tham gia CareerMap và bắt đầu lộ trình của bạn.'}
-              </p>
+          /* ============== LOGIN / REGISTER ============== */
+          : (
+            <section className="auth-card" aria-label={mode === 'login' ? 'Đăng nhập' : 'Đăng ký'}>
+              <header className="auth-card-head">
+                <span className="auth-card-eyebrow">
+                  {mode === 'login' ? 'Chào mừng trở lại' : 'Bắt đầu hành trình'}
+                </span>
+                <h2 className="auth-card-title">
+                  {mode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}
+                </h2>
+                <p className="auth-card-sub">
+                  {mode === 'login'
+                    ? 'Đăng nhập để tiếp tục lộ trình của bạn.'
+                    : 'Chỉ vài thông tin để CareerMap đồng hành cùng bạn.'}
+                </p>
+              </header>
 
-              {/* Mode toggle */}
               <div className="auth-toggle" role="tablist">
                 <button
+                  type="button"
                   role="tab"
+                  aria-selected={mode === 'login'}
                   className={mode === 'login' ? 'active' : ''}
                   onClick={() => switchMode('login')}
                 >Đăng nhập</button>
                 <button
+                  type="button"
                   role="tab"
+                  aria-selected={mode === 'register'}
                   className={mode === 'register' ? 'active' : ''}
                   onClick={() => switchMode('register')}
                 >Đăng ký</button>
@@ -202,48 +445,131 @@ export function AuthPage({ onAuthenticated, onBackHome }) {
                 {mode === 'register' && (
                   <div className="auth-field">
                     <label htmlFor="reg-fullName">Họ và tên</label>
-                    <input id="reg-fullName" name="fullName" value={regForm.fullName}
-                      onChange={field(setRegForm)} placeholder="Nguyễn Văn A"
-                      maxLength={200} autoComplete="name" required />
+                    <div className="auth-input with-icon">
+                      <input
+                        id="reg-fullName"
+                        name="fullName"
+                        value={regForm.fullName}
+                        onChange={field(setRegForm)}
+                        placeholder="Nguyễn Văn A"
+                        maxLength={200}
+                        autoComplete="name"
+                        required
+                      />
+                      <span className="auth-input-icon">{Icon.badge}</span>
+                    </div>
                   </div>
                 )}
 
                 <div className="auth-field">
                   <label htmlFor="auth-username">Tên đăng nhập</label>
-                  <input id="auth-username" name="username"
-                    value={mode === 'login' ? loginForm.username : regForm.username}
-                    onChange={mode === 'login' ? field(setLoginForm) : field(setRegForm)}
-                    placeholder="your_username"
-                    minLength={3} maxLength={100} autoComplete="username" required />
+                  <div className="auth-input with-icon">
+                    <input
+                      id="auth-username"
+                      name="username"
+                      value={mode === 'login' ? loginForm.username : regForm.username}
+                      onChange={mode === 'login' ? field(setLoginForm) : field(setRegForm)}
+                      placeholder="your_username"
+                      minLength={3}
+                      maxLength={100}
+                      autoComplete="username"
+                      required
+                    />
+                    <span className="auth-input-icon">{Icon.user}</span>
+                  </div>
                 </div>
 
                 {mode === 'register' && (
                   <div className="auth-field">
                     <label htmlFor="reg-email">Email</label>
-                    <input id="reg-email" name="email" type="email" value={regForm.email}
-                      onChange={field(setRegForm)} placeholder="you@example.com"
-                      maxLength={256} autoComplete="email" required />
+                    <div className="auth-input with-icon">
+                      <input
+                        id="reg-email"
+                        name="email"
+                        type="email"
+                        value={regForm.email}
+                        onChange={field(setRegForm)}
+                        placeholder="you@example.com"
+                        maxLength={256}
+                        autoComplete="email"
+                        required
+                      />
+                      <span className="auth-input-icon">{Icon.mail}</span>
+                    </div>
                   </div>
                 )}
 
                 <div className="auth-field">
                   <label htmlFor="auth-password">Mật khẩu</label>
-                  <input id="auth-password" name="password" type="password"
-                    value={mode === 'login' ? loginForm.password : regForm.password}
-                    onChange={mode === 'login' ? field(setLoginForm) : field(setRegForm)}
-                    placeholder="••••••••"
-                    minLength={6} maxLength={100}
-                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                    required />
+                  <div className="auth-input with-icon">
+                    <input
+                      id="auth-password"
+                      name="password"
+                      type={(mode === 'login' ? showLoginPwd : showRegPwd) ? 'text' : 'password'}
+                      value={mode === 'login' ? loginForm.password : regForm.password}
+                      onChange={mode === 'login' ? field(setLoginForm) : field(setRegForm)}
+                      placeholder="••••••••"
+                      minLength={6}
+                      maxLength={100}
+                      autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                      required
+                    />
+                    <span className="auth-input-icon">{Icon.lock}</span>
+                    <button
+                      type="button"
+                      className="auth-input-toggle"
+                      onClick={() =>
+                        mode === 'login'
+                          ? setShowLoginPwd((v) => !v)
+                          : setShowRegPwd((v) => !v)
+                      }
+                      aria-label="Hiện / ẩn mật khẩu"
+                    >
+                      {(mode === 'login' ? showLoginPwd : showRegPwd) ? Icon.eyeOff : Icon.eye}
+                    </button>
+                  </div>
+
+                  {mode === 'register' && regForm.password && (
+                    <>
+                      <div className="auth-strength" data-score={passwordScore}>
+                        <span className="auth-strength-bar" />
+                        <span className="auth-strength-bar" />
+                        <span className="auth-strength-bar" />
+                        <span className="auth-strength-bar" />
+                      </div>
+                      <span className="auth-strength-label">
+                        Độ mạnh: {STRENGTH_LABEL[passwordScore]}
+                      </span>
+                    </>
+                  )}
                 </div>
 
                 {mode === 'register' && (
                   <div className="auth-field">
                     <label htmlFor="reg-confirm">Xác nhận mật khẩu</label>
-                    <input id="reg-confirm" name="confirmPassword" type="password"
-                      value={regForm.confirmPassword} onChange={field(setRegForm)}
-                      placeholder="••••••••"
-                      minLength={6} maxLength={100} autoComplete="new-password" required />
+                    <div className="auth-input with-icon">
+                      <input
+                        id="reg-confirm"
+                        name="confirmPassword"
+                        type={showRegConfirm ? 'text' : 'password'}
+                        value={regForm.confirmPassword}
+                        onChange={field(setRegForm)}
+                        placeholder="••••••••"
+                        minLength={6}
+                        maxLength={100}
+                        autoComplete="new-password"
+                        required
+                      />
+                      <span className="auth-input-icon">{Icon.lock}</span>
+                      <button
+                        type="button"
+                        className="auth-input-toggle"
+                        onClick={() => setShowRegConfirm((v) => !v)}
+                        aria-label="Hiện / ẩn mật khẩu"
+                      >
+                        {showRegConfirm ? Icon.eyeOff : Icon.eye}
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -251,7 +577,12 @@ export function AuthPage({ onAuthenticated, onBackHome }) {
 
                 <button type="submit" className="auth-submit" disabled={isLoading}>
                   {isLoading
-                    ? (mode === 'login' ? 'Đang đăng nhập…' : 'Đang tạo tài khoản…')
+                    ? (
+                      <>
+                        <span className="auth-spinner" />
+                        {mode === 'login' ? 'Đang đăng nhập…' : 'Đang tạo tài khoản…'}
+                      </>
+                    )
                     : (mode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản')}
                 </button>
               </form>
@@ -262,11 +593,19 @@ export function AuthPage({ onAuthenticated, onBackHome }) {
                   <div className="auth-google"><div id="g-btn" /></div>
                 </>
               )}
-            </div>
+
+              <p className="auth-card-foot">
+                {mode === 'login' ? (
+                  <>Chưa có tài khoản? <button type="button" className="auth-text-btn" onClick={() => switchMode('register')}>Đăng ký ngay</button></>
+                ) : (
+                  <>Đã có tài khoản? <button type="button" className="auth-text-btn" onClick={() => switchMode('login')}>Đăng nhập</button></>
+                )}
+              </p>
+            </section>
           )}
 
         </div>
-      </div>
+      </main>
     </div>
   );
 }

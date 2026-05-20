@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import '../../styles.css';
+import '../../styles/admin.css';
 import { AdminLayout } from './components/AdminLayout';
 import {
+  createCounselorAssignment,
   deleteAdminUser,
   deleteCareerRole,
+  deleteCounselorAssignment,
   deleteLearningResource,
   deleteRoleSkillRequirement,
   deleteSkill,
@@ -31,11 +33,11 @@ import { OverviewView } from './views/OverviewView';
 import { UsersView } from './views/UsersView';
 import { PaymentsView } from './views/PaymentsView';
 import { PlansView } from './views/PlansView';
-import { LearningView } from './views/LearningView';
 import { SkillsView } from './views/SkillsView';
 import { ResourcesView } from './views/ResourcesView';
 import { RequirementsView } from './views/RequirementsView';
 import { CareerRolesView } from './views/CareerRolesView';
+import { AssignmentsView } from './views/AssignmentsView';
 
 export function AdminDashboard({ session, onSignOut }) {
   const [activeSection, setActiveSection] = useState('overview');
@@ -46,7 +48,10 @@ export function AdminDashboard({ session, onSignOut }) {
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedPayment, setSelectedPayment] = useState(null);
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function refresh() {
     setLoading(true);
@@ -65,9 +70,7 @@ export function AdminDashboard({ session, onSignOut }) {
     setNotice('');
     try {
       await action();
-      if (successMessage) {
-        setNotice(successMessage);
-      }
+      if (successMessage) setNotice(successMessage);
       await refresh();
     } catch (requestError) {
       setError(requestError.message);
@@ -90,7 +93,7 @@ export function AdminDashboard({ session, onSignOut }) {
   async function handleToggleUserStatus(user) {
     await runAction(
       () => updateUserStatus(session, user.id, !user.isActive),
-      user.isActive ? 'Đã vô hiệu hóa user.' : 'Đã kích hoạt user.',
+      user.isActive ? 'User has been deactivated.' : 'User has been activated.',
     );
   }
 
@@ -100,7 +103,7 @@ export function AdminDashboard({ session, onSignOut }) {
     try {
       const savedUser = await saveAdminUser(session, user, id);
       setSelectedUser(savedUser);
-      setNotice(id ? 'Da cap nhat user.' : 'Da tao user.');
+      setNotice(id ? 'User updated.' : 'User created.');
       await refresh();
       return savedUser;
     } catch (requestError) {
@@ -115,7 +118,7 @@ export function AdminDashboard({ session, onSignOut }) {
     try {
       const updatedUser = await uploadAdminUserAvatar(session, userId, file);
       setSelectedUser(updatedUser);
-      setNotice('Da upload avatar.');
+      setNotice('Avatar uploaded.');
       await refresh();
       return updatedUser;
     } catch (requestError) {
@@ -128,7 +131,7 @@ export function AdminDashboard({ session, onSignOut }) {
     await runAction(async () => {
       await deleteAdminUser(session, user.id);
       setSelectedUser(null);
-    }, 'Đã xóa mềm user. Lịch sử thanh toán vẫn được giữ.');
+    }, 'User soft-deleted. Payment history is preserved.');
   }
 
   async function handleSelectPayment(id) {
@@ -141,167 +144,178 @@ export function AdminDashboard({ session, onSignOut }) {
     await runAction(async () => {
       const updated = await updatePaymentStatus(session, id, status);
       setSelectedPayment(updated);
-    }, 'Đã cập nhật trạng thái thanh toán.');
+    }, 'Payment status updated.');
   }
 
   async function handleSavePlan(plan, id) {
     await runAction(
       () => saveSubscriptionPlan(session, plan, id),
-      id ? 'Đã cập nhật gói đăng ký.' : 'Đã tạo gói đăng ký.',
+      id ? 'Plan updated.' : 'Plan created.',
     );
   }
 
   async function handleDeletePlan(plan) {
     await runAction(
       () => deleteSubscriptionPlan(session, plan.id),
-      'Đã xóa hoặc tắt gói đăng ký.',
+      'Plan removed or disabled.',
     );
   }
 
-  function handleLoadPlan(id) {
-    return getSubscriptionPlan(session, id);
-  }
+  function handleLoadPlan(id) { return getSubscriptionPlan(session, id); }
 
   async function handleSaveSkill(skill, id) {
-    await runAction(
-      () => saveSkill(session, skill, id),
-      id ? 'Đã cập nhật skill.' : 'Đã tạo skill.',
-    );
+    await runAction(() => saveSkill(session, skill, id), id ? 'Skill updated.' : 'Skill created.');
   }
-
-  function handleLoadSkill(id) {
-    return getSkill(session, id);
-  }
-
+  function handleLoadSkill(id) { return getSkill(session, id); }
   async function handleDeleteSkill(skill) {
-    await runAction(() => deleteSkill(session, skill.id), 'Đã xóa hoặc tắt skill.');
+    await runAction(() => deleteSkill(session, skill.id), 'Skill removed or disabled.');
   }
 
   async function handleSaveResource(resource, id) {
     await runAction(
       () => saveLearningResource(session, resource, id),
-      id ? 'Đã cập nhật tài nguyên.' : 'Đã tạo tài nguyên.',
+      id ? 'Resource updated.' : 'Resource created.',
     );
   }
-
-  function handleLoadResource(id) {
-    return getLearningResource(session, id);
-  }
-
+  function handleLoadResource(id) { return getLearningResource(session, id); }
   async function handleUploadResource(resource) {
-    await runAction(() => uploadLearningResource(session, resource), 'Đã upload tài nguyên.');
+    await runAction(() => uploadLearningResource(session, resource), 'Resource uploaded.');
   }
-
   async function handleDeleteResource(resource) {
-    await runAction(() => deleteLearningResource(session, resource.id), 'Đã xóa tài nguyên.');
+    await runAction(() => deleteLearningResource(session, resource.id), 'Resource removed.');
   }
 
   async function handleSaveRequirement(requirement, id) {
     await runAction(
       () => saveRoleSkillRequirement(session, requirement, id),
-      id ? 'Đã cập nhật requirement.' : 'Đã tạo requirement.',
+      id ? 'Requirement updated.' : 'Requirement created.',
     );
   }
-
-  function handleLoadRequirement(id) {
-    return getRoleSkillRequirement(session, id);
-  }
-
+  function handleLoadRequirement(id) { return getRoleSkillRequirement(session, id); }
   async function handleDeleteRequirement(requirement) {
-    await runAction(() => deleteRoleSkillRequirement(session, requirement.id), 'Đã xóa requirement.');
+    await runAction(() => deleteRoleSkillRequirement(session, requirement.id), 'Requirement removed.');
   }
 
   async function handleSaveCareerRole(careerRole, id) {
     await runAction(
       () => saveCareerRole(session, careerRole, id),
-      id ? 'Đã cập nhật career role.' : 'Đã tạo career role.',
+      id ? 'Career role updated.' : 'Career role created.',
     );
   }
-
-  function handleLoadCareerRole(id) {
-    return getCareerRole(session, id);
+  function handleLoadCareerRole(id) { return getCareerRole(session, id); }
+  async function handleDeleteCareerRole(careerRole) {
+    await runAction(() => deleteCareerRole(session, careerRole), 'Career role disabled.');
   }
 
-  async function handleDeleteCareerRole(careerRole) {
-    await runAction(() => deleteCareerRole(session, careerRole), 'Đã tắt career role.');
+  async function handleCreateAssignment(payload) {
+    await runAction(() => createCounselorAssignment(session, payload), 'Assignment created.');
+  }
+  async function handleDeleteAssignment(assignment) {
+    await runAction(() => deleteCounselorAssignment(session, assignment.id), 'Assignment ended.');
   }
 
   function renderSection() {
     if (!data) return null;
-    if (activeSection === 'users') {
-      return (
-        <UsersView
-          users={data.users}
-          selectedUser={selectedUser}
-          onSelectUser={handleSelectUser}
-          onSaveUser={handleSaveUser}
-          onUploadAvatar={handleUploadUserAvatar}
-          onToggleStatus={handleToggleUserStatus}
-          onDeleteUser={handleDeleteUser}
-        />
-      );
+
+    switch (activeSection) {
+      case 'users':
+        return (
+          <UsersView
+            users={data.users}
+            selectedUser={selectedUser}
+            onSelectUser={handleSelectUser}
+            onSaveUser={handleSaveUser}
+            onUploadAvatar={handleUploadUserAvatar}
+            onToggleStatus={handleToggleUserStatus}
+            onDeleteUser={handleDeleteUser}
+          />
+        );
+      case 'assignments':
+        return (
+          <AssignmentsView
+            assignments={data.assignments}
+            users={data.users}
+            onCreate={handleCreateAssignment}
+            onDelete={handleDeleteAssignment}
+          />
+        );
+      case 'payments':
+        return (
+          <PaymentsView
+            stats={data.stats}
+            payments={data.payments}
+            subscriptions={data.paymentSubscriptions}
+            invoices={data.invoices}
+            selectedPayment={selectedPayment}
+            onSelectPayment={handleSelectPayment}
+            onUpdatePaymentStatus={handleUpdatePaymentStatus}
+          />
+        );
+      case 'plans':
+        return (
+          <PlansView
+            plans={data.plans}
+            onLoadPlan={handleLoadPlan}
+            onSavePlan={handleSavePlan}
+            onDeletePlan={handleDeletePlan}
+          />
+        );
+      case 'skills':
+        return (
+          <SkillsView
+            skills={data.skills}
+            onLoadSkill={handleLoadSkill}
+            onSaveSkill={handleSaveSkill}
+            onDeleteSkill={handleDeleteSkill}
+          />
+        );
+      case 'resources':
+        return (
+          <ResourcesView
+            resources={data.learningResources}
+            skills={data.skills}
+            onLoadResource={handleLoadResource}
+            onSaveResource={handleSaveResource}
+            onUploadResource={handleUploadResource}
+            onDeleteResource={handleDeleteResource}
+          />
+        );
+      case 'requirements':
+        return (
+          <RequirementsView
+            requirements={data.roleSkillRequirements}
+            careerRoles={data.careerRoles}
+            skills={data.skills}
+            onLoadRequirement={handleLoadRequirement}
+            onSaveRequirement={handleSaveRequirement}
+            onDeleteRequirement={handleDeleteRequirement}
+          />
+        );
+      case 'careerRoles':
+        return (
+          <CareerRolesView
+            careerRoles={data.careerRoles}
+            onLoadCareerRole={handleLoadCareerRole}
+            onSaveCareerRole={handleSaveCareerRole}
+            onDeleteCareerRole={handleDeleteCareerRole}
+          />
+        );
+      default:
+        return <OverviewView stats={data.stats} session={session} />;
     }
-    if (activeSection === 'payments') {
-      return (
-        <PaymentsView
-          stats={data.stats}
-          payments={data.payments}
-          subscriptions={data.paymentSubscriptions}
-          invoices={data.invoices}
-          selectedPayment={selectedPayment}
-          onSelectPayment={handleSelectPayment}
-          onUpdatePaymentStatus={handleUpdatePaymentStatus}
-        />
-      );
-    }
-    if (activeSection === 'plans') {
-      return <PlansView plans={data.plans} onLoadPlan={handleLoadPlan} onSavePlan={handleSavePlan} onDeletePlan={handleDeletePlan} />;
-    }
-    if (activeSection === 'skills') {
-      return <SkillsView skills={data.skills} onLoadSkill={handleLoadSkill} onSaveSkill={handleSaveSkill} onDeleteSkill={handleDeleteSkill} />;
-    }
-    if (activeSection === 'resources') {
-      return (
-        <ResourcesView
-          resources={data.learningResources}
-          skills={data.skills}
-          onLoadResource={handleLoadResource}
-          onSaveResource={handleSaveResource}
-          onUploadResource={handleUploadResource}
-          onDeleteResource={handleDeleteResource}
-        />
-      );
-    }
-    if (activeSection === 'requirements') {
-      return (
-        <RequirementsView
-          requirements={data.roleSkillRequirements}
-          careerRoles={data.careerRoles}
-          skills={data.skills}
-          onLoadRequirement={handleLoadRequirement}
-          onSaveRequirement={handleSaveRequirement}
-          onDeleteRequirement={handleDeleteRequirement}
-        />
-      );
-    }
-    if (activeSection === 'careerRoles') {
-      return (
-        <CareerRolesView
-          careerRoles={data.careerRoles}
-          onLoadCareerRole={handleLoadCareerRole}
-          onSaveCareerRole={handleSaveCareerRole}
-          onDeleteCareerRole={handleDeleteCareerRole}
-        />
-      );
-    }
-    return <OverviewView stats={data.stats} />;
   }
 
   return (
-    <AdminLayout session={session} activeSection={activeSection} onSectionChange={setActiveSection} onRefresh={refresh} onSignOut={onSignOut}>
-      {loading && <div className="state-card">Loading...</div>}
-      {error && <div className="alert">{error}</div>}
-      {notice && <div className="success">{notice}</div>}
+    <AdminLayout
+      session={session}
+      activeSection={activeSection}
+      onSectionChange={setActiveSection}
+      onRefresh={refresh}
+      onSignOut={onSignOut}
+    >
+      {error && <div className="notice error">{error}</div>}
+      {notice && <div className="notice success">{notice}</div>}
+      {loading && !data && <div className="empty-state">Loading dashboard…</div>}
       {!loading && renderSection()}
     </AdminLayout>
   );
