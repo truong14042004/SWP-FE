@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 :root {
   font-family: Inter, "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #1d1d1f;
@@ -4213,13 +4212,3 @@ tr:hover td {
     flex-direction: column;
   }
 }
-=======
-/* DEPRECATED — content has been split into modular stylesheets:
-   - src/styles/global.css   (root tokens & reset)
-   - src/styles/home.css     (hp-* landing page)
-   - src/styles/auth.css     (auth-* login/register)
-   - src/styles/admin.css    (admin console)
-   - src/styles/member.css   (member-shell, role-action-grid, primary-action)
-   - src/styles/payment.css  (payment-shell, payment-card)
-   This file is intentionally empty; safe to delete. */
->>>>>>> c76c1d4df0da7e232e28a439082ae3ee62364b03
