@@ -81,10 +81,10 @@ const STATUS_META = {
 };
 
 const ROADMAP_STATUS_OPTIONS = [
+  { value: 'NotStarted', label: 'Chưa bắt đầu' },
   { value: 'InProgress', label: 'Đang tiến hành' },
   { value: 'Completed', label: 'Đã hoàn thành' },
-  { value: 'Verified', label: 'Đã xác minh' },
-  { value: 'NeedReview', label: 'Cần review' },
+  { value: 'NeedReview', label: 'Cần mentor review' },
 ];
 
 function safeArray(value) {
@@ -633,13 +633,9 @@ function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatus
   const resources = getNodeResources(node);
   const children = getChildren(node);
   const priority = Number(node.priority || 0);
-
-  const progress =
-    statusMeta.className === 'completed'
-      ? 100
-      : statusMeta.className === 'progressing'
-        ? 45
-        : 0;
+  const isGroup = String(node.nodeType || '').toLowerCase() === 'group';
+  const isVerified = normalizeStatus(node.status) === 'verified';
+  const canUpdate = !isGroup && !isVerified && Boolean(node.id);
 
   return (
     <article
@@ -662,26 +658,34 @@ function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatus
           </div>
         </div>
 
-        <div className="roadmap-status-control">
-          <label>
-            <span>Trạng thái</span>
-            <select
-              value={getRoadmapStatusValue(node.status)}
-              onChange={(event) => onStatusChange?.(node, event.target.value)}
-              disabled={!node.id || updatingNodeId === node.id}
-            >
-              {ROADMAP_STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+        {canUpdate ? (
+          <div className="roadmap-status-control">
+            <label>
+              <span>Trạng thái</span>
+              <select
+                value={getRoadmapStatusValue(node.status)}
+                onChange={(event) => onStatusChange?.(node, event.target.value)}
+                disabled={updatingNodeId === node.id}
+              >
+                {ROADMAP_STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : isVerified ? (
+          <div className="roadmap-status-control verified">
+            <span className="roadmap-status-locked">
+              ✓ Đã được mentor xác minh — không thể chỉnh sửa
+            </span>
+          </div>
+        ) : null}
 
         <div className="roadmap-node-main">
           <div>
-            <small>Module #{index + 1}</small>
+            <small>{isGroup ? `Nhóm #${index + 1}` : `Module #${index + 1}`}</small>
             <h2>{node.title || 'Chưa có tiêu đề'}</h2>
             <p>{node.description || 'Chưa có mô tả cho module này.'}</p>
           </div>
@@ -692,18 +696,6 @@ function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatus
             </span>
           )}
         </div>
-
-        {statusMeta.className !== 'pending' && (
-          <div className="roadmap-node-progress">
-            <div>
-              <span>Tiến độ module</span>
-              <strong>{progress}%</strong>
-            </div>
-            <div className="roadmap-progress-line">
-              <span style={{ width: `${progress}%` }} />
-            </div>
-          </div>
-        )}
 
         {resources.length > 0 && (
           <div className="roadmap-resources">
