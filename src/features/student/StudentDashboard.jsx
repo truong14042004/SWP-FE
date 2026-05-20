@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { apiUrl } from '../../config';
 import '../../styles.css';
+import '../../styles/admin.css';
+import '../../styles/student.css';
 import { StudentProfileForm } from './components/StudentProfileForm';
 import '../../styles/student-dashboard.css';
 import {
