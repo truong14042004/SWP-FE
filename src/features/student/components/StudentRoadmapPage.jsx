@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
 import '../../../styles/roadmap.css'
 import {
   generateRoadmap,
   getRoadmapById,
   getRoadmaps,
+  updateRoadmapNodeStatus,
 } from '../roadmapApi';
 
 const EMPTY_FORM = {
@@ -18,6 +20,26 @@ const STATUS_META = {
     label: 'Đã hoàn thành',
     className: 'completed',
     icon: '✓',
+  },
+  verified: {
+    label: 'Đã xác minh',
+    className: 'completed',
+    icon: '✓',
+  },
+  needreview: {
+    label: 'Cần review',
+    className: 'progressing',
+    icon: '↻',
+  },
+  need_review: {
+    label: 'Cần review',
+    className: 'progressing',
+    icon: '↻',
+  },
+  inprogress: {
+    label: 'Đang tiến hành',
+    className: 'progressing',
+    icon: '↻',
   },
   done: {
     label: 'Đã hoàn thành',
@@ -49,7 +71,19 @@ const STATUS_META = {
     className: 'pending',
     icon: '○',
   },
+  notstarted: {
+    label: 'Chưa bắt đầu',
+    className: 'pending',
+    icon: '○',
+  },
 };
+
+const ROADMAP_STATUS_OPTIONS = [
+  { value: 'InProgress', label: 'Đang tiến hành' },
+  { value: 'Completed', label: 'Đã hoàn thành' },
+  { value: 'Verified', label: 'Đã xác minh' },
+  { value: 'NeedReview', label: 'Cần review' },
+];
 
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
@@ -70,6 +104,12 @@ function getStatusMeta(status) {
     className: 'pending',
     icon: '○',
   };
+}
+
+function getRoadmapStatusValue(status) {
+  const normalized = normalizeStatus(status);
+  const matched = ROADMAP_STATUS_OPTIONS.find((option) => normalizeStatus(option.value) === normalized);
+  return matched?.value || 'InProgress';
 }
 
 function sortRoadmaps(roadmaps) {
@@ -146,6 +186,55 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
+function isCompletedStatus(status) {
+  const normalized = normalizeStatus(status);
+  return normalized === 'completed' || normalized === 'verified' || normalized === 'done';
+}
+
+function isProgressNode(node) {
+  return normalizeStatus(node?.nodeType) !== 'group';
+}
+
+function calculateProgressFromNodes(nodes) {
+  const flat = flattenNodes(nodes).filter(isProgressNode);
+  if (!flat.length) return 0;
+
+  const completed = flat.filter((node) => isCompletedStatus(node.status)).length;
+  return Math.round((completed / flat.length) * 100);
+}
+
+function updateNodeInList(nodes, nodeId, updater) {
+  return safeArray(nodes).map((node) => {
+    const nextNode = node.id === nodeId ? updater(node) : node;
+    const children = getChildren(nextNode);
+
+    if (!children.length) {
+      return nextNode;
+    }
+
+    return {
+      ...nextNode,
+      children: updateNodeInList(children, nodeId, updater),
+    };
+  });
+}
+
+function updateRoadmapNode(roadmap, nodeId, updater) {
+  if (!roadmap) return roadmap;
+
+  const nextRoadmap = { ...roadmap };
+
+  if (Array.isArray(nextRoadmap.nodeTree)) {
+    nextRoadmap.nodeTree = updateNodeInList(nextRoadmap.nodeTree, nodeId, updater);
+  }
+
+  if (Array.isArray(nextRoadmap.nodes)) {
+    nextRoadmap.nodes = updateNodeInList(nextRoadmap.nodes, nodeId, updater);
+  }
+
+  return nextRoadmap;
+}
+
 export function StudentRoadmapPage({ session }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [roadmaps, setRoadmaps] = useState([]);
@@ -156,6 +245,7 @@ export function StudentRoadmapPage({ session }) {
   const [loadingList, setLoadingList] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [updatingNodeId, setUpdatingNodeId] = useState('');
 
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
@@ -172,13 +262,16 @@ export function StudentRoadmapPage({ session }) {
   }, [roadmapNodes]);
 
   const completedNodes = useMemo(() => {
-    return flatNodes.filter((node) => {
-      const status = normalizeStatus(node.status);
-      return status === 'completed' || status === 'done';
-    }).length;
+    return flatNodes.filter((node) => isProgressNode(node) && isCompletedStatus(node.status)).length;
   }, [flatNodes]);
 
-  const progress = normalizeProgress(roadmap?.progress);
+  const progressNodeCount = useMemo(() => {
+    return flatNodes.filter(isProgressNode).length;
+  }, [flatNodes]);
+
+  const progress = flatNodes.length
+    ? calculateProgressFromNodes(roadmapNodes)
+    : normalizeProgress(roadmap?.progress);
 
   async function loadRoadmaps() {
     setLoadingList(true);
@@ -199,7 +292,9 @@ export function StudentRoadmapPage({ session }) {
         setShowGenerateForm(true);
       }
     } catch (requestError) {
-      setError(requestError.message || 'Không tải được danh sách lộ trình.');
+      const message = requestError.message || 'Không tải được danh sách lộ trình.';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoadingList(false);
     }
@@ -218,7 +313,9 @@ export function StudentRoadmapPage({ session }) {
       setRoadmap(result);
       setShowGenerateForm(false);
     } catch (requestError) {
-      setError(requestError.message || 'Không tải được chi tiết lộ trình.');
+      const message = requestError.message || 'Không tải được chi tiết lộ trình.';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoadingDetail(false);
     }
@@ -249,15 +346,52 @@ export function StudentRoadmapPage({ session }) {
       setRoadmap(result);
       setSelectedRoadmapId(result.id);
       setNotice('Đã tạo lộ trình học tập thành công.');
+      toast.success('Đã tạo lộ trình học tập thành công.');
       setShowGenerateForm(false);
       setForm(EMPTY_FORM);
 
       const nextList = sortRoadmaps([result, ...roadmaps.filter((item) => item.id !== result.id)]);
       setRoadmaps(nextList);
     } catch (requestError) {
-      setError(requestError.message || 'Không tạo được lộ trình.');
+      const message = requestError.message || 'Không tạo được lộ trình.';
+      setError(message);
+      toast.error(message);
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleNodeStatusChange(node, status) {
+    if (!node?.id) return;
+
+    const previousRoadmap = roadmap;
+    setUpdatingNodeId(node.id);
+    setError('');
+    setNotice('');
+    setRoadmap((current) => {
+      const next = updateRoadmapNode(current, node.id, (item) => ({ ...item, status }));
+      return next ? { ...next, progress: calculateProgressFromNodes(getRoadmapNodes(next)) } : next;
+    });
+
+    try {
+      const updated = await updateRoadmapNodeStatus(session, node.id, status);
+      setRoadmap((current) => {
+        const next = updateRoadmapNode(current, node.id, (item) => ({
+          ...item,
+          ...(updated && typeof updated === 'object' ? updated : {}),
+          status: updated?.status || status,
+        }));
+        return next ? { ...next, progress: calculateProgressFromNodes(getRoadmapNodes(next)) } : next;
+      });
+      setNotice('Đã cập nhật trạng thái module.');
+      toast.success('Đã cập nhật trạng thái module.');
+    } catch (requestError) {
+      const message = requestError.message || 'Không cập nhật được trạng thái module.';
+      setRoadmap(previousRoadmap);
+      setError(message);
+      toast.error(message);
+    } finally {
+      setUpdatingNodeId('');
     }
   }
 
@@ -294,9 +428,6 @@ export function StudentRoadmapPage({ session }) {
           </button>
         </div>
       </header>
-
-      {error && <div className="roadmap-alert error">{error}</div>}
-      {notice && <div className="roadmap-alert success">{notice}</div>}
 
       {showGenerateForm && (
         <form className="roadmap-generate-card" onSubmit={handleGenerate}>
@@ -416,7 +547,7 @@ export function StudentRoadmapPage({ session }) {
 
                 <div>
                   <span>Module đã hoàn thành</span>
-                  <strong>{completedNodes}/{flatNodes.length || 0}</strong>
+                  <strong>{completedNodes}/{progressNodeCount || 0}</strong>
                   <small>module</small>
                 </div>
 
@@ -447,6 +578,8 @@ export function StudentRoadmapPage({ session }) {
                         key={node.id || `${node.title}-${index}`}
                         node={node}
                         index={index}
+                        updatingNodeId={updatingNodeId}
+                        onStatusChange={handleNodeStatusChange}
                       />
                     ))}
                   </div>
@@ -460,7 +593,7 @@ export function StudentRoadmapPage({ session }) {
   );
 }
 
-function RoadmapNodeCard({ node, index, level = 0 }) {
+function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatusChange }) {
   const statusMeta = getStatusMeta(node.status);
   const resources = getNodeResources(node);
   const children = getChildren(node);
@@ -492,6 +625,23 @@ function RoadmapNodeCard({ node, index, level = 0 }) {
             {priority > 0 && <span>Ưu tiên {priority}</span>}
             <span>⏱ {node.estimatedHours || 0} giờ</span>
           </div>
+        </div>
+
+        <div className="roadmap-status-control">
+          <label>
+            <span>Trạng thái</span>
+            <select
+              value={getRoadmapStatusValue(node.status)}
+              onChange={(event) => onStatusChange?.(node, event.target.value)}
+              disabled={!node.id || updatingNodeId === node.id}
+            >
+              {ROADMAP_STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         <div className="roadmap-node-main">
@@ -540,6 +690,8 @@ function RoadmapNodeCard({ node, index, level = 0 }) {
                 node={child}
                 index={childIndex}
                 level={level + 1}
+                updatingNodeId={updatingNodeId}
+                onStatusChange={onStatusChange}
               />
             ))}
           </div>

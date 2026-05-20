@@ -23,3 +23,20 @@ export function publishPortfolio(session) {
         method: 'POST',
     });
 }
+
+export function uploadPortfolioProjectImage(session, projectId, file) {
+    const formData = new FormData();
+    formData.append('File', file);
+
+    return authorizedRequest(`/api/storage/portfolio-projects/${projectId}/image`, session, {
+        method: 'POST',
+        body: formData,
+    });
+}
+
+export function importPortfolioProjectImageFromUrl(session, projectId, payload) {
+    return authorizedRequest(`/api/storage/portfolio-projects/${projectId}/image/import-url`, session, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}

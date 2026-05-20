@@ -14,3 +14,10 @@ export function generateRoadmap(session, payload) {
         body: JSON.stringify(payload),
     });
 }
+
+export function updateRoadmapNodeStatus(session, id, status) {
+    return authorizedRequest(`/api/roadmap-node/${id}/status`, session, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+    });
+}
