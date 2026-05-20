@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import '../../../styles/roadmap.css'
 import {
@@ -124,7 +124,7 @@ function getRoadmapNodes(roadmap) {
   const tree = safeArray(roadmap?.nodeTree);
   if (tree.length > 0) return tree;
 
-  return safeArray(roadmap?.nodes)
+  const nodes = safeArray(roadmap?.nodes)
     .slice()
     .sort((a, b) => {
       const levelA = Number(a.level || 0);
@@ -135,6 +135,29 @@ function getRoadmapNodes(roadmap) {
       if (levelA !== levelB) return levelA - levelB;
       return orderA - orderB;
     });
+
+  if (!nodes.some((node) => node.parentNodeId)) {
+    return nodes;
+  }
+
+  const byId = new Map();
+  nodes.forEach((node) => {
+    byId.set(node.id, { ...node, children: [] });
+  });
+
+  const roots = [];
+  nodes.forEach((node) => {
+    const current = byId.get(node.id);
+    const parent = byId.get(node.parentNodeId);
+
+    if (parent) {
+      parent.children.push(current);
+    } else {
+      roots.push(current);
+    }
+  });
+
+  return roots;
 }
 
 function getNodeResources(node) {
@@ -203,6 +226,24 @@ function calculateProgressFromNodes(nodes) {
   return Math.round((completed / flat.length) * 100);
 }
 
+function getNodeProgress(node) {
+  if (node?.progress !== undefined && node?.progress !== null) {
+    return normalizeProgress(node.progress);
+  }
+
+  return isCompletedStatus(node?.status) ? 100 : 0;
+}
+
+function isNodeUpdateResponse(value) {
+  return Boolean(
+    value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    !Array.isArray(value.nodeTree) &&
+    !Array.isArray(value.nodes)
+  );
+}
+
 function updateNodeInList(nodes, nodeId, updater) {
   return safeArray(nodes).map((node) => {
     const nextNode = node.id === nodeId ? updater(node) : node;
@@ -247,8 +288,8 @@ export function StudentRoadmapPage({ session }) {
   const [generating, setGenerating] = useState(false);
   const [updatingNodeId, setUpdatingNodeId] = useState('');
 
-  const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const detailRequestRef = useRef(0);
 
   useEffect(() => {
     loadRoadmaps();
@@ -276,7 +317,6 @@ export function StudentRoadmapPage({ session }) {
   async function loadRoadmaps() {
     setLoadingList(true);
     setError('');
-    setNotice('');
 
     try {
       const result = await getRoadmaps(session);
@@ -303,21 +343,26 @@ export function StudentRoadmapPage({ session }) {
   async function loadRoadmapDetail(id) {
     if (!id) return;
 
+    const requestId = detailRequestRef.current + 1;
+    detailRequestRef.current = requestId;
     setLoadingDetail(true);
     setError('');
-    setNotice('');
     setSelectedRoadmapId(id);
 
     try {
       const result = await getRoadmapById(session, id);
+      if (detailRequestRef.current !== requestId) return;
       setRoadmap(result);
       setShowGenerateForm(false);
     } catch (requestError) {
+      if (detailRequestRef.current !== requestId) return;
       const message = requestError.message || 'Không tải được chi tiết lộ trình.';
       setError(message);
       toast.error(message);
     } finally {
-      setLoadingDetail(false);
+      if (detailRequestRef.current === requestId) {
+        setLoadingDetail(false);
+      }
     }
   }
 
@@ -330,7 +375,6 @@ export function StudentRoadmapPage({ session }) {
     event.preventDefault();
 
     setGenerating(true);
-    setNotice('');
     setError('');
 
     try {
@@ -342,15 +386,18 @@ export function StudentRoadmapPage({ session }) {
       };
 
       const result = await generateRoadmap(session, payload);
+      const detail = result?.id
+        ? await getRoadmapById(session, result.id).catch(() => result)
+        : result;
 
-      setRoadmap(result);
-      setSelectedRoadmapId(result.id);
-      setNotice('Đã tạo lộ trình học tập thành công.');
+      setRoadmap(detail);
+      setSelectedRoadmapId(detail?.id || result?.id || '');
       toast.success('Đã tạo lộ trình học tập thành công.');
       setShowGenerateForm(false);
       setForm(EMPTY_FORM);
 
-      const nextList = sortRoadmaps([result, ...roadmaps.filter((item) => item.id !== result.id)]);
+      const listItem = detail || result;
+      const nextList = sortRoadmaps([listItem, ...roadmaps.filter((item) => item.id !== listItem.id)]);
       setRoadmaps(nextList);
     } catch (requestError) {
       const message = requestError.message || 'Không tạo được lộ trình.';
@@ -367,7 +414,6 @@ export function StudentRoadmapPage({ session }) {
     const previousRoadmap = roadmap;
     setUpdatingNodeId(node.id);
     setError('');
-    setNotice('');
     setRoadmap((current) => {
       const next = updateRoadmapNode(current, node.id, (item) => ({ ...item, status }));
       return next ? { ...next, progress: calculateProgressFromNodes(getRoadmapNodes(next)) } : next;
@@ -378,12 +424,11 @@ export function StudentRoadmapPage({ session }) {
       setRoadmap((current) => {
         const next = updateRoadmapNode(current, node.id, (item) => ({
           ...item,
-          ...(updated && typeof updated === 'object' ? updated : {}),
-          status: updated?.status || status,
+          ...(isNodeUpdateResponse(updated) ? updated : {}),
+          status: isNodeUpdateResponse(updated) ? updated.status || status : status,
         }));
         return next ? { ...next, progress: calculateProgressFromNodes(getRoadmapNodes(next)) } : next;
       });
-      setNotice('Đã cập nhật trạng thái module.');
       toast.success('Đã cập nhật trạng thái module.');
     } catch (requestError) {
       const message = requestError.message || 'Không cập nhật được trạng thái module.';
@@ -482,6 +527,12 @@ export function StudentRoadmapPage({ session }) {
         </form>
       )}
 
+      {error && (
+        <div className="roadmap-alert error" role="alert">
+          {error}
+        </div>
+      )}
+
       <section className="roadmap-layout">
         <aside className="roadmap-list-card">
           <div className="roadmap-list-head">
@@ -493,6 +544,10 @@ export function StudentRoadmapPage({ session }) {
 
           {loadingList ? (
             <div className="roadmap-list-empty">Đang tải danh sách...</div>
+          ) : roadmaps.length === 0 && error ? (
+            <div className="roadmap-list-empty">
+              Không tải được danh sách lộ trình. Hãy thử tải lại.
+            </div>
           ) : roadmaps.length === 0 ? (
             <div className="roadmap-list-empty">
               Chưa có lộ trình nào. Hãy tạo lộ trình đầu tiên.
@@ -598,13 +653,8 @@ function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatus
   const resources = getNodeResources(node);
   const children = getChildren(node);
   const priority = Number(node.priority || 0);
-
-  const progress =
-    statusMeta.className === 'completed'
-      ? 100
-      : statusMeta.className === 'progressing'
-        ? 45
-        : 0;
+  const isGroup = !isProgressNode(node);
+  const progress = getNodeProgress(node);
 
   return (
     <article
@@ -627,6 +677,7 @@ function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatus
           </div>
         </div>
 
+        {!isGroup && (
         <div className="roadmap-status-control">
           <label>
             <span>Trạng thái</span>
@@ -643,6 +694,7 @@ function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatus
             </select>
           </label>
         </div>
+        )}
 
         <div className="roadmap-node-main">
           <div>
@@ -658,7 +710,7 @@ function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatus
           )}
         </div>
 
-        {statusMeta.className !== 'pending' && (
+        {!isGroup && statusMeta.className !== 'pending' && (
           <div className="roadmap-node-progress">
             <div>
               <span>Tiến độ module</span>
@@ -713,7 +765,7 @@ function ResourceButton({ resource }) {
 
   const content = (
     <>
-      <strong>{label}</strong>
+      <strong>{label}{resource.url ? ' ↗' : ''}</strong>
       {metaItems.length > 0 && <small>{metaItems.join(' • ')}</small>}
     </>
   );

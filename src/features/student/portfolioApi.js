@@ -24,6 +24,12 @@ export function publishPortfolio(session) {
     });
 }
 
+export function unpublishPortfolio(session) {
+    return authorizedRequest('/api/portfolio/unpublish', session, {
+        method: 'POST',
+    });
+}
+
 export function uploadPortfolioProjectImage(session, projectId, file) {
     const formData = new FormData();
     formData.append('File', file);

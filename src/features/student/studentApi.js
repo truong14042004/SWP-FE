@@ -8,16 +8,9 @@ export function uploadStudentAvatar(session, file) {
   const formData = new FormData();
   formData.append('File', file);
 
-  return authorizedRequest('/api/storage/avatar', session, {
+  return authorizedRequest('/api/profile/avatar', session, {
     method: 'POST',
     body: formData,
-  });
-}
-
-export function importStudentAvatarFromUrl(session, payload) {
-  return authorizedRequest('/api/storage/avatar/import-url', session, {
-    method: 'POST',
-    body: JSON.stringify(payload),
   });
 }
 

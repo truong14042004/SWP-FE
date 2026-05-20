@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { apiUrl } from '../../config';
-import '../../styles.css';
 import '../../styles/admin.css';
 import '../../styles/student.css';
 import { StudentProfileForm } from './components/StudentProfileForm';
@@ -10,7 +9,6 @@ import {
   createStudentProfile,
   getCareerRoles,
   getStudentProfile,
-  importStudentAvatarFromUrl,
   updateStudentProfile,
   uploadStudentAvatar,
 } from './studentApi';
@@ -273,7 +271,7 @@ function getRoadmapNodes(roadmap) {
   const tree = safeArray(roadmap?.nodeTree);
   if (tree.length > 0) return tree;
 
-  return safeArray(roadmap?.nodes)
+  const nodes = safeArray(roadmap?.nodes)
     .slice()
     .sort((a, b) => {
       const levelA = Number(a.level || 0);
@@ -284,6 +282,29 @@ function getRoadmapNodes(roadmap) {
       if (levelA !== levelB) return levelA - levelB;
       return orderA - orderB;
     });
+
+  if (!nodes.some((node) => node.parentNodeId)) {
+    return nodes;
+  }
+
+  const byId = new Map();
+  nodes.forEach((node) => {
+    byId.set(node.id, { ...node, children: [] });
+  });
+
+  const roots = [];
+  nodes.forEach((node) => {
+    const current = byId.get(node.id);
+    const parent = byId.get(node.parentNodeId);
+
+    if (parent) {
+      parent.children.push(current);
+    } else {
+      roots.push(current);
+    }
+  });
+
+  return roots;
 }
 
 function flattenRoadmapNodes(nodes) {
@@ -466,6 +487,7 @@ export function StudentDashboard({ session, onSignOut, onNavigateHome }) {
 }
 
 const [activeSection, setActiveSection] = useState(getInitialStudentSection);
+  const didMountRef = useRef(false);
   const [activeTab, setActiveTab] = useState('all');
   const [form, setForm] = useState(emptyProfile);
   const [careerRoles, setCareerRoles] = useState([]);
@@ -487,6 +509,17 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     loadProfile();
     loadDashboardOverview();
   }, []);
+
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+
+    if (activeSection === 'overview') {
+      loadDashboardOverview();
+    }
+  }, [activeSection]);
 
   const visibleGroups = useMemo(() => {
     if (activeTab === 'missing') return ['missing'];
@@ -552,6 +585,15 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     }
   }
 
+  function navigateStudentSection(sectionId) {
+    if (sectionId === activeSection && sectionId === 'overview') {
+      loadDashboardOverview();
+    }
+
+    setActiveSection(sectionId);
+    window.history.replaceState({}, '', `#${sectionId}`);
+  }
+
   async function loadProfile() {
     setLoadingProfile(true);
     try {
@@ -595,33 +637,12 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
 
     setUploadingAvatar(true);
     try {
-      const uploaded = await uploadStudentAvatar(session, file);
-      const nextAvatarUrl = uploaded?.downloadPath || uploaded?.objectName || '';
-      setForm((current) => ({ ...current, avatarUrl: nextAvatarUrl }));
+      const updatedProfile = await uploadStudentAvatar(session, file);
+      setForm(normalizeProfile(updatedProfile));
+      setHasProfile(true);
       toast.success('Da upload avatar.');
     } catch (requestError) {
       toast.error(requestError.message || 'Khong upload duoc avatar.');
-    } finally {
-      setUploadingAvatar(false);
-    }
-  }
-
-  async function handleAvatarImport() {
-    const avatarUrl = form.avatarUrl.trim();
-    if (!avatarUrl) {
-      toast.error('Vui long nhap URL avatar.');
-      return;
-    }
-
-    setUploadingAvatar(true);
-    try {
-      const fileName = avatarUrl.split('/').pop()?.split('?')[0] || 'avatar';
-      const imported = await importStudentAvatarFromUrl(session, { url: avatarUrl, fileName });
-      const nextAvatarUrl = imported?.downloadPath || imported?.objectName || avatarUrl;
-      setForm((current) => ({ ...current, avatarUrl: nextAvatarUrl }));
-      toast.success('Da import avatar tu URL.');
-    } catch (requestError) {
-      toast.error(requestError.message || 'Khong import duoc avatar tu URL.');
     } finally {
       setUploadingAvatar(false);
     }
@@ -663,10 +684,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
               key={section.id}
               type="button"
               className={activeSection === section.id ? 'active' : ''}
-              onClick={() => {
-                setActiveSection(section.id);
-                window.history.replaceState({}, '', `#${section.id}`);
-              }}
+              onClick={() => navigateStudentSection(section.id)}
             >
               <span className="student-nav-dot" />
               {section.label}
@@ -696,14 +714,14 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
       <section className="admin-main student-main">
        {!['portfolio', 'roadmap','skills','github','mentors'].includes(activeSection) && (
   <header className="student-header-bar">
-    <button type="button" className="student-search-bar" onClick={() => setActiveSection('skills')}>
+    <button type="button" className="student-search-bar" onClick={() => navigateStudentSection('skills')}>
       <span>⌕</span>
       Tìm kiếm khóa học, mentor, kỹ năng...
     </button>
 
     <div className="student-header-actions">
       <button type="button" className="student-icon-btn" aria-label="Thông báo">🔔</button>
-      <button type="button" className="student-avatar-chip" onClick={() => setActiveSection('settings')}>
+      <button type="button" className="student-avatar-chip" onClick={() => navigateStudentSection('settings')}>
         {avatarSrc ? <img src={avatarSrc} alt="Student avatar" /> : initials}
       </button>
     </div>
@@ -723,7 +741,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
 ) : activeSection === 'settings' ? (
           <section className="student-profile-page">
             <div className="student-profile-heading">
-              <button type="button" className="student-back-link" onClick={() => setActiveSection('overview')}>← Quay lại dashboard</button>
+              <button type="button" className="student-back-link" onClick={() => navigateStudentSection('overview')}>← Quay lại dashboard</button>
               <h1>Quản lý hồ sơ</h1>
               <p>Cập nhật thông tin học vấn và mục tiêu nghề nghiệp của bạn.</p>
             </div>
@@ -739,7 +757,6 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
               hasProfile={hasProfile}
               onChange={updateField}
               onAvatarFileChange={handleAvatarFileChange}
-              onAvatarImport={handleAvatarImport}
               onReload={loadProfile}
               onSubmit={handleSaveProfile}
             />
@@ -754,8 +771,8 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                 <p>{sectionMeta.subtitle} <strong>{targetRoleName}</strong>.</p>
               </div>
               <div className="student-topbar-actions">
-                <button type="button" className="student-secondary-btn" onClick={() => setActiveSection('settings')}>Cập nhật hồ sơ</button>
-                <button type="button" className="student-cta-btn" onClick={() => setActiveSection('roadmap')}>Tạo lộ trình cá nhân hóa</button>
+                <button type="button" className="student-secondary-btn" onClick={() => navigateStudentSection('settings')}>Cập nhật hồ sơ</button>
+                <button type="button" className="student-cta-btn" onClick={() => navigateStudentSection('roadmap')}>Tạo lộ trình cá nhân hóa</button>
               </div>
             </header>
 
@@ -810,7 +827,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                     <span>Roadmap</span>
                     <h2>Lộ trình 4 giai đoạn</h2>
                   </div>
-                  <button type="button" onClick={() => setActiveSection('roadmap')}>Xem chi tiết</button>
+                  <button type="button" onClick={() => navigateStudentSection('roadmap')}>Xem chi tiết</button>
                 </div>
 
                 <div className="student-roadmap-list">

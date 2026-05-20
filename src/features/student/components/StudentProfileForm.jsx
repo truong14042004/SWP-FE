@@ -11,7 +11,6 @@ export function StudentProfileForm({
   hasProfile,
   onChange,
   onAvatarFileChange,
-  onAvatarImport,
   onReload,
   onSubmit,
 }) {
@@ -27,7 +26,6 @@ export function StudentProfileForm({
         </div>
         <div className="student-profile-hero-copy">
           <h2>Ảnh đại diện</h2>
-          <p>Tải ảnh trực tiếp hoặc import từ URL, sau đó lưu lại cùng hồ sơ nếu backend trả về `avatarUrl` mới.</p>
           <div className="student-avatar-controls">
             <label className="secondary-action student-avatar-upload">
               <input
@@ -38,24 +36,6 @@ export function StudentProfileForm({
               />
               {uploadingAvatar ? 'Đang tải ảnh...' : 'Chọn ảnh'}
             </label>
-          </div>
-          <div className="student-avatar-import">
-            <input
-              name="avatarUrl"
-              type="url"
-              value={form.avatarUrl}
-              onChange={onChange}
-              placeholder="https://example.com/avatar.png"
-              disabled={loadingProfile || savingProfile || uploadingAvatar}
-            />
-            <button
-              type="button"
-              className="secondary-action"
-              onClick={onAvatarImport}
-              disabled={loadingProfile || savingProfile || uploadingAvatar || !form.avatarUrl.trim()}
-            >
-              Import URL
-            </button>
           </div>
         </div>
       </div>
