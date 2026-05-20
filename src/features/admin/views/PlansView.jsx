@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { formatMoney } from '../../../shared/format';
-import { StatusPill } from '../components/DashboardPrimitives';
+import { SectionTitle, StatusPill } from '../components/DashboardPrimitives';
 
 const initialPlanForm = {
   name: '',
@@ -62,15 +62,30 @@ export function PlansView({ plans, onLoadPlan, onSavePlan, onDeletePlan }) {
 
   return (
     <section className="admin-section">
-      {/* Form panel — shown when creating or editing */}
-      {showForm ? (
-        <div className="panel form-panel">
-          <div className="form-panel-header">
+      <SectionTitle
+        eyebrow="Catalog"
+        title="Subscription plans"
+        subtitle={`${plans.length} plans defined`}
+        action={
+          <button
+            type="button"
+            className="pill-button"
+            onClick={() => { resetForm(); setShowForm(true); }}
+          >
+            New plan
+          </button>
+        }
+      />
+
+      {showForm && (
+        <div className="form-card">
+          <header className="form-card-header">
             <h3>{editingPlanId ? 'Edit plan' : 'Create new plan'}</h3>
-            <button type="button" className="icon-close" onClick={resetForm}>✕</button>
-          </div>
-          <form className="user-inline-form" onSubmit={submitPlan}>
-            <div className="form-grid">
+            <button type="button" className="icon-close" onClick={resetForm} aria-label="Close form">✕</button>
+          </header>
+
+          <form className="field-stack" onSubmit={submitPlan}>
+            <div className="field-row three">
               <label>
                 <span>Plan name</span>
                 <input name="name" value={planForm.name} onChange={updatePlanField} required />
@@ -83,6 +98,8 @@ export function PlansView({ plans, onLoadPlan, onSavePlan, onDeletePlan }) {
                 <span>Currency</span>
                 <input name="currency" value={planForm.currency} onChange={updatePlanField} required />
               </label>
+            </div>
+            <div className="field-row">
               <label>
                 <span>Billing cycle</span>
                 <select name="billingCycle" value={planForm.billingCycle} onChange={updatePlanField}>
@@ -109,56 +126,52 @@ export function PlansView({ plans, onLoadPlan, onSavePlan, onDeletePlan }) {
               <span>Active (available for purchase)</span>
             </label>
             <div className="button-row">
-              <button className="primary-action" type="submit" disabled={saving}>
+              <button className="pill-button" type="submit" disabled={saving}>
                 {saving ? 'Saving…' : editingPlanId ? 'Save changes' : 'Create plan'}
               </button>
-              <button type="button" className="secondary-action" onClick={resetForm}>Cancel</button>
+              <button type="button" className="btn-secondary" onClick={resetForm}>Cancel</button>
             </div>
           </form>
         </div>
-      ) : (
-        <div className="section-action-row">
-          <button
-            type="button"
-            className="pill-button"
-            onClick={() => { resetForm(); setShowForm(true); }}
-          >
-            + New plan
-          </button>
-        </div>
       )}
 
-      {/* Plan cards */}
-      <div className="plan-cards-grid">
+      <div className="plan-grid">
         {plans.map((plan) => (
           <article className="plan-card" key={plan.id}>
-            <div className="plan-card-header">
+            <header className="plan-card-head">
               <div>
                 <h3>{plan.name}</h3>
                 <p>{plan.description || 'No description'}</p>
               </div>
               <StatusPill active={plan.isActive} />
-            </div>
+            </header>
+
             <div className="plan-card-price">
               <strong>{formatMoney(plan.price, plan.currency)}</strong>
               <span>/ {plan.billingCycle}</span>
             </div>
+
             <div className="plan-card-meta">
-              <span>🔍 {plan.mentorReviewLimit} mentor reviews</span>
+              {plan.mentorReviewLimit} mentor reviews / cycle
             </div>
+
             {plan.features?.length > 0 && (
-              <ul className="plan-features-list">
+              <ul className="plan-features">
                 {plan.features.map((feature) => (
-                  <li key={feature}>✓ {feature}</li>
+                  <li key={feature}>{feature}</li>
                 ))}
               </ul>
             )}
+
             <div className="button-row">
-              <button type="button" className="secondary-action" onClick={() => editPlan(plan)}>Edit</button>
-              <button type="button" className="danger-action" onClick={() => onDeletePlan(plan)}>Delete</button>
+              <button type="button" className="btn-secondary" onClick={() => editPlan(plan)}>Edit</button>
+              <button type="button" className="btn-secondary danger-action" onClick={() => onDeletePlan(plan)}>Delete</button>
             </div>
           </article>
         ))}
+        {!plans.length && (
+          <p className="empty-state">No plans defined yet.</p>
+        )}
       </div>
     </section>
   );
