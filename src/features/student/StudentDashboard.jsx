@@ -19,6 +19,7 @@ import { StudentRoadmapPage } from './components/StudentRoadmapPage';
 import { StudentSkillsPage } from './components/StudentSkillsPage';
 import { StudentGithubPage } from './components/StudentGithubPage';
 import { StudentMentorPage } from './components/StudentMentorPage';
+import { StudentSubscriptionPage } from './components/StudentSubscriptionPage';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { getGithubRepositories } from './githubApi';
 import { getMentorSessions } from './mentorApi';
@@ -678,7 +679,13 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
         </nav>
 
         <div className="student-sidebar-footer">
-          <button type="button" className="student-upgrade-btn">Nâng cấp tài khoản</button>
+          <button
+            type="button"
+            className="student-upgrade-btn"
+            onClick={() => setActiveSection('subscription')}
+          >
+            Nâng cấp tài khoản
+          </button>
           <div className="admin-account">
             <div className="admin-account-info">
               {avatarSrc ? (
@@ -697,7 +704,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
       </aside>
 
       <section className="admin-main student-main">
-       {!['portfolio', 'roadmap','skills','github','mentors'].includes(activeSection) && (
+      {!['portfolio', 'roadmap','skills','github','mentors','subscription'].includes(activeSection) && (
   <header className="student-header-bar">
     <button type="button" className="student-search-bar" onClick={() => setActiveSection('skills')}>
       <span>⌕</span>
@@ -732,6 +739,8 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   <StudentGithubPage session={session} />
 ) : activeSection === 'mentors' ? (
   <StudentMentorPage session={session} />
+) : activeSection === 'subscription' ? (
+  <StudentSubscriptionPage session={session} />
 ) : activeSection === 'settings' ? (
           <section className="student-profile-page">
             <div className="student-profile-heading">

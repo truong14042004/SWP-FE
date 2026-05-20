@@ -1,0 +1,266 @@
+/* ============================================================
+   STUDENT SUBSCRIPTION — Apple Style
+   ============================================================ */
+
+.student-subscription {
+    display: grid;
+    gap: 28px;
+    padding: 12px 0 40px;
+    color: var(--student-ink, #1d1d1f);
+}
+
+.student-subscription-hero {
+    display: grid;
+    gap: 8px;
+    text-align: center;
+    padding: 24px 0 4px;
+}
+
+.student-subscription-hero h1 {
+    margin: 0;
+    font-size: 38px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #0066cc, #34c759);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.student-subscription-hero p {
+    margin: 0 auto;
+    max-width: 620px;
+    color: var(--student-muted, #6e6e73);
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+.student-subscription-current {
+    background: linear-gradient(135deg, rgba(0, 102, 204, 0.08), rgba(52, 199, 89, 0.08));
+    border: 1px solid rgba(0, 102, 204, 0.18);
+    border-radius: 18px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.student-subscription-current small {
+    color: var(--student-primary, #0066cc);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.student-subscription-current h2 {
+    margin: 4px 0 4px;
+    font-size: 20px;
+}
+
+.student-subscription-current p {
+    margin: 0;
+    color: var(--student-muted, #6e6e73);
+    font-size: 13px;
+}
+
+.student-subscription-grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.student-subscription-card {
+    position: relative;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 22px;
+    padding: 26px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: 0.18s ease;
+}
+
+.student-subscription-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.08);
+}
+
+.student-subscription-card.featured {
+    border-color: var(--student-primary, #0066cc);
+    box-shadow: 0 16px 32px rgba(0, 102, 204, 0.12);
+}
+
+.student-subscription-card.current {
+    background: linear-gradient(135deg, rgba(52, 199, 89, 0.04), rgba(255, 255, 255, 0));
+    border-color: rgba(52, 199, 89, 0.4);
+}
+
+.student-subscription-tag {
+    position: absolute;
+    top: -10px;
+    right: 18px;
+    background: var(--student-primary, #0066cc);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    letter-spacing: 0.2px;
+}
+
+.student-subscription-tag.current {
+    background: #34c759;
+}
+
+.student-subscription-card h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.student-subscription-desc {
+    margin: 0;
+    color: var(--student-muted, #6e6e73);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.student-subscription-price {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.student-subscription-price strong {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+}
+
+.student-subscription-price small {
+    color: var(--student-muted, #6e6e73);
+    font-size: 13px;
+}
+
+.student-subscription-features {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+    color: var(--student-ink, #1d1d1f);
+    font-size: 13.5px;
+}
+
+.student-subscription-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.45;
+}
+
+.student-subscription-cta {
+    margin-top: auto;
+    border: 0;
+    background: var(--student-primary, #0066cc);
+    color: #ffffff;
+    border-radius: 9999px;
+    padding: 11px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+.student-subscription-cta:hover:not(:disabled) {
+    background: #0071e3;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(0, 102, 204, 0.18);
+}
+
+.student-subscription-card.current .student-subscription-cta {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--student-muted, #6e6e73);
+}
+
+.student-subscription-cta:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.student-subscription-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--student-muted, #6e6e73);
+}
+
+.student-subscription-empty span {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.student-subscription-history h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.student-subscription-history-list {
+    display: grid;
+    gap: 8px;
+}
+
+.student-subscription-history-item {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.student-subscription-history-item strong {
+    display: block;
+    font-size: 14px;
+}
+
+.student-subscription-history-item small {
+    display: block;
+    color: var(--student-muted, #6e6e73);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.student-subscription-status {
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--student-muted, #6e6e73);
+    flex: 0 0 auto;
+}
+
+.student-subscription-status.active {
+    background: rgba(52, 199, 89, 0.14);
+    color: #1f5e2c;
+}
+
+.student-subscription-status.pending {
+    background: rgba(255, 149, 0, 0.14);
+    color: #b35900;
+}
+
+.student-subscription-status.cancelled,
+.student-subscription-status.expired,
+.student-subscription-status.checkoutfailed {
+    background: rgba(255, 59, 48, 0.12);
+    color: #a30005;
+}
