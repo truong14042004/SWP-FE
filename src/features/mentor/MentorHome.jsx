@@ -12,6 +12,7 @@ import {
   getMyMentorFeedbacks,
   createMentorFeedback,
 } from './api/industryMentorApi';
+import { getMentorRoadmapQueue } from '../roadmap-review/reviewApi';
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Tổng quan' },
@@ -28,6 +29,7 @@ export function MentorHome({ session, onSignOut }) {
   const [loading, setLoading] = useState(true);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackModalStudent, setFeedbackModalStudent] = useState(null);
+  const [pendingReviewCount, setPendingReviewCount] = useState(0);
 
   useEffect(() => {
     loadInitialData();
@@ -37,12 +39,16 @@ export function MentorHome({ session, onSignOut }) {
   async function loadInitialData() {
     setLoading(true);
     try {
-      const [queueData, feedbacksData] = await Promise.all([
+      const [queueData, feedbacksData, roadmapQueueData] = await Promise.all([
         getReviewQueue(session).catch(() => []),
         getMyMentorFeedbacks(session).catch(() => []),
+        getMentorRoadmapQueue(session).catch(() => []),
       ]);
       setReviewQueue(Array.isArray(queueData) ? queueData : []);
       setFeedbacks(Array.isArray(feedbacksData) ? feedbacksData : []);
+      const pending = (Array.isArray(roadmapQueueData) ? roadmapQueueData : [])
+        .filter((item) => item.status === 'Pending').length;
+      setPendingReviewCount(pending);
     } finally {
       setLoading(false);
     }
@@ -105,7 +111,13 @@ export function MentorHome({ session, onSignOut }) {
           <span className="imentor-globalnav-meta">
             Đăng nhập:<strong>{mentorName}</strong>
           </span>
-          <NotificationBell session={session} />
+          <NotificationBell
+            session={session}
+            onNavigate={(target) => {
+              const view = target === 'roadmap-reviews' ? 'roadmap-reviews' : 'overview';
+              handleNavigate(view);
+            }}
+          />
           <button
             type="button"
             className="imentor-globalnav-action"
@@ -125,6 +137,8 @@ export function MentorHome({ session, onSignOut }) {
               const badge =
                 item.id === 'queue' && reviewQueue.length > 0
                   ? reviewQueue.length
+                  : item.id === 'roadmap-reviews' && pendingReviewCount > 0
+                  ? pendingReviewCount
                   : item.id === 'feedback' && feedbacks.length > 0
                   ? feedbacks.length
                   : null;

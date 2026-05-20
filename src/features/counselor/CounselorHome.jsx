@@ -12,6 +12,7 @@ import {
   getMyFeedbacks,
   createFeedback,
 } from './api/counselorApi';
+import { getCounselorRoadmapQueue } from '../roadmap-review/reviewApi';
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Tổng quan' },
@@ -28,6 +29,7 @@ export function CounselorHome({ session, onSignOut }) {
   const [loading, setLoading] = useState(true);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackModalStudent, setFeedbackModalStudent] = useState(null);
+  const [pendingReviewCount, setPendingReviewCount] = useState(0);
 
   useEffect(() => {
     loadInitialData();
@@ -37,12 +39,16 @@ export function CounselorHome({ session, onSignOut }) {
   async function loadInitialData() {
     setLoading(true);
     try {
-      const [studentsData, feedbacksData] = await Promise.all([
+      const [studentsData, feedbacksData, queueData] = await Promise.all([
         getCounselorStudents(session).catch(() => []),
         getMyFeedbacks(session).catch(() => []),
+        getCounselorRoadmapQueue(session).catch(() => []),
       ]);
       setStudents(Array.isArray(studentsData) ? studentsData : []);
       setFeedbacks(Array.isArray(feedbacksData) ? feedbacksData : []);
+      const pending = (Array.isArray(queueData) ? queueData : [])
+        .filter((item) => item.status === 'Pending').length;
+      setPendingReviewCount(pending);
     } finally {
       setLoading(false);
     }
@@ -100,7 +106,14 @@ export function CounselorHome({ session, onSignOut }) {
           <span className="counselor-globalnav-meta">
             Đăng nhập:<strong>{counselorName}</strong>
           </span>
-          <NotificationBell session={session} />
+          <NotificationBell
+            session={session}
+            onNavigate={(target) => {
+              // Map BE link target to counselor view id
+              const view = target === 'roadmap-reviews' ? 'roadmap-reviews' : 'overview';
+              handleNavigate(view);
+            }}
+          />
           <button
             type="button"
             className="counselor-globalnav-action"
@@ -121,6 +134,8 @@ export function CounselorHome({ session, onSignOut }) {
               const badge =
                 item.id === 'students' && students.length > 0
                   ? students.length
+                  : item.id === 'roadmap-reviews' && pendingReviewCount > 0
+                  ? pendingReviewCount
                   : item.id === 'feedback' && feedbacks.length > 0
                   ? feedbacks.length
                   : null;

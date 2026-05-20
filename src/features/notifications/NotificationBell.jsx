@@ -27,7 +27,7 @@ function timeAgo(value) {
   }).format(date);
 }
 
-export function NotificationBell({ session }) {
+export function NotificationBell({ session, onNavigate }) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -97,8 +97,9 @@ export function NotificationBell({ session }) {
       }
     }
 
-    if (notification.linkUrl) {
-      window.location.hash = notification.linkUrl.replace(/^#/, '');
+    if (notification.linkUrl && onNavigate) {
+      const target = notification.linkUrl.replace(/^#/, '');
+      onNavigate(target);
     }
 
     setOpen(false);
