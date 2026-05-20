@@ -249,10 +249,6 @@ async function loadData() {
       ...EMPTY_FORM,
       skillId,
     });
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
   }
 
   function startEdit(userSkill) {
@@ -262,10 +258,6 @@ async function loadData() {
       level: userSkill.level || 'Beginner',
       evidenceUrl: userSkill.evidenceUrl || '',
       evidenceType: userSkill.evidenceType || 'Project',
-    });
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
     });
   }
 
@@ -435,13 +427,28 @@ async function handleLoadSkillGapById(event) {
   return (
     <section className="skills-page">
       <header className="skills-hero">
-        <div>
+        <div className="skills-hero-copy">
           <span className="skills-eyebrow">◇ Kỹ năng & khóa học</span>
           <h1>Quản lý kỹ năng cá nhân</h1>
           <p>
             Theo dõi kỹ năng đã có, mức độ hiện tại và minh chứng học tập để hệ thống
             đề xuất roadmap phù hợp hơn.
           </p>
+
+          <div className="skills-hero-metrics" aria-label="Skills summary">
+            <div>
+              <span>My skills</span>
+              <strong>{stats.totalUser}</strong>
+            </div>
+            <div>
+              <span>Average</span>
+              <strong>{stats.average}%</strong>
+            </div>
+            <div>
+              <span>Verified</span>
+              <strong>{stats.verified}</strong>
+            </div>
+          </div>
         </div>
 
         <div className="skills-hero-actions">
@@ -560,13 +567,6 @@ async function handleLoadSkillGapById(event) {
                 />
                 {uploadingEvidence ? 'Đang tải...' : 'Upload file'}
               </label>
-              <button
-                type="button"
-                onClick={handleEvidenceImport}
-                disabled={!editingId || uploadingEvidence || saving || !isHttpUrl(form.evidenceUrl)}
-              >
-                Import URL
-              </button>
             </div>
 
             {!editingId && (

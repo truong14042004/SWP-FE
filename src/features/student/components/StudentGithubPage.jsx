@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
 import '../../../styles/github.css';
 import {
   analyzeGithubReadme,
@@ -8,7 +9,6 @@ import {
   syncGithubRepositories,
 } from '../githubApi';
 import { getStudentProfile } from '../studentApi';
-
 const EMPTY_ANALYZE_FORM = {
   repoUrl: '',
   readmeContent: '',
@@ -175,7 +175,6 @@ export function StudentGithubPage({ session }) {
   const [analyzingRepoId, setAnalyzingRepoId] = useState('');
 
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     loadInitialData();
@@ -208,11 +207,19 @@ export function StudentGithubPage({ session }) {
     };
   }, [repositories]);
 
+  function showError(message) {
+    setError(message);
+    toast.error(message);
+  }
+
+  function showWarning(message) {
+    setError(message);
+    toast.warn(message);
+  }
+
   async function loadInitialData() {
     setLoading(true);
     setError('');
-    setNotice('');
-
     try {
       await handlePossibleCallback();
 
@@ -225,7 +232,7 @@ export function StudentGithubPage({ session }) {
       setUsername(profileResult?.githubUsername || '');
       setRepositories(safeArray(repoResult));
     } catch (requestError) {
-      setError(requestError.message || 'Không tải được dữ liệu GitHub.');
+      showError(requestError.message || 'Không tải được dữ liệu GitHub.');
     } finally {
       setLoading(false);
     }
@@ -246,43 +253,40 @@ export function StudentGithubPage({ session }) {
         error: oauthError,
       });
 
-      setNotice('Kết nối GitHub thành công.');
+      toast.success('Kết nối GitHub thành công.');
 
       const cleanUrl = `${window.location.origin}${window.location.pathname}#github`;
       window.history.replaceState({}, document.title, cleanUrl);
     } catch (requestError) {
-      setError(requestError.message || 'Không xử lý được GitHub callback.');
+      showError(requestError.message || 'Không xử lý được GitHub callback.');
     }
   }
 
  async function handleConnectGithub() {
   setConnecting(true);
   setError('');
-  setNotice('');
 
   try {
     const result = await startGithubLogin(session, {
-      returnUrl: `${window.location.origin}${window.location.pathname}`,
+      returnUrl: `${window.location.origin}${window.location.pathname}#github`,
       scope: 'repo read:user user:email',
     });
-
-    console.log('GitHub OAuth login result:', result);
 
     const authorizationUrl = result?.authorizationUrl;
 
     if (!authorizationUrl) {
-      setError('API không trả về authorizationUrl.');
+      showError('API không trả về authorizationUrl.');
       return;
     }
 
     if (!authorizationUrl.startsWith('https://github.com/login/oauth/authorize')) {
-      setError(`authorizationUrl không hợp lệ: ${authorizationUrl}`);
+      showError(`authorizationUrl không hợp lệ: ${authorizationUrl}`);
       return;
     }
 
     window.location.href = authorizationUrl;
   } catch (requestError) {
-    setError(requestError.message || 'Không khởi tạo được GitHub OAuth.');
+    showError(requestError.message || 'Không khởi tạo được GitHub OAuth.');
   } finally {
     setConnecting(false);
   }
@@ -292,13 +296,12 @@ export function StudentGithubPage({ session }) {
   const finalUsername = normalizeGithubUsername(username || profile?.githubUsername);
 
   if (!finalUsername) {
-    setError('Vui lòng nhập GitHub username trước khi đồng bộ.');
+    showWarning('Vui lòng nhập GitHub username trước khi đồng bộ.');
     return;
   }
 
   setSyncing(true);
   setError('');
-  setNotice('');
 
   try {
     const result = await syncGithubRepositories(session, {
@@ -308,9 +311,9 @@ export function StudentGithubPage({ session }) {
 
     setUsername(finalUsername);
     setRepositories(safeArray(result));
-    setNotice('Đã đồng bộ repositories từ GitHub.');
+    toast.success('Đã đồng bộ repositories từ GitHub.');
   } catch (requestError) {
-    setError(requestError.message || 'Không đồng bộ được GitHub repositories.');
+    showError(requestError.message || 'Không đồng bộ được GitHub repositories.');
   } finally {
     setSyncing(false);
   }
@@ -319,13 +322,13 @@ export function StudentGithubPage({ session }) {
   async function handleReloadRepositories() {
     setLoading(true);
     setError('');
-    setNotice('');
 
     try {
       const result = await getGithubRepositories(session);
       setRepositories(safeArray(result));
+      toast.success('Đã tải lại repositories.');
     } catch (requestError) {
-      setError(requestError.message || 'Không tải được repositories.');
+      showError(requestError.message || 'Không tải được repositories.');
     } finally {
       setLoading(false);
     }
@@ -341,7 +344,6 @@ export function StudentGithubPage({ session }) {
       readmeContent: '',
     });
     setError('');
-    setNotice('');
   }
 
   function updateAnalyzeForm(event) {
@@ -365,18 +367,17 @@ export function StudentGithubPage({ session }) {
     const repositoryId = repo.id;
 
     if (!repositoryId) {
-      setError('Repository không có ID.');
+      showError('Repository không có ID.');
       return;
     }
 
     if (!analyzeForm.readmeContent.trim()) {
-      setError('Vui lòng dán nội dung README trước khi phân tích.');
+      showWarning('Vui lòng dán nội dung README trước khi phân tích.');
       return;
     }
 
     setAnalyzingRepoId(repositoryId);
     setError('');
-    setNotice('');
 
     try {
       const result = await analyzeGithubReadme(session, {
@@ -391,9 +392,9 @@ export function StudentGithubPage({ session }) {
 
       setSelectedRepoId('');
       setAnalyzeForm(EMPTY_ANALYZE_FORM);
-      setNotice('Đã phân tích README repository.');
+      toast.success('Đã phân tích README repository.');
     } catch (requestError) {
-      setError(requestError.message || 'Không phân tích được README.');
+      showError(requestError.message || 'Không phân tích được README.');
     } finally {
       setAnalyzingRepoId('');
     }
@@ -402,10 +403,28 @@ export function StudentGithubPage({ session }) {
   return (
     <section className="github-page">
       <header className="github-hero">
-        <div>
+        <div className="github-hero-copy">
+          <span className={connected ? 'github-status-pill connected' : 'github-status-pill disconnected'}>
+            {connected ? 'Connected workspace' : 'Not connected'}
+          </span>
           <span className="github-eyebrow">GitHub Integration</span>
           <h1>Tích hợp GitHub</h1>
           <p>Đồng bộ repository để AI đánh giá năng lực lập trình của bạn.</p>
+
+          <div className="github-hero-metrics" aria-label="GitHub summary">
+            <div>
+              <span>Repositories</span>
+              <strong>{stats.total}</strong>
+            </div>
+            <div>
+              <span>Analyzed</span>
+              <strong>{stats.analyzed}</strong>
+            </div>
+            <div>
+              <span>Average score</span>
+              <strong>{stats.average}/100</strong>
+            </div>
+          </div>
         </div>
 
         <div className="github-hero-actions">
@@ -413,7 +432,7 @@ export function StudentGithubPage({ session }) {
             type="button"
             className="github-btn outline"
             onClick={handleConnectGithub}
-            disabled={connecting}
+            disabled={connecting || syncing}
           >
             {connecting ? 'Đang kết nối...' : 'Kết nối GitHub'}
           </button>
@@ -422,15 +441,18 @@ export function StudentGithubPage({ session }) {
             type="button"
             className="github-btn primary"
             onClick={handleSyncGithub}
-            disabled={syncing}
+            disabled={syncing || connecting}
           >
             {syncing ? 'Đang đồng bộ...' : '↻ Đồng bộ ngay'}
           </button>
         </div>
       </header>
 
-      {error && <div className="github-alert error">{error}</div>}
-      {notice && <div className="github-alert success">{notice}</div>}
+      {error && (
+        <div className="github-alert error" role="alert">
+          {error}
+        </div>
+      )}
 
       <section className={connected ? 'github-connection-card connected' : 'github-connection-card'}>
         <div className="github-connection-icon">‹›</div>
@@ -445,13 +467,13 @@ export function StudentGithubPage({ session }) {
             Tài khoản:{' '}
             <strong>
               {username || profile?.githubUsername
-                ? `@${username || profile?.githubUsername}`
+                ? `${username || profile?.githubUsername}`
                 : 'Chưa có username'}
             </strong>
           </p>
         </div>
 
-        <button type="button" onClick={handleReloadRepositories}>
+        <button type="button" onClick={handleReloadRepositories} disabled={loading}>
           Tải lại
         </button>
       </section>
@@ -483,7 +505,7 @@ export function StudentGithubPage({ session }) {
             <span>Bao gồm private repositories</span>
           </label>
 
-          <button type="button" onClick={handleSyncGithub} disabled={syncing}>
+          <button type="button" onClick={handleSyncGithub} disabled={syncing || connecting}>
             {syncing ? 'Đang đồng bộ...' : 'Đồng bộ repositories'}
           </button>
         </div>

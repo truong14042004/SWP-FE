@@ -7,6 +7,7 @@ import {
   getMyPortfolio,
   importPortfolioProjectImageFromUrl,
   publishPortfolio,
+  unpublishPortfolio,
   updatePortfolio,
   uploadPortfolioProjectImage,
 } from '../portfolioApi';
@@ -175,20 +176,29 @@ export function StudentPortfolioPage({ session }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [unpublishing, setUnpublishing] = useState(false);
   const [uploadingProjectId, setUploadingProjectId] = useState('');
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     loadPortfolio();
   }, []);
 
   const publicUrl = useMemo(() => getPublicUrl(form.slug), [form.slug]);
+  const completedProjects = useMemo(() => {
+    return form.projects.filter((project) => project.title.trim() && project.description.trim()).length;
+  }, [form.projects]);
+  const readinessItems = [
+    Boolean(form.title.trim()),
+    Boolean(form.bio.trim()),
+    completedProjects > 0,
+    Boolean(form.slug.trim()),
+  ];
+  const readiness = Math.round((readinessItems.filter(Boolean).length / readinessItems.length) * 100);
 
   async function loadPortfolio() {
     setLoading(true);
     setError('');
-    setNotice('');
 
     try {
       const portfolio = await getMyPortfolio(session);
@@ -285,11 +295,9 @@ export function StudentPortfolioPage({ session }) {
 
     setUploadingProjectId(project.localId);
     setError('');
-    setNotice('');
     try {
       const uploaded = await uploadPortfolioProjectImage(session, project.id, file);
       updateProject(project.localId, 'imageUrl', getStorageValue(uploaded, project.imageUrl));
-      setNotice('Da upload anh du an.');
       toast.success('Da upload anh du an.');
     } catch (requestError) {
       const message = requestError.message || 'Khong upload duoc anh du an.';
@@ -309,14 +317,12 @@ export function StudentPortfolioPage({ session }) {
 
     setUploadingProjectId(project.localId);
     setError('');
-    setNotice('');
     try {
       const imported = await importPortfolioProjectImageFromUrl(session, project.id, {
         url,
         fileName: getFileNameFromUrl(url),
       });
       updateProject(project.localId, 'imageUrl', getStorageValue(imported, url));
-      setNotice('Da import anh du an tu URL.');
       toast.success('Da import anh du an tu URL.');
     } catch (requestError) {
       const message = requestError.message || 'Khong import duoc anh du an.';
@@ -330,7 +336,6 @@ export function StudentPortfolioPage({ session }) {
   async function handleSave() {
     setSaving(true);
     setError('');
-    setNotice('');
 
     try {
       const payload = buildPayload(form);
@@ -340,7 +345,6 @@ export function StudentPortfolioPage({ session }) {
 
       setForm(normalizePortfolio(saved));
       setHasPortfolio(true);
-      setNotice(hasPortfolio ? 'Đã cập nhật portfolio.' : 'Đã tạo portfolio.');
       toast.success(hasPortfolio ? 'Đã cập nhật portfolio.' : 'Đã tạo portfolio.');
     } catch (requestError) {
       const message = requestError.message || 'Không lưu được portfolio.';
@@ -354,7 +358,6 @@ export function StudentPortfolioPage({ session }) {
   async function handlePublish() {
     setPublishing(true);
     setError('');
-    setNotice('');
 
     try {
       if (!hasPortfolio) {
@@ -365,7 +368,6 @@ export function StudentPortfolioPage({ session }) {
 
       const published = await publishPortfolio(session);
       setForm(normalizePortfolio(published));
-      setNotice('Đã xuất bản portfolio.');
       toast.success('Đã xuất bản portfolio.');
       setActiveTab('share');
     } catch (requestError) {
@@ -377,20 +379,55 @@ export function StudentPortfolioPage({ session }) {
     }
   }
 
+  async function handleUnpublish() {
+    if (!hasPortfolio || !form.isPublished) return;
+
+    setUnpublishing(true);
+    setError('');
+
+    try {
+      const unpublished = await unpublishPortfolio(session);
+      setForm(normalizePortfolio(unpublished));
+      toast.success('Đã hủy xuất bản portfolio.');
+    } catch (requestError) {
+      const message = requestError.message || 'Không hủy xuất bản được portfolio.';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setUnpublishing(false);
+    }
+  }
+
   async function copyPublicUrl() {
     if (!publicUrl) return;
 
     await navigator.clipboard?.writeText(publicUrl);
-    setNotice('Đã copy link portfolio.');
     toast.success('Đã copy link portfolio.');
   }
 
   return (
     <section className="portfolio-page">
       <header className="portfolio-header">
-        <div>
+        <div className="portfolio-header-copy">
+          <span className={form.isPublished ? 'portfolio-status-pill live' : 'portfolio-status-pill draft'}>
+            {form.isPublished ? 'Đang public' : 'Bản nháp'}
+          </span>
           <h1>Xây dựng Portfolio</h1>
           <p>Quản lý và tùy chỉnh hồ sơ năng lực của bạn.</p>
+          <div className="portfolio-hero-metrics">
+            <div>
+              <span>Mức hoàn thiện</span>
+              <strong>{readiness}%</strong>
+            </div>
+            <div>
+              <span>Dự án đủ nội dung</span>
+              <strong>{completedProjects}/{form.projects.length}</strong>
+            </div>
+            <div>
+              <span>Theme</span>
+              <strong>{form.theme}</strong>
+            </div>
+          </div>
         </div>
 
         <div className="portfolio-header-actions">
@@ -406,7 +443,7 @@ export function StudentPortfolioPage({ session }) {
             type="button"
             className="portfolio-btn primary"
             onClick={handlePublish}
-            disabled={publishing || loading}
+            disabled={publishing || unpublishing || loading}
           >
              {publishing ? 'Đang xuất bản...' : 'Xuất bản Portfolio'}
           </button>
@@ -440,7 +477,6 @@ export function StudentPortfolioPage({ session }) {
       </nav>
 
       {error && <div className="portfolio-alert error">{error}</div>}
-      {notice && <div className="portfolio-alert success">{notice}</div>}
 
       {loading && (
         <div className="portfolio-card">
@@ -591,9 +627,18 @@ export function StudentPortfolioPage({ session }) {
               type="button"
               className="portfolio-btn soft"
               onClick={copyPublicUrl}
-              disabled={!publicUrl}
+              disabled={!publicUrl || !form.isPublished}
             >
               Copy link
+            </button>
+
+            <button
+              type="button"
+              className="portfolio-btn outline"
+              onClick={handleUnpublish}
+              disabled={!form.isPublished || unpublishing || publishing}
+            >
+              {unpublishing ? 'Đang hủy xuất bản...' : 'Hủy xuất bản'}
             </button>
           </div>
 

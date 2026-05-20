@@ -72,14 +72,22 @@
 }
 
 .student-nav {
+    display: grid !important;
+    align-content: start !important;
     padding: 14px 10px !important;
     gap: 2px !important;
 }
 
 .student-nav button {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
     min-height: 40px !important;
     border-radius: 8px !important;
     padding: 0 12px !important;
+    border: 0 !important;
     color: rgba(255, 255, 255, 0.58) !important;
     background: transparent !important;
     font-size: 12px !important;
@@ -625,8 +633,8 @@
     }
 
     .student-nav {
-        display: flex !important;
-        overflow-x: auto !important;
+        display: grid !important;
+        overflow: visible !important;
         padding: 10px !important;
     }
 
