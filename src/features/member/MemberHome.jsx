@@ -1,4 +1,6 @@
-﻿export function MemberHome({ session, onSignOut }) {
+import '../../styles/member.css';
+
+export function MemberHome({ session, onSignOut }) {
   return (
     <main className="member-shell">
       <section className="member-card">
