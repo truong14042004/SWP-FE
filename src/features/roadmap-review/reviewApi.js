@@ -53,3 +53,10 @@ export function rejectReviewRequest(session, requestId, payload) {
     body: JSON.stringify(payload),
   });
 }
+
+export function getEvidenceDownloadUrl(session, requestId) {
+  return authorizedRequest(
+    `/api/roadmap-node/review-requests/${requestId}/evidence-url`,
+    session
+  );
+}

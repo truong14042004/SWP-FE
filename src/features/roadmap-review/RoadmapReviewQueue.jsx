@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import {
   approveReviewRequest,
   getCounselorRoadmapQueue,
+  getEvidenceDownloadUrl,
   getMentorRoadmapQueue,
   rejectReviewRequest,
 } from './reviewApi';
@@ -37,6 +38,7 @@ export function RoadmapReviewQueue({ session, role }) {
   const [actionLoadingId, setActionLoadingId] = useState('');
   const [rejectingId, setRejectingId] = useState('');
   const [rejectNote, setRejectNote] = useState('');
+  const [downloadingId, setDownloadingId] = useState('');
 
   useEffect(() => {
     loadQueue();
@@ -55,6 +57,23 @@ export function RoadmapReviewQueue({ session, role }) {
       toast.error(error.message || 'Không tải được queue.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleDownloadEvidence(item) {
+    setDownloadingId(item.id);
+    try {
+      const result = await getEvidenceDownloadUrl(session, item.id);
+      if (result?.downloadUrl) {
+        // Open in a new tab — browser handles download or preview
+        window.open(result.downloadUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        toast.warn('Không lấy được link evidence.');
+      }
+    } catch (error) {
+      toast.error(error.message || 'Không tải được evidence.');
+    } finally {
+      setDownloadingId('');
     }
   }
 
@@ -204,12 +223,20 @@ export function RoadmapReviewQueue({ session, role }) {
                       🔗 {item.evidenceUrl}
                     </a>
                   ) : (
-                    <span>
-                      📎 {item.evidenceFileName || 'File evidence'}
-                      <small> ({item.evidenceType})</small>
-                      <br />
-                      <code>{item.evidenceUrl}</code>
-                    </span>
+                    <div className="review-queue-evidence-file">
+                      <div>
+                        <strong>📎 {item.evidenceFileName || 'File evidence'}</strong>
+                        <small> · {item.evidenceType}</small>
+                      </div>
+                      <button
+                        type="button"
+                        className="review-queue-btn outline small"
+                        onClick={() => handleDownloadEvidence(item)}
+                        disabled={downloadingId === item.id}
+                      >
+                        {downloadingId === item.id ? 'Đang tạo link...' : '⬇ Tải xuống'}
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
