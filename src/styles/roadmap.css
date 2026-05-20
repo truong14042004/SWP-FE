@@ -590,11 +590,19 @@
     min-height: 44px;
     width: 100%;
     padding: 9px 12px;
-    display: grid;
-    gap: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     text-decoration: none;
     text-align: left;
     cursor: pointer;
+    min-width: 0;
+}
+
+.roadmap-resource > :first-child,
+.roadmap-resource strong {
+    flex: 1;
     min-width: 0;
 }
 
@@ -611,6 +619,13 @@
     font-weight: 400;
     overflow-wrap: break-word;
     word-break: normal;
+}
+
+.roadmap-resource-icon {
+    flex: 0 0 auto;
+    color: var(--student-primary, #0066cc);
+    font-size: 14px;
+    font-weight: 600;
 }
 
 /* =========================
