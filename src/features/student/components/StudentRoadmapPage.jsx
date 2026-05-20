@@ -645,6 +645,7 @@ export function StudentRoadmapPage({ session }) {
                         index={index}
                         updatingNodeId={updatingNodeId}
                         onStatusChange={handleNodeStatusChange}
+                        onRequestGroupReview={(groupNode) => setReviewModalNode(groupNode)}
                       />
                     ))}
                   </div>
@@ -673,14 +674,29 @@ export function StudentRoadmapPage({ session }) {
   );
 }
 
-function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatusChange }) {
+function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatusChange, onRequestGroupReview }) {
   const statusMeta = getStatusMeta(node.status);
   const resources = getNodeResources(node);
   const children = getChildren(node);
   const priority = Number(node.priority || 0);
   const isGroup = String(node.nodeType || '').toLowerCase() === 'group';
   const isVerified = normalizeStatus(node.status) === 'verified';
+  const isPendingReview = normalizeStatus(node.status) === 'needreview';
   const canUpdate = !isGroup && !isVerified && Boolean(node.id);
+
+  // Group review readiness: count non-group children that are Completed or Verified
+  const nonGroupChildren = children.filter(
+    (child) => String(child.nodeType || '').toLowerCase() !== 'group'
+  );
+  const completedChildren = nonGroupChildren.filter((child) => {
+    const status = normalizeStatus(child.status);
+    return status === 'completed' || status === 'verified';
+  });
+  const groupReadyForReview =
+    isGroup
+    && nonGroupChildren.length > 0
+    && completedChildren.length === nonGroupChildren.length
+    && !isVerified;
 
   return (
     <article
@@ -728,6 +744,31 @@ function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatus
           </div>
         ) : null}
 
+        {isGroup && nonGroupChildren.length > 0 && !isVerified && (
+          <div className="roadmap-group-review">
+            <div className="roadmap-group-review-stats">
+              <strong>
+                {completedChildren.length}/{nonGroupChildren.length} module đã hoàn thành
+              </strong>
+              <small>
+                {groupReadyForReview
+                  ? 'Đủ điều kiện yêu cầu review nhóm'
+                  : 'Hoàn thành tất cả module để mở review nhóm'}
+              </small>
+            </div>
+            <button
+              type="button"
+              className="roadmap-group-review-btn"
+              disabled={!groupReadyForReview || isPendingReview}
+              onClick={() => onRequestGroupReview?.(node)}
+            >
+              {isPendingReview
+                ? 'Yêu cầu review đang chờ'
+                : '✓ Yêu cầu review nhóm'}
+            </button>
+          </div>
+        )}
+
         <div className="roadmap-node-main">
           <div>
             <small>{isGroup ? `Nhóm #${index + 1}` : `Module #${index + 1}`}</small>
@@ -764,6 +805,7 @@ function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatus
                 level={level + 1}
                 updatingNodeId={updatingNodeId}
                 onStatusChange={onStatusChange}
+                onRequestGroupReview={onRequestGroupReview}
               />
             ))}
           </div>
