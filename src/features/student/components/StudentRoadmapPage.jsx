@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import '../../../styles/roadmap.css'
 import {
@@ -253,6 +253,8 @@ export function StudentRoadmapPage({ session }) {
 
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const [listError, setListError] = useState(false);
+  const detailRequestRef = useRef(0);
 
   useEffect(() => {
     loadRoadmaps();
@@ -297,6 +299,7 @@ export function StudentRoadmapPage({ session }) {
     setLoadingList(true);
     setError('');
     setNotice('');
+    setListError(false);
 
     try {
       const result = await getRoadmaps(session);
@@ -314,6 +317,7 @@ export function StudentRoadmapPage({ session }) {
     } catch (requestError) {
       const message = requestError.message || 'Không tải được danh sách lộ trình.';
       setError(message);
+      setListError(true);
       toast.error(message);
     } finally {
       setLoadingList(false);
@@ -323,6 +327,7 @@ export function StudentRoadmapPage({ session }) {
   async function loadRoadmapDetail(id) {
     if (!id) return;
 
+    const requestId = ++detailRequestRef.current;
     setLoadingDetail(true);
     setError('');
     setNotice('');
@@ -330,14 +335,19 @@ export function StudentRoadmapPage({ session }) {
 
     try {
       const result = await getRoadmapById(session, id);
+      // Ignore stale response if user clicked another roadmap meanwhile.
+      if (requestId !== detailRequestRef.current) return;
       setRoadmap(result);
       setShowGenerateForm(false);
     } catch (requestError) {
+      if (requestId !== detailRequestRef.current) return;
       const message = requestError.message || 'Không tải được chi tiết lộ trình.';
       setError(message);
       toast.error(message);
     } finally {
-      setLoadingDetail(false);
+      if (requestId === detailRequestRef.current) {
+        setLoadingDetail(false);
+      }
     }
   }
 
@@ -396,10 +406,13 @@ export function StudentRoadmapPage({ session }) {
     try {
       const updated = await updateRoadmapNodeStatus(session, node.id, status);
       setRoadmap((current) => {
+        // Only merge primitive fields; never spread the whole node response
+        // because BE returns Children = empty for single-node update,
+        // which would erase children in the local tree.
         const next = updateRoadmapNode(current, node.id, (item) => ({
           ...item,
-          ...(updated && typeof updated === 'object' ? updated : {}),
           status: updated?.status || status,
+          updatedAt: updated?.updatedAt || item.updatedAt,
         }));
         return next ? { ...next, progress: calculateProgressFromNodes(getRoadmapNodes(next)) } : next;
       });
@@ -448,6 +461,9 @@ export function StudentRoadmapPage({ session }) {
           </button>
         </div>
       </header>
+
+      {error && <div className="roadmap-alert error">{error}</div>}
+      {notice && <div className="roadmap-alert success">{notice}</div>}
 
       {showGenerateForm && (
         <form className="roadmap-generate-card" onSubmit={handleGenerate}>
@@ -528,6 +544,10 @@ export function StudentRoadmapPage({ session }) {
 
           {loadingList ? (
             <div className="roadmap-list-empty">Đang tải danh sách...</div>
+          ) : listError ? (
+            <div className="roadmap-list-empty">
+              Không tải được danh sách. Vui lòng bấm “Tải lại danh sách”.
+            </div>
           ) : roadmaps.length === 0 ? (
             <div className="roadmap-list-empty">
               Chưa có lộ trình nào. Hãy tạo lộ trình đầu tiên.
@@ -754,6 +774,7 @@ function ResourceButton({ resource }) {
         rel="noreferrer"
       >
         {content}
+        <span className="roadmap-resource-icon" aria-hidden="true">↗</span>
       </a>
     );
   }
