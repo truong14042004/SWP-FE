@@ -761,73 +761,64 @@ function ProjectEditor({
 }
 
 function PortfolioPreview({ form }) {
-  const projects = form.projects.length
-    ? form.projects
-    : [
-        {
-          localId: 'sample',
-          title: 'Fintech Dashboard Redesign',
-          description:
-            'Thiết kế dashboard quản lý tài chính cá nhân, cải thiện trải nghiệm người dùng.',
-          techStack: 'React, Figma, Dashboard',
-          imageUrl:
-            'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80',
-          demoUrl: '#',
-          sourceUrl: '#',
-        },
-      ];
+  const hasProjects = form.projects.length > 0;
 
   return (
     <section className={`portfolio-preview portfolio-preview-${form.theme}`}>
       <div className="portfolio-preview-hero">
         <div>
           <span>Portfolio Preview</span>
-          <h2>{form.title || 'Your Career Title'}</h2>
+          <h2>{form.title || 'Chưa đặt tiêu đề nghề nghiệp'}</h2>
           <p>
-            {form.bio ||
-              'Giới thiệu ngắn về định hướng nghề nghiệp, kỹ năng và các dự án nổi bật của bạn.'}
+            {form.bio || 'Chưa có giới thiệu. Hãy thêm ở tab Chỉnh sửa.'}
           </p>
         </div>
       </div>
 
-      <div className="portfolio-preview-projects">
-        {projects.map((project) => (
-          <article key={project.localId} className="portfolio-preview-project">
-              <img
-              src={
-                resolveStorageUrl(project.imageUrl) ||
-                'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80'
-              }
-              alt={project.title || 'Project'}
-            />
+      {!hasProjects && (
+        <div className="portfolio-empty">
+          <strong>Chưa có dự án nào</strong>
+          <p>Quay lại tab “Chỉnh sửa” để thêm dự án đầu tiên vào portfolio.</p>
+        </div>
+      )}
 
-            <div>
-              <h3>{project.title || 'Tên dự án'}</h3>
-              <p>{project.description || 'Mô tả ngắn về dự án.'}</p>
+      {hasProjects && (
+        <div className="portfolio-preview-projects">
+          {form.projects.map((project) => {
+            const imageSrc = resolveStorageUrl(project.imageUrl);
+            return (
+              <article key={project.localId} className="portfolio-preview-project">
+                {imageSrc && <img src={imageSrc} alt={project.title || 'Dự án'} />}
 
-              <div className="portfolio-preview-tags">
-                {parseTechStack(project.techStack).map((tag) => (
-                  <span key={tag}>{tag}</span>
-                ))}
-              </div>
+                <div>
+                  <h3>{project.title || 'Dự án chưa đặt tên'}</h3>
+                  <p>{project.description || 'Chưa có mô tả.'}</p>
 
-              <div className="portfolio-preview-links">
-                {project.demoUrl && (
-                  <a href={project.demoUrl} target="_blank" rel="noreferrer">
-                    Live Demo
-                  </a>
-                )}
+                  <div className="portfolio-preview-tags">
+                    {parseTechStack(project.techStack).map((tag) => (
+                      <span key={tag}>{tag}</span>
+                    ))}
+                  </div>
 
-                {project.sourceUrl && (
-                  <a href={project.sourceUrl} target="_blank" rel="noreferrer">
-                    Source
-                  </a>
-                )}
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
+                  <div className="portfolio-preview-links">
+                    {project.demoUrl && (
+                      <a href={project.demoUrl} target="_blank" rel="noreferrer">
+                        Live Demo
+                      </a>
+                    )}
+
+                    {project.sourceUrl && (
+                      <a href={project.sourceUrl} target="_blank" rel="noreferrer">
+                        Source
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
