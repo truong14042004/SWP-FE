@@ -134,26 +134,6 @@ export function AdminLayout({ session, activeSection, onSectionChange, onRefresh
           )}
         </div>
 
-        <button
-          type="button"
-          className="admin-rail-toggle"
-          onClick={() => setCollapsed((value) => !value)}
-          aria-expanded={!collapsed}
-          aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
-          title={collapsed ? 'Mở rộng' : 'Thu gọn'}
-        >
-          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path
-              d="M6 4l4 4-4 4"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          {!collapsed && <span>Thu gọn</span>}
-        </button>
-
         <nav className="admin-rail-nav" aria-label="Admin sections">
           {adminSections.map((section) => (
             <button
@@ -211,9 +191,28 @@ export function AdminLayout({ session, activeSection, onSectionChange, onRefresh
 
       <section className="admin-main">
         <header className="admin-topbar">
-          <div>
-            <h1>{meta.title}</h1>
-            <small>{meta.sub}</small>
+          <div className="admin-topbar-lead">
+            <button
+              type="button"
+              className="admin-topbar-toggle"
+              onClick={() => setCollapsed((value) => !value)}
+              aria-expanded={!collapsed}
+              aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+              title={collapsed ? 'Mở rộng' : 'Thu gọn'}
+            >
+              <svg viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                <path
+                  d="M3 5h12M3 9h12M3 13h12"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+            <div>
+              <h1>{meta.title}</h1>
+              <small>{meta.sub}</small>
+            </div>
           </div>
           <button type="button" className="pearl-button" onClick={onRefresh}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
