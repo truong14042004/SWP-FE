@@ -1489,3 +1489,22 @@ button:disabled {
   .avatar-editor { grid-template-columns: 1fr; }
   .filter-row select { flex: 1 1 140px; }
 }
+
+/* ===== Admin UsersView search input (M3) ===== */
+.data-table-search {
+    min-width: 220px;
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(60, 60, 67, 0.18);
+    background: #fff;
+    color: var(--admin-ink, #1d1d1f);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.data-table-search:focus {
+    border-color: rgba(0, 122, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+}
