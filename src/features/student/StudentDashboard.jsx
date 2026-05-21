@@ -517,7 +517,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
 
   const targetRoleName = useMemo(() => {
     const selectedRole = careerRoles.find((role) => String(getRoleId(role)) === String(form.targetRoleId));
-    return getRoleName(selectedRole) || 'Backend Developer';
+    return getRoleName(selectedRole) || 'mục tiêu chưa thiết lập';
   }, [careerRoles, form.targetRoleId]);
 
   async function loadDashboardOverview() {
