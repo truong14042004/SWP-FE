@@ -1,4 +1,7 @@
 import { Fragment, useMemo, useState } from 'react';
+import { Button } from '@/components/animate-ui/components/buttons/button';
+import { Fade } from '@/components/animate-ui/primitives/effects/fade';
+import { AnimatePresence, motion } from 'motion/react';
 
 function getInitials(name = '') {
   return (
@@ -21,15 +24,52 @@ function formatDate(date) {
   });
 }
 
+const GRADIENTS = [
+  { bg: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', text: '#d63384' },
+  { bg: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)', text: '#0066cc' },
+  { bg: 'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)', text: '#198754' },
+  { bg: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)', text: '#fd7e14' },
+  { bg: 'linear-gradient(135deg, #abecd6 0%, #fbed96 100%)', text: '#0f5132' },
+  { bg: 'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)', text: '#0aa2c0' },
+  { bg: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)', text: '#6f42c1' },
+  { bg: 'linear-gradient(135deg, #fddb92 0%, #d1f6f1 100%)', text: '#5c636a' },
+];
+
+function getStudentGradient(name = '') {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % GRADIENTS.length;
+  return GRADIENTS[index];
+}
+
 function renderStars(rating = 0) {
-  return Array.from({ length: 5 }, (_, i) => (
-    <span
-      key={i}
-      className={`counselor-feedback-star ${i < (rating || 0) ? '' : 'empty'}`}
-    >
-      ★
-    </span>
-  ));
+  return Array.from({ length: 5 }, (_, i) => {
+    const filled = i < (rating || 0);
+    return (
+      <svg
+        key={i}
+        className={`counselor-feedback-star ${filled ? 'filled' : 'empty'}`}
+        viewBox="0 0 24 24"
+        fill={filled ? 'currentColor' : 'none'}
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{
+          width: '15px',
+          height: '15px',
+          color: filled ? '#ffb800' : '#d2d2d7',
+          display: 'inline-block',
+          verticalAlign: 'middle',
+          marginRight: '1px'
+        }}
+      >
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+    );
+  });
 }
 
 function getFeedbackTypeBadges(fb) {
@@ -112,81 +152,111 @@ export function CounselorFeedbackHistory({
               </tr>
             </thead>
             <tbody>
-              {filteredFeedbacks.map((fb) => {
+              {filteredFeedbacks.map((fb, index) => {
                 const name = getStudentName(fb.studentId, fb.studentFullName);
                 const isExpanded = expandedId === fb.id;
                 const typeBadge = getFeedbackTypeBadges(fb);
 
                 return (
                   <Fragment key={fb.id}>
-                    <tr
-                      className="row-clickable"
-                      onClick={() => setExpandedId(isExpanded ? null : fb.id)}
-                    >
-                      <td>{formatDate(fb.createdAt)}</td>
-                      <td>
-                        <div className="student-cell">
-                          <div className="student-avatar" aria-hidden>
-                            {getInitials(name)}
-                          </div>
-                          <span>{name}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className="counselor-feedback-stars" aria-hidden>
-                          {renderStars(fb.rating)}
-                        </span>
-                      </td>
-                      <td>
-                        {typeBadge ? (
-                          <span className="counselor-feedback-type-badge">
-                            {typeBadge}
-                          </span>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                      <td>
-                        <div className="text-truncate">{fb.feedbackText}</div>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="counselor-btn counselor-btn-link"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectStudent(fb.studentId);
-                          }}
-                        >
-                          Xem
-                        </button>
-                      </td>
-                    </tr>
-
-                    {isExpanded && (
-                      <tr className="row-expanded">
-                        <td colSpan={6}>
-                          <div className="counselor-feedback-expanded">
-                            <h5>Nội dung feedback</h5>
-                            <p>{fb.feedbackText}</p>
-
-                            {fb.recommendations && (
-                              <>
-                                <h5>Khuyến nghị</h5>
-                                <p>{fb.recommendations}</p>
-                              </>
-                            )}
-
-                            {fb.privateNotes && (
-                              <div className="counselor-feedback-private">
-                                <h5>Ghi chú riêng (chỉ bạn thấy)</h5>
-                                <p>{fb.privateNotes}</p>
-                              </div>
-                            )}
+                    <Fade asChild delay={index * 30} inView={true}>
+                      <tr
+                        className="row-clickable"
+                        onClick={() => setExpandedId(isExpanded ? null : fb.id)}
+                      >
+                        <td>{formatDate(fb.createdAt)}</td>
+                        <td>
+                          <div className="student-cell">
+                            <div
+                              className="student-avatar"
+                              aria-hidden
+                              style={{
+                                background: getStudentGradient(name).bg,
+                                color: getStudentGradient(name).text,
+                                border: `1px solid ${getStudentGradient(name).text}25`
+                              }}
+                            >
+                              {getInitials(name)}
+                            </div>
+                            <span style={{ fontWeight: 500 }}>{name}</span>
                           </div>
                         </td>
+                        <td>
+                          <span className="counselor-feedback-stars" aria-hidden>
+                            {renderStars(fb.rating)}
+                          </span>
+                        </td>
+                        <td>
+                          {typeBadge ? (
+                            <span className="counselor-feedback-type-badge">
+                              {typeBadge}
+                            </span>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td>
+                          <div className="text-truncate">{fb.feedbackText}</div>
+                        </td>
+                        <td>
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="counselor-btn counselor-btn-link"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectStudent(fb.studentId);
+                            }}
+                            hoverScale={1.05}
+                            tapScale={0.95}
+                          >
+                            Xem
+                          </Button>
+                        </td>
                       </tr>
-                    )}
+                    </Fade>
+
+                    <AnimatePresence initial={false}>
+                      {isExpanded && (
+                        <motion.tr
+                          key={`expanded-${fb.id}`}
+                          className="row-expanded"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <td colSpan={6} style={{ padding: 0 }}>
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.22, ease: 'easeInOut' }}
+                              style={{ overflow: 'hidden' }}
+                            >
+                              <div className="counselor-feedback-expanded" style={{ padding: '20px 24px' }}>
+                                <h5>Nội dung feedback</h5>
+                                <p>{fb.feedbackText}</p>
+
+                                {fb.recommendations && (
+                                  <>
+                                    <h5>Khuyến nghị</h5>
+                                    <p>{fb.recommendations}</p>
+                                  </>
+                                )}
+
+                                {fb.privateNotes && (
+                                  <div className="counselor-feedback-private">
+                                    <h5>Ghi chú riêng (chỉ bạn thấy)</h5>
+                                    <p>{fb.privateNotes}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          </td>
+                        </motion.tr>
+                      )}
+                    </AnimatePresence>
                   </Fragment>
                 );
               })}

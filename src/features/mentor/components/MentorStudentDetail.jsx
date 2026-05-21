@@ -1,5 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
+import { Button } from '@/components/animate-ui/components/buttons/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/animate-ui/components/radix/tabs';
+import { ScrollProgress, ScrollProgressProvider } from '@/components/animate-ui/primitives/animate/scroll-progress';
+import { Fade } from '@/components/animate-ui/primitives/effects/fade';
 import { toast } from 'react-toastify';
+import { motion } from 'motion/react';
 import {
   getStudentPortfolio,
   getStudentGithub,
@@ -131,103 +136,129 @@ export function MentorStudentDetail({
       : 'is-empty';
 
   return (
-    <>
-      <button type="button" className="imentor-detail-back" onClick={onBack}>
-        ← Quay lại review queue
-      </button>
-
-      <div className="imentor-detail">
-        <aside className="imentor-detail-aside">
+    <ScrollProgressProvider global={true} direction="horizontal">
+      <ScrollProgress
+        className="fixed top-0 left-0 right-0 h-1 bg-[#d4af37] z-[9999] origin-left"
+        mode="scaleX"
+      />
+      {/* Full-bleed dark hero */}
+      <section className="imentor-detail-hero">
+        <div className="imentor-detail-hero-inner">
           <div
-            className="imentor-avatar"
+            className="imentor-avatar imentor-avatar--xl"
             style={
               student?.avatarUrl
-                ? { backgroundImage: `url(${student.avatarUrl})`, width: 56, height: 56 }
-                : { width: 56, height: 56 }
+                ? { backgroundImage: `url(${student.avatarUrl})` }
+                : undefined
             }
           >
             {!student?.avatarUrl && getInitials(student?.fullName)}
           </div>
-          <h2 className="imentor-detail-aside-name">{student?.fullName || 'Sinh viên'}</h2>
-          <p className="imentor-detail-aside-meta">{student?.email}</p>
-          {student?.username && (
-            <p className="imentor-detail-aside-meta">@{student.username}</p>
-          )}
-
-          {quota && (
-            <div className={`imentor-detail-aside-quota ${quotaClass}`}>
-              <span className="imentor-detail-aside-quota-label">Quota review</span>
-              <span className="imentor-detail-aside-quota-value">
-                {quota.remaining} / {quota.limit}
-              </span>
-              <span className="imentor-detail-aside-quota-hint">
-                Plan {quota.planName} · đã dùng {quota.used}
-              </span>
+          <div className="imentor-detail-hero-info">
+            <span className="imentor-eyebrow">Sinh viên</span>
+            <h1>{student?.fullName || 'Sinh viên'}</h1>
+            <p>
+              {student?.email}
+              {student?.username && ` · @${student.username}`}
+            </p>
+            <div className="imentor-tags">
+              {student?.portfolioTitle && (
+                <span className="imentor-tag">{student.portfolioTitle}</span>
+              )}
+              {quota && (
+                <>
+                  <span className="imentor-tag">Gói: {quota.planName}</span>
+                  <span className="imentor-tag">Đã dùng: {quota.used} feedback</span>
+                  <span className={`imentor-tag imentor-tag--accent ${quotaClass}`}>
+                    Quota còn: {quota.remaining} / {quota.limit}
+                  </span>
+                </>
+              )}
             </div>
-          )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+            <Button
+              type="button"
+              className="imentor-btn-primary imentor-btn-lg"
+              disabled={quota?.remaining === 0}
+              onClick={() => student && onWriteFeedback(student)}
+              hoverScale={1.05}
+              tapScale={0.95}
+            >
+              {quota?.remaining === 0 ? 'Hết quota review' : 'Gửi feedback mới'}
+            </Button>
+            <Button
+              type="button"
+              className="imentor-btn-secondary on-dark"
+              onClick={onBack}
+              hoverScale={1.05}
+              tapScale={0.95}
+            >
+              Quay lại review queue
+            </Button>
+          </div>
+        </div>
+      </section>
 
-          <button
-            type="button"
-            className="imentor-btn-primary"
-            disabled={quota?.remaining === 0}
-            onClick={() => student && onWriteFeedback(student)}
-            style={{ width: '100%', justifyContent: 'center' }}
-          >
-            {quota?.remaining === 0 ? 'Hết quota' : 'Gửi feedback mới'}
-          </button>
-        </aside>
-
-        <div>
-          <div className="imentor-detail-tabs">
+      {/* Sticky tabs navigation wrap */}
+      <div className="imentor-tabs-wrap" style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-[600px] mx-auto">
+          <TabsList className="w-full bg-[#f4f1ea] dark:bg-[#252422] p-1 rounded-xl flex gap-1 border dark:border-neutral-800">
             {TABS.map((t) => (
-              <button
+              <TabsTrigger
                 key={t.id}
-                type="button"
-                className={`imentor-detail-tab ${activeTab === t.id ? 'active' : ''}`}
-                onClick={() => setActiveTab(t.id)}
+                value={t.id}
+                className="py-2 text-sm font-medium transition-all"
               >
                 {t.label}
                 {t.id === 'github' && repos.length > 0 && ` (${repos.length})`}
                 {t.id === 'feedback' && feedbacks.length > 0 && ` (${feedbacks.length})`}
                 {t.id === 'skills' && skills.length > 0 && ` (${skills.length})`}
-              </button>
+              </TabsTrigger>
             ))}
-          </div>
-
-          {error && (
-            <div className="imentor-empty">
-              <p className="imentor-empty-title">Không tải được dữ liệu</p>
-              <p className="imentor-empty-hint">{error}</p>
-            </div>
-          )}
-
-          {loading ? (
-            <div className="imentor-loading">Đang tải dữ liệu sinh viên...</div>
-          ) : (
-            <>
-              {activeTab === 'portfolio' && (
-                <PortfolioPanel portfolio={portfolio} />
-              )}
-              {activeTab === 'github' && <GithubPanel repos={repos} />}
-              {activeTab === 'skills' && (
-                <SkillsPanel
-                  skills={skills}
-                  currentMentorId={currentMentorId}
-                  onVerify={handleVerify}
-                  onUnverify={handleUnverify}
-                  verifyingSkillId={verifyingSkillId}
-                  errorMessage={skillError}
-                  session={session}
-                />
-              )}
-              {activeTab === 'feedback' && (
-                <FeedbackPanel feedbacks={feedbacks} />
-              )}
-            </>
-          )}
-        </div>
+          </TabsList>
+        </Tabs>
       </div>
-    </>
+
+      {/* Centered content wrapper */}
+      <section className="imentor-section imentor-section--tight">
+        <div className="imentor-section-inner imentor-section-inner--wide">
+          <div className="imentor-tab-content" role="tabpanel">
+            {error && (
+              <div className="imentor-empty">
+                <p className="imentor-empty-title">Không tải được dữ liệu</p>
+                <p className="imentor-empty-hint">{error}</p>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="imentor-loading">Đang tải dữ liệu sinh viên...</div>
+            ) : (
+              <Fade key={activeTab} inView={true} delay={100} transition={{ duration: 0.3 }}>
+                {activeTab === 'portfolio' && (
+                  <PortfolioPanel portfolio={portfolio} />
+                )}
+                {activeTab === 'github' && <GithubPanel repos={repos} />}
+                {activeTab === 'skills' && (
+                  <SkillsPanel
+                    skills={skills}
+                    currentMentorId={currentMentorId}
+                    onVerify={handleVerify}
+                    onUnverify={handleUnverify}
+                    verifyingSkillId={verifyingSkillId}
+                    errorMessage={skillError}
+                    session={session}
+                  />
+                )}
+                {activeTab === 'feedback' && (
+                  <FeedbackPanel feedbacks={feedbacks} />
+                )}
+              </Fade>
+            )}
+          </div>
+        </div>
+      </section>
+    </ScrollProgressProvider>
   );
 }
 
@@ -262,7 +293,16 @@ function PortfolioPanel({ portfolio }) {
             {portfolio.projects.map((p) => {
               const techs = parseTechStack(p.techStackJson);
               return (
-                <article key={p.id} className="imentor-project">
+                <motion.article
+                  key={p.id}
+                  className="imentor-project"
+                  whileHover={{
+                    y: -4,
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.04)',
+                    borderColor: 'rgba(0, 102, 204, 0.15)',
+                  }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                >
                   <h4 className="imentor-project-title">{p.title}</h4>
                   {p.description && (
                     <p className="imentor-project-desc">{p.description}</p>
@@ -286,7 +326,7 @@ function PortfolioPanel({ portfolio }) {
                       </a>
                     )}
                   </div>
-                </article>
+                </motion.article>
               );
             })}
           </div>
@@ -321,7 +361,16 @@ function GithubPanel({ repos }) {
         {repos.map((r) => {
           const techs = parseTechStack(r.techStackJson);
           return (
-            <article key={r.id} className="imentor-repo">
+            <motion.article
+              key={r.id}
+              className="imentor-repo"
+              whileHover={{
+                y: -4,
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.04)',
+                borderColor: 'rgba(0, 102, 204, 0.15)',
+              }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            >
               <div className="imentor-repo-head">
                 <h4 className="imentor-repo-name">{r.repoName}</h4>
                 {r.qualityScore != null && (
@@ -348,7 +397,7 @@ function GithubPanel({ repos }) {
                   Mở GitHub →
                 </a>
               )}
-            </article>
+            </motion.article>
           );
         })}
       </div>
@@ -383,7 +432,18 @@ function FeedbackItem({ feedback }) {
     ? feedback.jobReadinessLevel.toLowerCase()
     : '';
   return (
-    <div className="imentor-feedback-item">
+    <motion.div
+      className="imentor-feedback-item"
+      whileHover={{
+        x: 8,
+        backgroundColor: 'rgba(0, 102, 204, 0.02)',
+        paddingLeft: '16px',
+        paddingRight: '16px',
+        borderRadius: '12px',
+        boxShadow: '0 4px 16px rgba(0, 102, 204, 0.04)',
+      }}
+      transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+    >
       <div className="imentor-feedback-head">
         <span className="imentor-feedback-time">
           {new Date(feedback.createdAt).toLocaleString('vi-VN')}
@@ -442,7 +502,7 @@ function FeedbackItem({ feedback }) {
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -568,7 +628,11 @@ function SkillRow({
   };
 
   return (
-    <article className="mentor-skill-row">
+    <motion.article
+      className="mentor-skill-row"
+      whileHover={{ x: 6, backgroundColor: 'rgba(0, 102, 204, 0.015)' }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+    >
       <div className="mentor-skill-row-main">
         <div className="mentor-skill-row-head">
           <span className="mentor-skill-name">{skill.skillName}</span>
@@ -622,6 +686,6 @@ function SkillRow({
           <span className="mentor-skill-locked">Đã được người khác xác minh</span>
         )}
       </div>
-    </article>
+    </motion.article>
   );
 }
