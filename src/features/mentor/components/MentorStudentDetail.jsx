@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { toast } from 'react-toastify';
 import {
   getStudentPortfolio,
   getStudentGithub,
@@ -7,6 +8,7 @@ import {
   getStudentSkills,
   verifyStudentSkill,
   unverifyStudentSkill,
+  getSignedUrl,
 } from '../api/industryMentorApi';
 
 function getInitials(name) {
@@ -215,6 +217,7 @@ export function MentorStudentDetail({
                   onUnverify={handleUnverify}
                   verifyingSkillId={verifyingSkillId}
                   errorMessage={skillError}
+                  session={session}
                 />
               )}
               {activeTab === 'feedback' && (
@@ -450,6 +453,7 @@ function SkillsPanel({
   onUnverify,
   verifyingSkillId,
   errorMessage,
+  session,
 }) {
   if (skills.length === 0) {
     return (
@@ -505,6 +509,7 @@ function SkillsPanel({
                 isOtherBusy={
                   verifyingSkillId !== null && verifyingSkillId !== skill.id
                 }
+                session={session}
               />
             ))}
           </div>
@@ -521,11 +526,46 @@ function SkillRow({
   onUnverify,
   isBusy,
   isOtherBusy,
+  session,
 }) {
   const verifiedByMe =
     skill.isVerified && skill.verifiedByUserId === currentMentorId;
   const verifiedByOther =
     skill.isVerified && skill.verifiedByUserId !== currentMentorId;
+  const [downloading, setDownloading] = useState(false);
+
+  const getObjectNameFromUrl = (url) => {
+    if (!url) return '';
+    const match = String(url).match(/[?&]objectName=([^&]+)/i);
+    return match ? decodeURIComponent(match[1]) : url;
+  };
+
+  const handleViewEvidence = async (e) => {
+    e.preventDefault();
+    if (downloading) return;
+    const url = skill.evidenceUrl;
+    if (!url) return;
+
+    if (/^https?:\/\//i.test(url)) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    setDownloading(true);
+    try {
+      const objectName = getObjectNameFromUrl(url);
+      const response = await getSignedUrl(session, objectName);
+      if (response?.url) {
+        window.open(response.url, '_blank', 'noopener,noreferrer');
+      } else {
+        toast.error("Không lấy được đường dẫn tải file.");
+      }
+    } catch (err) {
+      toast.error(err.message || "Không thể tải minh chứng.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <article className="mentor-skill-row">
@@ -547,11 +587,10 @@ function SkillRow({
         {skill.evidenceUrl && (
           <a
             className="mentor-skill-evidence"
-            href={skill.evidenceUrl}
-            target="_blank"
-            rel="noreferrer"
+            href="#"
+            onClick={handleViewEvidence}
           >
-            Xem evidence →
+            {downloading ? 'Đang tải...' : 'Xem evidence →'}
           </a>
         )}
       </div>
