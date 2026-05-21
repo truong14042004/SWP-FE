@@ -275,24 +275,67 @@ export function StudentPortfolioPage({ session }) {
     });
   }
 
+  // Make sure the portfolio + every project has an ID so child uploads can target them.
+  // Returns the up-to-date project object (with `id`) for the given localId, or null on failure.
+  async function ensureProjectPersisted(localId) {
+    const targetIndex = form.projects.findIndex((p) => p.localId === localId);
+    if (targetIndex < 0) return null;
+
+    const existing = form.projects[targetIndex];
+    if (existing.id) return existing;
+
+    setSaving(true);
+    try {
+      const payload = buildPayload(form);
+      const saved = hasPortfolio
+        ? await updatePortfolio(session, payload)
+        : await createPortfolio(session, payload);
+
+      const normalized = normalizePortfolio(saved);
+      setForm(normalized);
+      setHasPortfolio(true);
+
+      // Map back by orderIndex (server preserves the input order in the response).
+      const persisted = normalized.projects[targetIndex];
+      if (persisted?.id) {
+        return { ...persisted, localId };
+      }
+      return null;
+    } catch (requestError) {
+      const message = requestError.message || 'Không lưu được portfolio.';
+      setError(message);
+      toast.error(message);
+      return null;
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleProjectImageFileChange(project, event) {
     const file = event.target.files?.[0];
     event.target.value = '';
 
-    if (!file || !project.id) {
+    if (!file) {
       return;
     }
 
-    setUploadingProjectId(project.localId);
+    let target = project;
+    if (!target.id) {
+      const persisted = await ensureProjectPersisted(project.localId);
+      if (!persisted) return;
+      target = persisted;
+    }
+
+    setUploadingProjectId(target.localId);
     setError('');
     setNotice('');
     try {
-      const uploaded = await uploadPortfolioProjectImage(session, project.id, file);
-      updateProject(project.localId, 'imageUrl', getStorageValue(uploaded, project.imageUrl));
-      setNotice('Da upload anh du an.');
-      toast.success('Da upload anh du an.');
+      const uploaded = await uploadPortfolioProjectImage(session, target.id, file);
+      updateProject(target.localId, 'imageUrl', getStorageValue(uploaded, target.imageUrl));
+      setNotice('Đã upload ảnh dự án.');
+      toast.success('Đã upload ảnh dự án.');
     } catch (requestError) {
-      const message = requestError.message || 'Khong upload duoc anh du an.';
+      const message = requestError.message || 'Không upload được ảnh dự án.';
       setError(message);
       toast.error(message);
     } finally {
@@ -303,23 +346,30 @@ export function StudentPortfolioPage({ session }) {
   async function handleProjectImageImport(project) {
     const url = project.imageUrl.trim();
 
-    if (!project.id || !url) {
+    if (!url) {
       return;
     }
 
-    setUploadingProjectId(project.localId);
+    let target = project;
+    if (!target.id) {
+      const persisted = await ensureProjectPersisted(project.localId);
+      if (!persisted) return;
+      target = { ...persisted, imageUrl: url };
+    }
+
+    setUploadingProjectId(target.localId);
     setError('');
     setNotice('');
     try {
-      const imported = await importPortfolioProjectImageFromUrl(session, project.id, {
+      const imported = await importPortfolioProjectImageFromUrl(session, target.id, {
         url,
         fileName: getFileNameFromUrl(url),
       });
-      updateProject(project.localId, 'imageUrl', getStorageValue(imported, url));
-      setNotice('Da import anh du an tu URL.');
-      toast.success('Da import anh du an tu URL.');
+      updateProject(target.localId, 'imageUrl', getStorageValue(imported, url));
+      setNotice('Đã import ảnh từ URL.');
+      toast.success('Đã import ảnh từ URL.');
     } catch (requestError) {
-      const message = requestError.message || 'Khong import duoc anh du an.';
+      const message = requestError.message || 'Không import được ảnh dự án.';
       setError(message);
       toast.error(message);
     } finally {
@@ -636,7 +686,6 @@ function ProjectEditor({
   uploadingImage,
 }) {
   const tags = parseTechStack(project.techStack);
-  const hasProjectId = Boolean(project.id);
 
   return (
     <article className="portfolio-project-editor">
@@ -666,17 +715,6 @@ function ProjectEditor({
             value={project.title}
             onChange={(event) => onChange(project.localId, 'title', event.target.value)}
             placeholder="Ví dụ: Job Matching Dashboard"
-          />
-        </label>
-
-        <label className="portfolio-field">
-          <span>GitHub Repository Id</span>
-          <input
-            value={project.githubRepositoryId}
-            onChange={(event) =>
-              onChange(project.localId, 'githubRepositoryId', event.target.value)
-            }
-            placeholder="Có thể bỏ trống"
           />
         </label>
 
@@ -727,20 +765,16 @@ function ProjectEditor({
           )}
 
           <div className="portfolio-image-actions">
-            <label className={hasProjectId ? 'portfolio-image-upload' : 'portfolio-image-upload disabled'}>
+            <label className="portfolio-image-upload">
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
                 onChange={(event) => onImageFileChange(project, event)}
-                disabled={!hasProjectId || uploadingImage}
+                disabled={uploadingImage}
               />
               {uploadingImage ? 'Đang tải...' : project.imageUrl ? 'Đổi ảnh' : 'Chọn ảnh từ máy'}
             </label>
           </div>
-
-          {!hasProjectId && (
-            <small className="portfolio-image-hint">Lưu portfolio trước để dự án có ID, sau đó mới upload được ảnh.</small>
-          )}
 
           <details className="portfolio-image-advanced">
             <summary>Hoặc dán URL ảnh có sẵn</summary>
@@ -754,7 +788,7 @@ function ProjectEditor({
               <button
                 type="button"
                 onClick={() => onImageImport(project)}
-                disabled={!hasProjectId || uploadingImage || !project.imageUrl.trim()}
+                disabled={uploadingImage || !project.imageUrl.trim()}
               >
                 Import
               </button>
