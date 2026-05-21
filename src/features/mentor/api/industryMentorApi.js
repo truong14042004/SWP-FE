@@ -46,3 +46,8 @@ export function unverifyStudentSkill(session, userSkillId) {
     method: 'POST',
   });
 }
+
+export function getSignedUrl(session, objectName) {
+  return authorizedRequest(`/api/storage/signed-url?objectName=${encodeURIComponent(objectName)}`, session);
+}
+
