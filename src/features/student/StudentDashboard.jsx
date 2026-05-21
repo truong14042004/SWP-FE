@@ -941,7 +941,13 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                           </div>
                           <p>Hiện tại: <b>{skill.current}</b> <span>→</span> Yêu cầu: <b>{skill.target}</b></p>
                         </div>
-                        <button type="button">{skill.action}</button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveSection('skills')}
+                          aria-label={`${skill.action} kỹ năng ${skill.name}`}
+                        >
+                          {skill.action}
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -965,7 +971,13 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                             <span style={{ width: `${skill.progress}%` }} />
                           </div>
                         </div>
-                        <button type="button">{skill.action}</button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveSection('skills')}
+                          aria-label={`${skill.action} kỹ năng ${skill.name}`}
+                        >
+                          {skill.action}
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -985,7 +997,13 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                           </div>
                           <p>Hiện tại: <b>{skill.current}</b> <span>→</span> Yêu cầu: <b>{skill.target}</b></p>
                         </div>
-                        <button type="button">{skill.action}</button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveSection('skills')}
+                          aria-label={`${skill.action} kỹ năng ${skill.name}`}
+                        >
+                          {skill.action}
+                        </button>
                       </div>
                     ))}
                   </div>
