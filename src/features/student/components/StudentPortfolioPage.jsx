@@ -707,35 +707,59 @@ function ProjectEditor({
           )}
         </label>
 
-        <label className="portfolio-field span-2">
-          <span>Image URL</span>
-          <input
-            value={project.imageUrl}
-            onChange={(event) => onChange(project.localId, 'imageUrl', event.target.value)}
-            placeholder="https://..."
-          />
-        </label>
+        <div className="portfolio-image-block span-2">
+          <div className="portfolio-image-block-head">
+            <span>Ảnh dự án</span>
+            <small>JPEG / PNG / WebP / GIF</small>
+          </div>
 
-        <div className="portfolio-image-actions span-2">
-          <label className={hasProjectId ? 'portfolio-image-upload' : 'portfolio-image-upload disabled'}>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={(event) => onImageFileChange(project, event)}
-              disabled={!hasProjectId || uploadingImage}
-            />
-            {uploadingImage ? 'Đang tải...' : 'Upload ảnh'}
-          </label>
-          <button
-            type="button"
-            onClick={() => onImageImport(project)}
-            disabled={!hasProjectId || uploadingImage || !project.imageUrl.trim()}
-          >
-            Import URL
-          </button>
-          {!hasProjectId && (
-            <small>Lưu portfolio trước để project có ID, sau đó có thể upload ảnh.</small>
+          {project.imageUrl && (
+            <div className="portfolio-image-preview">
+              <img src={resolveStorageUrl(project.imageUrl)} alt={project.title || 'Project'} />
+              <button
+                type="button"
+                className="portfolio-image-remove"
+                onClick={() => onChange(project.localId, 'imageUrl', '')}
+              >
+                Xóa ảnh
+              </button>
+            </div>
           )}
+
+          <div className="portfolio-image-actions">
+            <label className={hasProjectId ? 'portfolio-image-upload' : 'portfolio-image-upload disabled'}>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={(event) => onImageFileChange(project, event)}
+                disabled={!hasProjectId || uploadingImage}
+              />
+              {uploadingImage ? 'Đang tải...' : project.imageUrl ? 'Đổi ảnh' : 'Chọn ảnh từ máy'}
+            </label>
+          </div>
+
+          {!hasProjectId && (
+            <small className="portfolio-image-hint">Lưu portfolio trước để dự án có ID, sau đó mới upload được ảnh.</small>
+          )}
+
+          <details className="portfolio-image-advanced">
+            <summary>Hoặc dán URL ảnh có sẵn</summary>
+            <div className="portfolio-image-url-row">
+              <input
+                type="url"
+                value={project.imageUrl}
+                onChange={(event) => onChange(project.localId, 'imageUrl', event.target.value)}
+                placeholder="https://..."
+              />
+              <button
+                type="button"
+                onClick={() => onImageImport(project)}
+                disabled={!hasProjectId || uploadingImage || !project.imageUrl.trim()}
+              >
+                Import
+              </button>
+            </div>
+          </details>
         </div>
 
         <label className="portfolio-field">
