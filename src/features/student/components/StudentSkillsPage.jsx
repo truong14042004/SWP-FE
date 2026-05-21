@@ -125,6 +125,9 @@ export function StudentSkillsPage({ session }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingEvidence, setUploadingEvidence] = useState(false);
+  // File picked while creating a new skill (no userSkillId yet). Uploaded
+  // after the skill is persisted; cleared on cancel/reset.
+  const [pendingEvidenceFile, setPendingEvidenceFile] = useState(null);
 
 const [profile, setProfile] = useState(null);
 const [skillGapReport, setSkillGapReport] = useState(null);
@@ -251,6 +254,7 @@ async function loadData() {
       ...EMPTY_FORM,
       skillId,
     });
+    setPendingEvidenceFile(null);
     window.scrollTo({
       top: 0,
       behavior: 'smooth',
@@ -265,6 +269,7 @@ async function loadData() {
       evidenceUrl: userSkill.evidenceUrl || '',
       evidenceType: userSkill.evidenceType || 'Project',
     });
+    setPendingEvidenceFile(null);
     window.scrollTo({
       top: 0,
       behavior: 'smooth',
@@ -274,6 +279,7 @@ async function loadData() {
   function cancelEdit() {
     setEditingId('');
     setForm(EMPTY_FORM);
+    setPendingEvidenceFile(null);
   }
 
   function getFileNameFromUrl(url) {
@@ -292,7 +298,19 @@ async function loadData() {
     const file = event.target.files?.[0];
     event.target.value = '';
 
-    if (!file || !editingId) {
+    if (!file) {
+      return;
+    }
+
+    // Creating a new skill: stash the file and show a placeholder in the URL
+    // input so users see something happened. The real upload runs after save.
+    if (!editingId) {
+      setPendingEvidenceFile(file);
+      setForm((current) => ({
+        ...current,
+        evidenceUrl: current.evidenceUrl || `⏳ ${file.name}`,
+      }));
+      toast.info('File sẽ được tải lên sau khi bạn lưu kỹ năng.');
       return;
     }
 
@@ -346,10 +364,18 @@ async function loadData() {
 
     setSaving(true);
     try {
+      // When the user staged a file before saving, treat the placeholder URL
+      // as empty so it doesn't get sent to the backend.
+      const stagedFile = pendingEvidenceFile;
+      const cleanedEvidenceUrl =
+        stagedFile && form.evidenceUrl.startsWith('⏳ ')
+          ? ''
+          : form.evidenceUrl.trim();
+
       const payload = {
         skillId: form.skillId,
         level: form.level,
-        evidenceUrl: form.evidenceUrl.trim(),
+        evidenceUrl: cleanedEvidenceUrl,
         evidenceType: form.evidenceType,
       };
 
@@ -367,12 +393,41 @@ async function loadData() {
         toast.success('Da cap nhat ky nang.');
       } else {
         const created = await createUserSkill(session, payload);
-        setUserSkills((current) => [created, ...current]);
+
+        // If the user picked a file before save, upload it now and stitch the
+        // resulting evidence URL back into the freshly-created skill.
+        let finalSkill = created;
+        if (stagedFile && created?.id) {
+          setUploadingEvidence(true);
+          try {
+            const uploaded = await uploadUserSkillEvidence(
+              session,
+              created.id,
+              stagedFile,
+            );
+            const evidenceUrl = getStorageValue(uploaded, '');
+            if (evidenceUrl) {
+              finalSkill = {
+                ...created,
+                evidenceUrl,
+                evidenceType: created.evidenceType || form.evidenceType,
+              };
+            }
+            toast.success('Da upload minh chung cho ky nang moi.');
+          } catch (uploadError) {
+            toast.error(uploadError.message || 'Khong upload duoc minh chung sau khi luu.');
+          } finally {
+            setUploadingEvidence(false);
+          }
+        }
+
+        setUserSkills((current) => [finalSkill, ...current]);
         toast.success('Da them ky nang vao ho so.');
       }
 
       setEditingId('');
       setForm(EMPTY_FORM);
+      setPendingEvidenceFile(null);
     } catch (requestError) {
       toast.error(requestError.message || 'Khong luu duoc ky nang.');
     } finally {
@@ -527,61 +582,59 @@ async function loadData() {
                   onChange={updateField}
                   placeholder="GitHub, certificate, portfolio..."
                 />
-                {editingId && (
-                  <div className="skills-evidence-tools" role="group" aria-label="Tải minh chứng">
-                    <label
-                      className="skills-evidence-tool skills-file-action"
-                      title={uploadingEvidence ? 'Đang tải...' : 'Tải file lên'}
-                      aria-label="Tải file minh chứng"
-                    >
-                      <input
-                        type="file"
-                        onChange={handleEvidenceFileChange}
-                        disabled={uploadingEvidence || saving}
-                      />
-                      {uploadingEvidence ? (
-                        <span className="skills-evidence-spinner" aria-hidden="true" />
-                      ) : (
-                        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                          <path
-                            d="M8 11V3M8 3l-3 3m3-3l3 3M3 11v1a1 1 0 001 1h8a1 1 0 001-1v-1"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      )}
-                    </label>
-                    <button
-                      type="button"
-                      className="skills-evidence-tool"
-                      onClick={handleEvidenceImport}
-                      disabled={uploadingEvidence || saving || !isHttpUrl(form.evidenceUrl)}
-                      title="Nhập từ URL"
-                      aria-label="Nhập minh chứng từ URL"
-                    >
+                <div className="skills-evidence-tools" role="group" aria-label="Tải minh chứng">
+                  <label
+                    className="skills-evidence-tool skills-file-action"
+                    title={uploadingEvidence ? 'Đang tải...' : 'Tải file lên'}
+                    aria-label="Tải file minh chứng"
+                  >
+                    <input
+                      type="file"
+                      onChange={handleEvidenceFileChange}
+                      disabled={uploadingEvidence || saving}
+                    />
+                    {uploadingEvidence ? (
+                      <span className="skills-evidence-spinner" aria-hidden="true" />
+                    ) : (
                       <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
                         <path
-                          d="M6.5 9.5l3-3M5 11a2.5 2.5 0 01-1.77-4.27l1.5-1.5M11 5a2.5 2.5 0 011.77 4.27l-1.5 1.5"
+                          d="M8 11V3M8 3l-3 3m3-3l3 3M3 11v1a1 1 0 001 1h8a1 1 0 001-1v-1"
                           stroke="currentColor"
                           strokeWidth="1.5"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         />
                       </svg>
-                    </button>
-                  </div>
-                )}
+                    )}
+                  </label>
+                  <button
+                    type="button"
+                    className="skills-evidence-tool"
+                    onClick={handleEvidenceImport}
+                    disabled={!editingId || uploadingEvidence || saving || !isHttpUrl(form.evidenceUrl)}
+                    title={editingId ? 'Nhập từ URL' : 'Lưu kỹ năng trước, sau đó dùng Nhập từ URL'}
+                    aria-label="Nhập minh chứng từ URL"
+                  >
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path
+                        d="M6.5 9.5l3-3M5 11a2.5 2.5 0 01-1.77-4.27l1.5-1.5M11 5a2.5 2.5 0 011.77 4.27l-1.5 1.5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </label>
 
-            {!editingId && (
+            {!editingId && pendingEvidenceFile && (
               <small className="skills-evidence-hint">
-                Lưu kỹ năng trước, sau đó chỉnh sửa để upload hoặc import file minh chứng.
+                Đã chọn “{pendingEvidenceFile.name}”. File sẽ được tải lên ngay sau khi bạn lưu kỹ năng.
               </small>
             )}
-            {editingId && form.evidenceUrl.trim() && !isHttpUrl(form.evidenceUrl) && (
+            {editingId && form.evidenceUrl.trim() && !isHttpUrl(form.evidenceUrl) && !form.evidenceUrl.startsWith('⏳ ') && (
               <small className="skills-evidence-hint">
                 Link hiện tại là đường dẫn storage nội bộ. Dùng "Xem minh chứng" sau khi lưu, hoặc nhập URL http/https để import file mới.
               </small>
