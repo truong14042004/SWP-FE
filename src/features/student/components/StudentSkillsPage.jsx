@@ -3,10 +3,11 @@ import { toast } from 'react-toastify';
 import { apiUrl } from '../../../config';
 import '../../../styles/skills.css';
 import {
- analyzeSkillGap,
+  analyzeSkillGap,
   createUserSkill,
   deleteUserSkill,
   getLatestSkillGap,
+  getSignedUrl,
   getSkills,
   getUserSkills,
   importUserSkillEvidenceFromUrl,
@@ -742,6 +743,7 @@ async function loadData() {
                         userSkill={userSkill}
                         onEdit={startEdit}
                         onDelete={handleDelete}
+                        session={session}
                       />
                     ))}
                   </div>
@@ -789,9 +791,43 @@ async function loadData() {
   );
 }
 
-function UserSkillCard({ userSkill, onEdit, onDelete }) {
+function UserSkillCard({ userSkill, onEdit, onDelete, session }) {
   const levelClass = getLevelClass(userSkill.level);
   const levelLabel = userSkill.level || 'Chưa có';
+  const [downloading, setDownloading] = useState(false);
+
+  const getObjectNameFromUrl = (url) => {
+    if (!url) return '';
+    const match = String(url).match(/[?&]objectName=([^&]+)/i);
+    return match ? decodeURIComponent(match[1]) : url;
+  };
+
+  const handleViewEvidence = async (e) => {
+    e.preventDefault();
+    if (downloading) return;
+    const url = userSkill.evidenceUrl;
+    if (!url) return;
+
+    if (/^https?:\/\//i.test(url)) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    setDownloading(true);
+    try {
+      const objectName = getObjectNameFromUrl(url);
+      const response = await getSignedUrl(session, objectName);
+      if (response?.url) {
+        window.open(response.url, '_blank', 'noopener,noreferrer');
+      } else {
+        toast.error("Không lấy được đường dẫn tải file.");
+      }
+    } catch (err) {
+      toast.error(err.message || "Không thể tải minh chứng.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <article className={`user-skill-card ${levelClass}`}>
@@ -814,12 +850,11 @@ function UserSkillCard({ userSkill, onEdit, onDelete }) {
 
       {userSkill.evidenceUrl && (
         <a
-          href={resolveStorageUrl(userSkill.evidenceUrl)}
-          target="_blank"
-          rel="noreferrer"
+          href="#"
+          onClick={handleViewEvidence}
           className="user-skill-evidence"
         >
-          Xem minh chứng · {userSkill.evidenceType || 'Evidence'}
+          {downloading ? 'Đang tải...' : `Xem minh chứng · ${userSkill.evidenceType || 'Evidence'}`}
         </a>
       )}
 
