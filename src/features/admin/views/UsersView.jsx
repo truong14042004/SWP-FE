@@ -40,22 +40,29 @@ export function UsersView({
 }) {
   const [form, setForm] = useState(emptyUserForm);
   const [editingId, setEditingId] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
-  const filteredUsers = useMemo(
-    () =>
-      users.filter((user) => {
-        const roleMatch = roleFilter === 'All' || user.role === roleFilter;
-        const statusMatch =
-          statusFilter === 'All' ||
-          (statusFilter === 'Active' ? user.isActive : !user.isActive);
-        return roleMatch && statusMatch;
-      }),
-    [users, roleFilter, statusFilter],
-  );
+  const filteredUsers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return users.filter((user) => {
+      const roleMatch = roleFilter === 'All' || user.role === roleFilter;
+      const statusMatch =
+        statusFilter === 'All' ||
+        (statusFilter === 'Active' ? user.isActive : !user.isActive);
+      if (!roleMatch || !statusMatch) return false;
+
+      if (!q) return true;
+      return (
+        user.fullName?.toLowerCase().includes(q) ||
+        user.username?.toLowerCase().includes(q) ||
+        user.email?.toLowerCase().includes(q)
+      );
+    });
+  }, [users, searchQuery, roleFilter, statusFilter]);
 
   const activeCount = users.filter((user) => user.isActive).length;
   const inactiveCount = users.length - activeCount;
@@ -256,6 +263,14 @@ export function UsersView({
             <span className="count-badge">{filteredUsers.length} shown</span>
           </h3>
           <div className="filter-row">
+            <input
+              type="search"
+              className="data-table-search"
+              placeholder="Tìm theo tên, email, username..."
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              aria-label="Search users"
+            />
             <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)} aria-label="Filter role">
               <option value="All">All roles</option>
               {ROLES.map((role) => (

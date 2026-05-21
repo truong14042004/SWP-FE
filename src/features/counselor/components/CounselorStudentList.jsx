@@ -63,7 +63,11 @@ export function CounselorStudentList({
       if (!matchesSearch) return false;
 
       if (filter === 'new') {
-        const created = new Date(student.createdAt);
+        // Filter dựa trên ngày được phân công cho counselor (assignedAt),
+        // không phải ngày tạo tài khoản — sinh viên cũ được phân mới vẫn coi là 'mới'.
+        const refDate = student.assignedAt || student.createdAt;
+        if (!refDate) return false;
+        const created = new Date(refDate);
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
         return created > weekAgo;
