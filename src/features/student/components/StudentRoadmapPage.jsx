@@ -701,7 +701,7 @@ function RoadmapNodeCard({ node, index, level = 0, updatingNodeId = '', onStatus
   return (
     <article
       className={`roadmap-node ${statusMeta.className}`}
-      style={{ '--node-level': level }}
+      style={{ '--node-level': level, '--node-index': index }}
     >
       <div className="roadmap-node-marker">
         <span>{statusMeta.icon}</span>
