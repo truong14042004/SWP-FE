@@ -518,42 +518,72 @@ async function loadData() {
               </select>
             </label>
 
-            <label className="skills-field">
+            <label className="skills-field skills-evidence-field">
               <span>Link minh chứng</span>
-              <input
-                name="evidenceUrl"
-                value={form.evidenceUrl}
-                onChange={updateField}
-                placeholder="GitHub, certificate, portfolio..."
-              />
-            </label>
-
-            <div className="skills-evidence-actions">
-              <label className={editingId ? 'skills-file-action' : 'skills-file-action disabled'}>
+              <div className="skills-evidence-input">
                 <input
-                  type="file"
-                  onChange={handleEvidenceFileChange}
-                  disabled={!editingId || uploadingEvidence || saving}
+                  name="evidenceUrl"
+                  value={form.evidenceUrl}
+                  onChange={updateField}
+                  placeholder="GitHub, certificate, portfolio..."
                 />
-                {uploadingEvidence ? 'Đang tải...' : 'Upload file'}
-              </label>
-              <button
-                type="button"
-                onClick={handleEvidenceImport}
-                disabled={!editingId || uploadingEvidence || saving || !isHttpUrl(form.evidenceUrl)}
-              >
-                Import URL
-              </button>
-            </div>
+                {editingId && (
+                  <div className="skills-evidence-tools" role="group" aria-label="Tải minh chứng">
+                    <label
+                      className="skills-evidence-tool skills-file-action"
+                      title={uploadingEvidence ? 'Đang tải...' : 'Tải file lên'}
+                      aria-label="Tải file minh chứng"
+                    >
+                      <input
+                        type="file"
+                        onChange={handleEvidenceFileChange}
+                        disabled={uploadingEvidence || saving}
+                      />
+                      {uploadingEvidence ? (
+                        <span className="skills-evidence-spinner" aria-hidden="true" />
+                      ) : (
+                        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                          <path
+                            d="M8 11V3M8 3l-3 3m3-3l3 3M3 11v1a1 1 0 001 1h8a1 1 0 001-1v-1"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </label>
+                    <button
+                      type="button"
+                      className="skills-evidence-tool"
+                      onClick={handleEvidenceImport}
+                      disabled={uploadingEvidence || saving || !isHttpUrl(form.evidenceUrl)}
+                      title="Nhập từ URL"
+                      aria-label="Nhập minh chứng từ URL"
+                    >
+                      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path
+                          d="M6.5 9.5l3-3M5 11a2.5 2.5 0 01-1.77-4.27l1.5-1.5M11 5a2.5 2.5 0 011.77 4.27l-1.5 1.5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </label>
 
             {!editingId && (
               <small className="skills-evidence-hint">
-                Lưu kỹ năng trước, sau đó chỉnh sửa để upload file minh chứng.
+                Lưu kỹ năng trước, sau đó chỉnh sửa để upload hoặc import file minh chứng.
               </small>
             )}
             {editingId && form.evidenceUrl.trim() && !isHttpUrl(form.evidenceUrl) && (
               <small className="skills-evidence-hint">
-                Link hiện tại là đường dẫn storage nội bộ. Dùng “Xem minh chứng” sau khi lưu, hoặc nhập URL http/https để import file mới.
+                Link hiện tại là đường dẫn storage nội bộ. Dùng "Xem minh chứng" sau khi lưu, hoặc nhập URL http/https để import file mới.
               </small>
             )}
 
