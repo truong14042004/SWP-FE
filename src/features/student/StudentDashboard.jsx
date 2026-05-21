@@ -349,14 +349,33 @@ function mapGapToSkillCard(item) {
   };
 }
 
-function mapUserSkillToCard(item) {
+function mapUserSkillToCard(item, gapByName) {
   const score = getLevelScore(item?.level);
+  const isAchieved = item?.isVerified || score >= 50;
+  const skillName = item?.skillName || item?.name;
+  const matchingGap = skillName ? gapByName?.get(skillName.trim().toLowerCase()) : null;
+  const requiredLevel =
+    matchingGap?.requiredLevel ||
+    matchingGap?.targetLevel ||
+    matchingGap?.expectedLevel ||
+    null;
+
+  let target;
+  if (requiredLevel) {
+    target = requiredLevel;
+  } else if (item?.isVerified) {
+    target = 'Đã verified';
+  } else if (isAchieved) {
+    target = 'Chờ verify';
+  } else {
+    target = 'Cần cải thiện';
+  }
 
   return {
-    name: item?.skillName || item?.name || 'Kỹ năng chưa xác định',
+    name: skillName || 'Kỹ năng chưa xác định',
     current: item?.level || 'N/A',
-    target: item?.isVerified ? 'Verified' : 'Cần xác minh',
-    action: score >= 75 ? 'Đạt yêu cầu' : 'Cải thiện',
+    target,
+    action: isAchieved ? 'Đạt yêu cầu' : 'Cải thiện',
     progress: score,
   };
 }
@@ -380,20 +399,35 @@ function buildDashboardOverview({
 
   const matchScore = getReportScore(skillGap) || averageSkillScore;
 
-  const achievedSkills = skills.filter((item) => item.isVerified || getLevelScore(item.level) >= 75);
-  const weakSkills = skills.filter((item) => {
-    const score = getLevelScore(item.level);
-    return score > 0 && score < 75;
-  });
+  // Phân loại sẽ tính trong skillGroups bên dưới.
 
   const roadmapNodes = getRoadmapNodes(roadmap);
   const roadmapProgress = calculateRoadmapProgress(roadmapNodes);
   const roadmapSteps = roadmapNodes.slice(0, 4).map(mapRoadmapStep);
 
+  // Index gap items by skill name (lowercased) so we can look them up when rendering user-skills.
+  const gapByName = new Map();
+  for (const item of gapItems) {
+    const key = (item?.skillName || item?.name || item?.title || '').trim().toLowerCase();
+    if (key) gapByName.set(key, item);
+  }
+
+  // Skills that are achieved (verified OR ≥ Intermediate) — match the 'Đã đạt' label.
+  const achievedSkills = skills.filter((item) => item.isVerified || getLevelScore(item.level) >= 50);
+
+  // Skills that are 'còn yếu' = has some level (>0) but below Intermediate (50)
+  // AND is NOT already listed in the skill-gap report as 'thiếu' (avoid duplication).
+  const weakSkills = skills.filter((item) => {
+    const score = getLevelScore(item.level);
+    if (score === 0 || score >= 50) return false;
+    const key = (item.skillName || item.name || '').trim().toLowerCase();
+    return !gapByName.has(key);
+  });
+
   const skillGroups = {
     missing: gapItems.slice(0, 5).map(mapGapToSkillCard),
-    weak: weakSkills.slice(0, 5).map(mapUserSkillToCard),
-    done: achievedSkills.slice(0, 5).map(mapUserSkillToCard),
+    weak: weakSkills.slice(0, 5).map((item) => mapUserSkillToCard(item, gapByName)),
+    done: achievedSkills.slice(0, 5).map((item) => mapUserSkillToCard(item, gapByName)),
   };
 
   const learningQueue = gapItems.slice(0, 3).map((item) => ({
