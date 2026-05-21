@@ -527,6 +527,30 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     loadDashboardOverview();
   }, []);
 
+  // Auto-reload the profile whenever the user lands on the settings tab again,
+  // and whenever the browser tab regains focus while settings is active. This
+  // replaces the old manual "Tải lại" button.
+  useEffect(() => {
+    if (activeSection !== 'settings') return undefined;
+
+    // Reload on every entry into settings.
+    loadProfile();
+
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') {
+        loadProfile();
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection]);
+
   // First-time onboarding: if the student doesn't have a profile yet, push them
   // straight to the settings tab so they fill in school / major / career goal first.
   // We only do this once per session (forcedOnboardingRef) so the user can leave
@@ -818,7 +842,6 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
               onChange={updateField}
               onAvatarFileChange={handleAvatarFileChange}
               onAvatarImport={handleAvatarImport}
-              onReload={loadProfile}
               onSubmit={handleSaveProfile}
             />
           </section>

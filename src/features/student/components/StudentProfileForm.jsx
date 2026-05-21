@@ -14,7 +14,6 @@ export function StudentProfileForm({
   onChange,
   onAvatarFileChange,
   onAvatarImport,
-  onReload,
   onSubmit,
 }) {
   return (
@@ -107,7 +106,6 @@ export function StudentProfileForm({
       </div>
 
       <div className="student-profile-actions">
-        <button type="button" className="secondary-action" onClick={onReload} disabled={loadingProfile || savingProfile}>Tải lại</button>
         <button type="submit" className="student-save-btn" disabled={loadingProfile || savingProfile}>
           {savingProfile ? 'Đang lưu...' : hasProfile ? 'Lưu thay đổi' : 'Tạo hồ sơ'}
         </button>
