@@ -1,4 +1,8 @@
 import { useMemo } from 'react';
+import { Button } from '@/components/animate-ui/components/buttons/button';
+import { CountingNumber } from '@/components/animate-ui/primitives/texts/counting-number';
+import { Fades } from '@/components/animate-ui/primitives/effects/fade';
+import { motion } from 'motion/react';
 
 function getInitials(name) {
   if (!name) return 'M';
@@ -34,9 +38,33 @@ export function MentorOverview({
   const recentQueue = reviewQueue.slice(0, 6);
   const recentFeedbacks = feedbacks.slice(0, 5);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+      },
+    },
+  };
+
+  const statVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { type: 'spring', stiffness: 260, damping: 20 },
+    },
+  };
+
   return (
     <>
-      <header className="imentor-hero">
+      <motion.header
+        className="imentor-hero"
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+      >
         <p className="imentor-hero-eyebrow">Industry Mentor</p>
         <h1 className="imentor-hero-title">
           Chào {mentorName.split(' ').slice(-1)[0]}, sẵn sàng review portfolio?
@@ -45,32 +73,47 @@ export function MentorOverview({
           Review queue tổng hợp portfolio đã publish của sinh viên. Mỗi feedback
           structured giúp sinh viên hiểu chính xác cần cải thiện gì để sẵn sàng đi làm.
         </p>
-      </header>
+      </motion.header>
 
-      <section className="imentor-stats">
-        <div className="imentor-stat">
+      <motion.section
+        className="imentor-stats"
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.div className="imentor-stat" variants={statVariants}>
           <span className="imentor-stat-label">Queue</span>
-          <span className="imentor-stat-value">{loading ? '—' : stats.queueSize}</span>
+          <span className="imentor-stat-value">
+            {loading ? '—' : <CountingNumber number={stats.queueSize} />}
+          </span>
           <span className="imentor-stat-hint">Sinh viên có portfolio publish</span>
-        </div>
-        <div className="imentor-stat">
+        </motion.div>
+        <motion.div className="imentor-stat" variants={statVariants}>
           <span className="imentor-stat-label">Feedback đã gửi</span>
-          <span className="imentor-stat-value">{loading ? '—' : stats.feedbackGiven}</span>
+          <span className="imentor-stat-value">
+            {loading ? '—' : <CountingNumber number={stats.feedbackGiven} />}
+          </span>
           <span className="imentor-stat-hint">Tổng số review</span>
-        </div>
-        <div className="imentor-stat">
+        </motion.div>
+        <motion.div className="imentor-stat" variants={statVariants}>
           <span className="imentor-stat-label">Sinh viên đã review</span>
-          <span className="imentor-stat-value">{loading ? '—' : stats.studentsReviewed}</span>
+          <span className="imentor-stat-value">
+            {loading ? '—' : <CountingNumber number={stats.studentsReviewed} />}
+          </span>
           <span className="imentor-stat-hint">Unique students</span>
-        </div>
-        <div className="imentor-stat">
+        </motion.div>
+        <motion.div className="imentor-stat" variants={statVariants}>
           <span className="imentor-stat-label">Avg rating</span>
           <span className="imentor-stat-value">
-            {loading || stats.avgRating == null ? '—' : stats.avgRating.toFixed(1)}
+            {loading || stats.avgRating == null ? (
+              '—'
+            ) : (
+              <CountingNumber number={stats.avgRating} decimalPlaces={1} />
+            )}
           </span>
           <span className="imentor-stat-hint">Trung bình rating đã đưa</span>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       <section className="imentor-section">
         <div className="imentor-section-head">
@@ -80,13 +123,16 @@ export function MentorOverview({
               Sinh viên mới publish portfolio gần đây
             </p>
           </div>
-          <button
+          <Button
             type="button"
             className="imentor-section-action"
+            variant="link"
             onClick={onNavigateToQueue}
+            hoverScale={1.02}
+            tapScale={0.98}
           >
             Xem tất cả →
-          </button>
+          </Button>
         </div>
 
         {loading ? (
@@ -100,41 +146,54 @@ export function MentorOverview({
           </div>
         ) : (
           <div className="imentor-card-grid">
-            {recentQueue.map((s) => (
-              <article key={s.id} className="imentor-card">
-                <div className="imentor-card-row">
-                  <div
-                    className="imentor-avatar"
-                    style={
-                      s.avatarUrl
-                        ? { backgroundImage: `url(${s.avatarUrl})` }
-                        : undefined
-                    }
-                  >
-                    {!s.avatarUrl && getInitials(s.fullName)}
+            <Fades holdDelay={60} inView={true}>
+              {recentQueue.map((s) => (
+                <motion.article
+                  key={s.id}
+                  className="imentor-card"
+                  whileHover={{
+                    y: -6,
+                    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.08)',
+                    borderColor: 'var(--imentor-ink-muted)',
+                  }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                >
+                  <div className="imentor-card-row">
+                    <div
+                      className="imentor-avatar"
+                      style={
+                        s.avatarUrl
+                          ? { backgroundImage: `url(${s.avatarUrl})` }
+                          : undefined
+                      }
+                    >
+                      {!s.avatarUrl && getInitials(s.fullName)}
+                    </div>
+                    <div>
+                      <p className="imentor-card-name">{s.fullName}</p>
+                      <p className="imentor-card-meta">{s.email}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="imentor-card-name">{s.fullName}</p>
-                    <p className="imentor-card-meta">{s.email}</p>
+                  {s.portfolioTitle && (
+                    <div className="imentor-card-portfolio">
+                      <span className="imentor-card-portfolio-label">Portfolio</span>
+                      <p className="imentor-card-portfolio-title">{s.portfolioTitle}</p>
+                    </div>
+                  )}
+                  <div className="imentor-card-actions">
+                    <Button
+                      type="button"
+                      className="imentor-btn-primary"
+                      onClick={() => onSelectStudent(s.id)}
+                      hoverScale={1.05}
+                      tapScale={0.95}
+                    >
+                      Mở review
+                    </Button>
                   </div>
-                </div>
-                {s.portfolioTitle && (
-                  <div className="imentor-card-portfolio">
-                    <span className="imentor-card-portfolio-label">Portfolio</span>
-                    <p className="imentor-card-portfolio-title">{s.portfolioTitle}</p>
-                  </div>
-                )}
-                <div className="imentor-card-actions">
-                  <button
-                    type="button"
-                    className="imentor-btn-primary"
-                    onClick={() => onSelectStudent(s.id)}
-                  >
-                    Mở review
-                  </button>
-                </div>
-              </article>
-            ))}
+                </motion.article>
+              ))}
+            </Fades>
           </div>
         )}
       </section>
@@ -145,13 +204,16 @@ export function MentorOverview({
             <h2 className="imentor-section-title">Feedback gần đây</h2>
             <p className="imentor-section-meta">5 review mới nhất bạn đã gửi</p>
           </div>
-          <button
+          <Button
             type="button"
             className="imentor-section-action"
+            variant="link"
             onClick={onNavigateToFeedback}
+            hoverScale={1.02}
+            tapScale={0.98}
           >
             Lịch sử đầy đủ →
-          </button>
+          </Button>
         </div>
 
         {loading ? (
@@ -165,13 +227,15 @@ export function MentorOverview({
           </div>
         ) : (
           <div className="imentor-detail-section" style={{ padding: '8px 24px' }}>
-            {recentFeedbacks.map((f) => (
-              <FeedbackPreview
-                key={f.id}
-                feedback={f}
-                onClick={() => onSelectStudent(f.studentId)}
-              />
-            ))}
+            <Fades holdDelay={50} inView={true}>
+              {recentFeedbacks.map((f) => (
+                <FeedbackPreview
+                  key={f.id}
+                  feedback={f}
+                  onClick={() => onSelectStudent(f.studentId)}
+                />
+              ))}
+            </Fades>
           </div>
         )}
       </section>
@@ -184,10 +248,18 @@ function FeedbackPreview({ feedback, onClick }) {
     ? feedback.jobReadinessLevel.toLowerCase()
     : '';
   return (
-    <div
+    <motion.div
       className="imentor-feedback-item"
       style={{ cursor: 'pointer' }}
       onClick={onClick}
+      whileHover={{
+        x: 6,
+        backgroundColor: 'rgba(0, 102, 204, 0.02)',
+        paddingLeft: '12px',
+        paddingRight: '12px',
+        borderRadius: '8px',
+      }}
+      transition={{ type: 'spring', stiffness: 450, damping: 28 }}
     >
       <div className="imentor-feedback-head">
         <strong>{feedback.studentFullName}</strong>
@@ -208,6 +280,7 @@ function FeedbackPreview({ feedback, onClick }) {
       <span className="imentor-feedback-time">
         {new Date(feedback.createdAt).toLocaleString('vi-VN')}
       </span>
-    </div>
+    </motion.div>
   );
 }
+
