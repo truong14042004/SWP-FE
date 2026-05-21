@@ -1511,92 +1511,27 @@ button:disabled {
 }
 
 /* ============================================================
-   ADMIN SIDEBAR COLLAPSE TOGGLE
+   ADMIN SIDEBAR COLLAPSE
    ============================================================ */
 .admin-shell.is-collapsed {
     grid-template-columns: 72px minmax(0, 1fr);
-}
-
-.admin-rail {
-    transition: grid-template-rows 200ms ease;
 }
 
 .admin-rail.is-collapsed {
     width: 72px;
 }
 
-/* Brand row */
-.admin-rail-brand {
-    position: relative;
-}
-
 .admin-rail.is-collapsed .admin-rail-brand {
     flex-direction: column;
-    gap: 14px;
-    padding: 18px 8px 12px;
+    gap: 10px;
+    padding: 18px 8px 14px;
     align-items: center;
-    border-bottom: 0;
 }
 
 .admin-rail-brand-text {
     display: grid;
     gap: 2px;
     min-width: 0;
-}
-
-/* Expanded toggle: a pill bar that spans the rail with chevron + label */
-.admin-rail-toggle {
-    margin: 4px 14px 12px;
-    min-height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 9999px;
-    padding: 0 14px;
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.78);
-    font-family: var(--font-text);
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: -0.12px;
-    cursor: pointer;
-    transition: background 140ms ease, color 140ms ease, transform 140ms ease, border-color 140ms ease;
-}
-
-.admin-rail-toggle svg {
-    width: 12px;
-    height: 12px;
-    transition: transform 200ms ease;
-}
-
-/* Expanded → chevron points left ( "<" ). Collapsed → chevron points right ( ">" ). */
-.admin-rail:not(.is-collapsed) .admin-rail-toggle svg {
-    transform: rotate(180deg);
-}
-
-.admin-rail-toggle:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.28);
-    color: var(--canvas);
-}
-
-.admin-rail-toggle:active {
-    transform: scale(0.97);
-}
-
-.admin-rail-toggle:focus-visible {
-    outline: 2px solid rgba(41, 151, 255, 0.6);
-    outline-offset: 2px;
-}
-
-/* Collapsed toggle: square 36px button stacked under the logo */
-.admin-rail.is-collapsed .admin-rail-toggle {
-    margin: 0 12px 8px;
-    width: 44px;
-    min-height: 36px;
-    padding: 0;
 }
 
 /* Nav items */
@@ -1641,6 +1576,56 @@ button:disabled {
 }
 
 /* ============================================================
+   TOPBAR — hamburger toggle + title cluster
+   ============================================================ */
+.admin-topbar-lead {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.admin-topbar-toggle {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-md);
+    background: var(--canvas);
+    color: var(--ink-muted-80);
+    cursor: pointer;
+    transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 120ms ease;
+}
+
+.admin-topbar-toggle svg {
+    width: 18px;
+    height: 18px;
+}
+
+.admin-topbar-toggle:hover {
+    background: var(--canvas-parchment);
+    border-color: var(--ink-muted-48);
+    color: var(--ink);
+}
+
+.admin-topbar-toggle:active {
+    transform: scale(0.94);
+}
+
+.admin-topbar-toggle:focus-visible {
+    outline: 2px solid var(--primary-focus);
+    outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+    .admin-topbar-toggle {
+        display: none;
+    }
+}
+
+/* ============================================================
    CHART GRID — keep two columns until tablet, then stack
    ============================================================ */
 .chart-card {
@@ -1672,10 +1657,6 @@ button:disabled {
         width: 100%;
         min-height: auto;
         grid-template-rows: auto;
-    }
-
-    .admin-rail-toggle {
-        display: none;
     }
 }
 
