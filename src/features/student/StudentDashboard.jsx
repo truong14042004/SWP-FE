@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { apiUrl } from '../../config';
 import '../../styles.css';
@@ -526,6 +526,23 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     loadProfile();
     loadDashboardOverview();
   }, []);
+
+  // First-time onboarding: if the student doesn't have a profile yet, push them
+  // straight to the settings tab so they fill in school / major / career goal first.
+  // We only do this once per session (forcedOnboardingRef) so the user can leave
+  // the settings tab manually after seeing the toast.
+  const forcedOnboardingRef = useRef(false);
+  useEffect(() => {
+    if (loadingProfile) return;
+    if (hasProfile) return;
+    if (forcedOnboardingRef.current) return;
+
+    forcedOnboardingRef.current = true;
+    setActiveSection('settings');
+    toast.info('Hãy hoàn tất hồ sơ sinh viên để hệ thống gợi ý lộ trình phù hợp.', {
+      autoClose: 6000,
+    });
+  }, [loadingProfile, hasProfile]);
 
   const visibleGroups = useMemo(() => {
     if (activeTab === 'missing') return ['missing'];
