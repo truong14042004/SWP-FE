@@ -1,4 +1,5 @@
 import { CareerRoleSelect } from './CareerRoleSelect';
+import { apiUrl } from '../../../config';
 
 export function StudentProfileForm({
   initials,
@@ -10,9 +11,11 @@ export function StudentProfileForm({
   loadingProfile,
   savingProfile,
   uploadingAvatar,
+  uploadingCv,
   hasProfile,
   onChange,
   onAvatarFileChange,
+  onCvFileChange,
   onAvatarImport,
   onSubmit,
 }) {
@@ -103,6 +106,42 @@ export function StudentProfileForm({
           <span>Github username</span>
           <input name="githubUsername" value={form.githubUsername} onChange={onChange} placeholder="your-github-id" />
         </label>
+      </div>
+
+      <div className="student-profile-section-label">Hồ sơ cá nhân (CV)</div>
+      <div className="student-profile-grid single">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+            Tải lên CV của bạn dưới dạng file PDF (tối đa 10MB) để hệ thống và AI Mentor có thêm thông tin định hướng.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <label className="secondary-action student-avatar-upload" style={{ margin: 0, cursor: 'pointer' }}>
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={onCvFileChange}
+                disabled={loadingProfile || savingProfile || uploadingCv}
+                style={{ display: 'none' }}
+              />
+              {uploadingCv ? 'Đang tải CV...' : 'Tải CV mới (PDF)'}
+            </label>
+            {form.cvUrl ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.05)', padding: '6px 12px', borderRadius: '6px' }}>
+                <span style={{ fontSize: '1.2rem' }}>📄</span>
+                <a
+                  href={`${apiUrl}/api/storage/download?objectName=${encodeURIComponent(form.cvUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'var(--accent)', textDecoration: 'underline', fontSize: '0.9rem' }}
+                >
+                  {form.cvName || 'Xem CV hiện tại'}
+                </a>
+              </div>
+            ) : (
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Chưa có file CV nào được tải lên.</span>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="student-profile-actions">
