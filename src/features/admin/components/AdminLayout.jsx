@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 const NAV_ICONS = {
   overview: (
     <svg className="nav-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -88,6 +90,8 @@ const SECTION_LABELS = {
   careerRoles:  { title: 'Career roles',       sub: 'Target roles students can pursue' },
 };
 
+const SIDEBAR_STORAGE_KEY = 'admin.sidebar.collapsed';
+
 function getInitials(name = '') {
   return name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'A';
 }
@@ -96,16 +100,59 @@ export function AdminLayout({ session, activeSection, onSectionChange, onRefresh
   const initials = getInitials(session?.user?.fullName);
   const meta = SECTION_LABELS[activeSection] || SECTION_LABELS.overview;
 
+  // Collapsed = default (rail mỏng, chỉ icon). Click toggle để mở full sidebar.
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem(SIDEBAR_STORAGE_KEY);
+      return stored === null ? true : stored === '1';
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SIDEBAR_STORAGE_KEY, collapsed ? '1' : '0');
+    } catch {
+      /* ignore quota / privacy mode */
+    }
+  }, [collapsed]);
+
   return (
-    <main className="admin-shell">
-      <aside className="admin-rail" aria-label="Admin navigation">
+    <main className={`admin-shell${collapsed ? ' is-collapsed' : ''}`}>
+      <aside
+        className={`admin-rail${collapsed ? ' is-collapsed' : ''}`}
+        aria-label="Admin navigation"
+      >
         <div className="admin-rail-brand">
           <span className="admin-rail-mark">CM</span>
-          <div>
-            <strong>CareerMap</strong>
-            <small>Admin Console</small>
-          </div>
+          {!collapsed && (
+            <div className="admin-rail-brand-text">
+              <strong>CareerMap</strong>
+              <small>Admin Console</small>
+            </div>
+          )}
         </div>
+
+        <button
+          type="button"
+          className="admin-rail-toggle"
+          onClick={() => setCollapsed((value) => !value)}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+          title={collapsed ? 'Mở rộng' : 'Thu gọn'}
+        >
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M6 4l4 4-4 4"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          {!collapsed && <span>Thu gọn</span>}
+        </button>
 
         <nav className="admin-rail-nav" aria-label="Admin sections">
           {adminSections.map((section) => (
@@ -114,24 +161,51 @@ export function AdminLayout({ session, activeSection, onSectionChange, onRefresh
               type="button"
               className={activeSection === section.id ? 'active' : ''}
               onClick={() => onSectionChange(section.id)}
+              title={collapsed ? section.label : undefined}
+              aria-label={section.label}
             >
               {NAV_ICONS[section.id]}
-              {section.label}
+              {!collapsed && <span className="admin-rail-nav-label">{section.label}</span>}
             </button>
           ))}
         </nav>
 
         <div className="admin-rail-account">
           <div className="admin-rail-id">
-            <span className="admin-rail-avatar">{initials}</span>
-            <div>
-              <strong>{session?.user?.fullName || 'Admin'}</strong>
-              <small>{session?.user?.email}</small>
-            </div>
+            <span className="admin-rail-avatar" title={session?.user?.fullName || 'Admin'}>
+              {initials}
+            </span>
+            {!collapsed && (
+              <div>
+                <strong>{session?.user?.fullName || 'Admin'}</strong>
+                <small>{session?.user?.email}</small>
+              </div>
+            )}
           </div>
-          <button type="button" className="admin-rail-signout" onClick={onSignOut}>
-            Sign out
-          </button>
+          {!collapsed && (
+            <button type="button" className="admin-rail-signout" onClick={onSignOut}>
+              Sign out
+            </button>
+          )}
+          {collapsed && (
+            <button
+              type="button"
+              className="admin-rail-signout admin-rail-signout--icon"
+              onClick={onSignOut}
+              aria-label="Sign out"
+              title="Sign out"
+            >
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path
+                  d="M10 11l3-3-3-3M13 8H6M9 13H3.5a1 1 0 01-1-1v-8a1 1 0 011-1H9"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          )}
         </div>
       </aside>
 
@@ -153,3 +227,4 @@ export function AdminLayout({ session, activeSection, onSectionChange, onRefresh
     </main>
   );
 }
+
