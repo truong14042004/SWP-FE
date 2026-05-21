@@ -1287,6 +1287,7 @@ button:disabled {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
+  align-items: stretch;
 }
 
 .chart-card {
@@ -1294,9 +1295,9 @@ button:disabled {
   border-radius: var(--r-lg);
   padding: 22px 24px;
   background: var(--canvas);
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
-  align-content: start;
 }
 
 .chart-card.wide { grid-column: 1 / -1; }
@@ -1508,3 +1509,173 @@ button:disabled {
     border-color: rgba(0, 122, 255, 0.5);
     box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
 }
+
+/* ============================================================
+   ADMIN SIDEBAR COLLAPSE TOGGLE
+   ============================================================ */
+.admin-shell.is-collapsed {
+    grid-template-columns: 72px minmax(0, 1fr);
+}
+
+.admin-rail {
+    transition: grid-template-rows 200ms ease;
+}
+
+.admin-rail.is-collapsed {
+    width: 72px;
+}
+
+/* Brand row */
+.admin-rail-brand {
+    position: relative;
+}
+
+.admin-rail.is-collapsed .admin-rail-brand {
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 8px 12px;
+    align-items: center;
+    border-bottom: 0;
+}
+
+.admin-rail-brand-text {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+/* Expanded toggle: a pill bar that spans the rail with chevron + label */
+.admin-rail-toggle {
+    margin: 4px 14px 12px;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 9999px;
+    padding: 0 14px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.78);
+    font-family: var(--font-text);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: -0.12px;
+    cursor: pointer;
+    transition: background 140ms ease, color 140ms ease, transform 140ms ease, border-color 140ms ease;
+}
+
+.admin-rail-toggle svg {
+    width: 12px;
+    height: 12px;
+    transition: transform 200ms ease;
+}
+
+/* Expanded → chevron points left ( "<" ). Collapsed → chevron points right ( ">" ). */
+.admin-rail:not(.is-collapsed) .admin-rail-toggle svg {
+    transform: rotate(180deg);
+}
+
+.admin-rail-toggle:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.28);
+    color: var(--canvas);
+}
+
+.admin-rail-toggle:active {
+    transform: scale(0.97);
+}
+
+.admin-rail-toggle:focus-visible {
+    outline: 2px solid rgba(41, 151, 255, 0.6);
+    outline-offset: 2px;
+}
+
+/* Collapsed toggle: square 36px button stacked under the logo */
+.admin-rail.is-collapsed .admin-rail-toggle {
+    margin: 0 12px 8px;
+    width: 44px;
+    min-height: 36px;
+    padding: 0;
+}
+
+/* Nav items */
+.admin-rail.is-collapsed .admin-rail-nav {
+    padding: 14px 8px;
+    justify-items: center;
+}
+
+.admin-rail.is-collapsed .admin-rail-nav button {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+    justify-content: center;
+}
+
+/* Account block */
+.admin-rail.is-collapsed .admin-rail-account {
+    padding: 12px 8px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-rail.is-collapsed .admin-rail-id {
+    margin-bottom: 0;
+    justify-content: center;
+}
+
+.admin-rail-signout--icon {
+    width: 36px;
+    min-height: 36px;
+    padding: 0;
+    border-radius: 9999px;
+    display: grid;
+    place-items: center;
+}
+
+.admin-rail-signout--icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ============================================================
+   CHART GRID — keep two columns until tablet, then stack
+   ============================================================ */
+.chart-card {
+    /* Lock all four cards to the same outer height so the 2x2 grid never
+       looks staggered when one chart’s axis legend is taller. */
+    min-height: 320px;
+}
+
+.chart-card .chart-canvas {
+    /* Ensure the inner SVG always fills the same space across cards. */
+    flex: 1 1 auto;
+}
+
+@media (max-width: 1100px) {
+    .chart-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .admin-shell,
+    .admin-shell.is-collapsed {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-rail,
+    .admin-rail.is-collapsed {
+        position: static;
+        width: 100%;
+        min-height: auto;
+        grid-template-rows: auto;
+    }
+
+    .admin-rail-toggle {
+        display: none;
+    }
+}
+
