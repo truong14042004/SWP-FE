@@ -864,3 +864,49 @@
         border-left: 0;
     }
 }
+/* Public portfolio standalone shell */
+.portfolio-public-shell {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    min-height: 100vh;
+    background: var(--student-canvas, #ffffff);
+}
+
+.portfolio-public-state {
+    text-align: center;
+    padding: 80px 24px;
+    color: var(--student-ink, #1d1d1f);
+}
+
+.portfolio-public-state h1 {
+    margin: 0 0 12px;
+    font-size: 24px;
+}
+
+.portfolio-public-state p {
+    color: var(--student-muted, #7a7a7a);
+    margin: 0 0 20px;
+}
+
+.portfolio-public-state button,
+.portfolio-public-footer button {
+    min-height: 44px;
+    padding: 0 22px;
+    border-radius: 9999px;
+    border: 1px solid var(--student-primary, #0066cc);
+    background: var(--student-primary, #0066cc);
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.portfolio-public-state button:hover,
+.portfolio-public-footer button:hover {
+    filter: brightness(1.08);
+}
+
+.portfolio-public-footer {
+    margin-top: 48px;
+    text-align: center;
+}
