@@ -14,6 +14,16 @@ export function uploadStudentAvatar(session, file) {
   });
 }
 
+export function uploadStudentCv(session, file) {
+  const formData = new FormData();
+  formData.append('File', file);
+
+  return authorizedRequest('/api/profile/cv', session, {
+    method: 'POST',
+    body: formData,
+  });
+}
+
 export function importStudentAvatarFromUrl(session, payload) {
   return authorizedRequest('/api/storage/avatar/import-url', session, {
     method: 'POST',

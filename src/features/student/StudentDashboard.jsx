@@ -13,6 +13,7 @@ import {
   importStudentAvatarFromUrl,
   updateStudentProfile,
   uploadStudentAvatar,
+  uploadStudentCv,
 } from './studentApi';
 import { StudentPortfolioPage } from './components/StudentPortfolioPage';
 import { StudentRoadmapPage } from './components/StudentRoadmapPage';
@@ -75,6 +76,8 @@ const emptyProfile = {
   githubUsername: '',
   careerGoal: '',
   preferredLearningHoursPerWeek: '',
+  cvUrl: '',
+  cvName: '',
 };
 
 function getInitials(name = '') {
@@ -97,6 +100,8 @@ function normalizeProfile(profile) {
     githubUsername: profile.githubUsername || '',
     careerGoal: profile.careerGoal || '',
     preferredLearningHoursPerWeek: profile.preferredLearningHoursPerWeek ?? '',
+    cvUrl: profile.cvUrl || '',
+    cvName: profile.cvName || '',
   };
 }
 
@@ -511,6 +516,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingCv, setUploadingCv] = useState(false);
   const [avatarImportDraft, setAvatarImportDraft] = useState('');
   const [dashboardOverview, setDashboardOverview] = useState(DEFAULT_DASHBOARD_OVERVIEW);
   const [loadingOverview, setLoadingOverview] = useState(false);
@@ -708,6 +714,26 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     }
   }
 
+  async function handleCvFileChange(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    setUploadingCv(true);
+    try {
+      const uploaded = await uploadStudentCv(session, file);
+      setForm(normalizeProfile(uploaded));
+      toast.success('Đã tải lên CV thành công.');
+    } catch (requestError) {
+      toast.error(requestError.message || 'Không tải được CV.');
+    } finally {
+      setUploadingCv(false);
+    }
+  }
+
   async function handleSaveProfile(event) {
     event.preventDefault();
     setSavingProfile(true);
@@ -838,9 +864,11 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
               loadingProfile={loadingProfile}
               savingProfile={savingProfile}
               uploadingAvatar={uploadingAvatar}
+              uploadingCv={uploadingCv}
               hasProfile={hasProfile}
               onChange={updateField}
               onAvatarFileChange={handleAvatarFileChange}
+              onCvFileChange={handleCvFileChange}
               onAvatarImport={handleAvatarImport}
               onSubmit={handleSaveProfile}
             />
