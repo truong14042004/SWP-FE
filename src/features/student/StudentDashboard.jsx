@@ -1038,32 +1038,6 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                   </div>
                 </article>
 
-                <article className="student-side-card">
-                  <div className="student-panel-heading">
-                    <span>Mentor</span>
-                    <h2>Lịch tư vấn</h2>
-                  </div>
-                  <div className="student-compact-list">
-                    {dashboardOverview.mentorSessions.length === 0 && (
-                      <div className="student-compact-item static">
-                        <div>
-                          <strong>Chưa có lịch tư vấn</strong>
-                          <small>Vào AI tư vấn để bắt đầu phiên mới.</small>
-                        </div>
-                        <span>—</span>
-                      </div>
-                    )}
-                    {dashboardOverview.mentorSessions.map((sessionItem) => (
-                      <div key={sessionItem.topic} className="student-compact-item static">
-                        <div>
-                          <strong>{sessionItem.topic}</strong>
-                          <small>{sessionItem.mentor}</small>
-                        </div>
-                        <span>{sessionItem.time}</span>
-                      </div>
-                    ))}
-                  </div>
-                </article>
 
                 <article className="student-side-card">
                   <div className="student-panel-heading">
