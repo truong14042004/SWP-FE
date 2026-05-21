@@ -1135,3 +1135,121 @@
     justify-content: flex-end;
   }
 }
+
+/* ===== Skill verification panel (Mentor C5) ===== */
+
+.mentor-skill-group {
+    margin-top: 18px;
+}
+
+.mentor-skill-group-title {
+    margin: 0 0 10px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--imentor-muted, #6e6e73);
+}
+
+.mentor-skill-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mentor-skill-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(60, 60, 67, 0.12);
+    border-radius: 12px;
+}
+
+.mentor-skill-row-main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.mentor-skill-row-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mentor-skill-name {
+    font-weight: 600;
+    color: var(--imentor-ink, #1d1d1f);
+}
+
+.mentor-skill-level {
+    padding: 2px 9px;
+    border-radius: 9999px;
+    background: rgba(0, 122, 255, 0.1);
+    color: #0066cc;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.mentor-skill-badge {
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.mentor-skill-badge.verified-mine {
+    background: rgba(52, 199, 89, 0.15);
+    color: #1f7a3a;
+}
+
+.mentor-skill-badge.verified-other {
+    background: rgba(142, 142, 147, 0.15);
+    color: #555;
+}
+
+.mentor-skill-evidence {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 13px;
+    color: #0066cc;
+    text-decoration: none;
+}
+
+.mentor-skill-evidence:hover {
+    text-decoration: underline;
+}
+
+.mentor-skill-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.imentor-btn-secondary {
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: 9999px;
+    border: 1px solid rgba(60, 60, 67, 0.2);
+    background: transparent;
+    color: var(--imentor-ink, #1d1d1f);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.imentor-btn-secondary:hover:not(:disabled) {
+    background: rgba(60, 60, 67, 0.06);
+}
+
+.imentor-btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.mentor-skill-locked {
+    font-size: 13px;
+    color: var(--imentor-muted, #6e6e73);
+    font-style: italic;
+}

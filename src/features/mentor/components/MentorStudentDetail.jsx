@@ -4,6 +4,9 @@ import {
   getStudentGithub,
   getStudentMentorFeedbacks,
   getStudentQuota,
+  getStudentSkills,
+  verifyStudentSkill,
+  unverifyStudentSkill,
 } from '../api/industryMentorApi';
 
 function getInitials(name) {
@@ -32,6 +35,7 @@ function parseTechStack(json) {
 const TABS = [
   { id: 'portfolio', label: 'Portfolio' },
   { id: 'github', label: 'GitHub' },
+  { id: 'skills', label: 'Kỹ năng' },
   { id: 'feedback', label: 'Feedback đã gửi' },
 ];
 
@@ -47,8 +51,13 @@ export function MentorStudentDetail({
   const [repos, setRepos] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [quota, setQuota] = useState(null);
+  const [skills, setSkills] = useState([]);
+  const [verifyingSkillId, setVerifyingSkillId] = useState(null);
+  const [skillError, setSkillError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const currentMentorId = session?.user?.id;
 
   const student = useMemo(
     () => reviewQueue.find((s) => s.id === studentId) || null,
@@ -61,17 +70,19 @@ export function MentorStudentDetail({
       setLoading(true);
       setError(null);
       try {
-        const [portfolioData, reposData, feedbacksData, quotaData] = await Promise.all([
+        const [portfolioData, reposData, feedbacksData, quotaData, skillsData] = await Promise.all([
           getStudentPortfolio(session, studentId).catch(() => null),
           getStudentGithub(session, studentId).catch(() => []),
           getStudentMentorFeedbacks(session, studentId).catch(() => []),
           getStudentQuota(session, studentId).catch(() => null),
+          getStudentSkills(session, studentId).catch(() => []),
         ]);
         if (cancelled) return;
         setPortfolio(portfolioData);
         setRepos(Array.isArray(reposData) ? reposData : []);
         setFeedbacks(Array.isArray(feedbacksData) ? feedbacksData : []);
         setQuota(quotaData);
+        setSkills(Array.isArray(skillsData) ? skillsData : []);
       } catch (e) {
         if (!cancelled) setError(e?.message || 'Không tải được dữ liệu sinh viên');
       } finally {
@@ -83,6 +94,32 @@ export function MentorStudentDetail({
       cancelled = true;
     };
   }, [session, studentId]);
+
+  async function handleVerify(skill) {
+    setVerifyingSkillId(skill.id);
+    setSkillError('');
+    try {
+      const updated = await verifyStudentSkill(session, skill.id);
+      setSkills((prev) => prev.map((s) => (s.id === skill.id ? updated : s)));
+    } catch (e) {
+      setSkillError(e?.message || 'Không xác minh được kỹ năng.');
+    } finally {
+      setVerifyingSkillId(null);
+    }
+  }
+
+  async function handleUnverify(skill) {
+    setVerifyingSkillId(skill.id);
+    setSkillError('');
+    try {
+      const updated = await unverifyStudentSkill(session, skill.id);
+      setSkills((prev) => prev.map((s) => (s.id === skill.id ? updated : s)));
+    } catch (e) {
+      setSkillError(e?.message || 'Không rút lại xác minh được.');
+    } finally {
+      setVerifyingSkillId(null);
+    }
+  }
 
   const quotaClass =
     !quota || quota.remaining > 1
@@ -150,6 +187,7 @@ export function MentorStudentDetail({
                 {t.label}
                 {t.id === 'github' && repos.length > 0 && ` (${repos.length})`}
                 {t.id === 'feedback' && feedbacks.length > 0 && ` (${feedbacks.length})`}
+                {t.id === 'skills' && skills.length > 0 && ` (${skills.length})`}
               </button>
             ))}
           </div>
@@ -169,6 +207,16 @@ export function MentorStudentDetail({
                 <PortfolioPanel portfolio={portfolio} />
               )}
               {activeTab === 'github' && <GithubPanel repos={repos} />}
+              {activeTab === 'skills' && (
+                <SkillsPanel
+                  skills={skills}
+                  currentMentorId={currentMentorId}
+                  onVerify={handleVerify}
+                  onUnverify={handleUnverify}
+                  verifyingSkillId={verifyingSkillId}
+                  errorMessage={skillError}
+                />
+              )}
               {activeTab === 'feedback' && (
                 <FeedbackPanel feedbacks={feedbacks} />
               )}
@@ -392,5 +440,149 @@ function FeedbackItem({ feedback }) {
         </div>
       )}
     </div>
+  );
+}
+
+function SkillsPanel({
+  skills,
+  currentMentorId,
+  onVerify,
+  onUnverify,
+  verifyingSkillId,
+  errorMessage,
+}) {
+  if (skills.length === 0) {
+    return (
+      <div className="imentor-empty">
+        <p className="imentor-empty-title">Sinh viên chưa khai báo kỹ năng</p>
+        <p className="imentor-empty-hint">
+          Sinh viên cần thêm kỹ năng vào hồ sơ trước khi mentor có thể xác minh.
+        </p>
+      </div>
+    );
+  }
+
+  // Group theo category cho dễ scan
+  const grouped = skills.reduce((acc, skill) => {
+    const category = skill.skillCategory || 'Khác';
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(skill);
+    return acc;
+  }, {});
+  const categories = Object.keys(grouped).sort();
+
+  return (
+    <section className="imentor-detail-section">
+      <h3 className="imentor-detail-section-title">
+        Kỹ năng đã khai báo ({skills.length})
+      </h3>
+      <p className="imentor-card-meta">
+        Xác minh kỹ năng giúp sinh viên có credential đáng tin cậy trước nhà tuyển dụng.
+        Bạn chỉ rút lại được xác minh do chính bạn cấp.
+      </p>
+
+      {errorMessage && (
+        <div
+          className="imentor-empty"
+          style={{ marginTop: 12, marginBottom: 12, padding: 12 }}
+        >
+          <p className="imentor-empty-hint">{errorMessage}</p>
+        </div>
+      )}
+
+      {categories.map((category) => (
+        <div key={category} className="mentor-skill-group">
+          <h4 className="mentor-skill-group-title">{category}</h4>
+          <div className="mentor-skill-list">
+            {grouped[category].map((skill) => (
+              <SkillRow
+                key={skill.id}
+                skill={skill}
+                currentMentorId={currentMentorId}
+                onVerify={onVerify}
+                onUnverify={onUnverify}
+                isBusy={verifyingSkillId === skill.id}
+                isOtherBusy={
+                  verifyingSkillId !== null && verifyingSkillId !== skill.id
+                }
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function SkillRow({
+  skill,
+  currentMentorId,
+  onVerify,
+  onUnverify,
+  isBusy,
+  isOtherBusy,
+}) {
+  const verifiedByMe =
+    skill.isVerified && skill.verifiedByUserId === currentMentorId;
+  const verifiedByOther =
+    skill.isVerified && skill.verifiedByUserId !== currentMentorId;
+
+  return (
+    <article className="mentor-skill-row">
+      <div className="mentor-skill-row-main">
+        <div className="mentor-skill-row-head">
+          <span className="mentor-skill-name">{skill.skillName}</span>
+          <span className="mentor-skill-level">{skill.level}</span>
+          {skill.isVerified && (
+            <span
+              className={`mentor-skill-badge ${
+                verifiedByMe ? 'verified-mine' : 'verified-other'
+              }`}
+            >
+              ✓ Đã xác minh
+              {skill.verifiedByName ? ` · ${skill.verifiedByName}` : ''}
+            </span>
+          )}
+        </div>
+        {skill.evidenceUrl && (
+          <a
+            className="mentor-skill-evidence"
+            href={skill.evidenceUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Xem evidence →
+          </a>
+        )}
+      </div>
+
+      <div className="mentor-skill-row-actions">
+        {!skill.isVerified && (
+          <button
+            type="button"
+            className="imentor-btn-primary"
+            disabled={isBusy || isOtherBusy}
+            onClick={() => onVerify(skill)}
+          >
+            {isBusy ? 'Đang xác minh...' : 'Xác minh'}
+          </button>
+        )}
+
+        {verifiedByMe && (
+          <button
+            type="button"
+            className="imentor-btn-secondary"
+            disabled={isBusy || isOtherBusy}
+            onClick={() => onUnverify(skill)}
+          >
+            {isBusy ? 'Đang rút...' : 'Rút lại xác minh'}
+          </button>
+        )}
+
+        {verifiedByOther && (
+          <span className="mentor-skill-locked">Đã được người khác xác minh</span>
+        )}
+      </div>
+    </article>
   );
 }
