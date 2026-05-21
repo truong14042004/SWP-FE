@@ -36,6 +36,28 @@ const EVIDENCE_TYPES = [
   'Other',
 ];
 
+// Mirror of the backend EvidenceContentTypes whitelist (StorageController.cs).
+const ACCEPTED_EVIDENCE_MIMES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/x-compressed',
+]);
+const ACCEPTED_EVIDENCE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.pdf', '.zip'];
+const EVIDENCE_FILE_HINT = 'Chỉ chấp nhận JPG, PNG, WEBP, PDF hoặc ZIP.';
+
+function isAcceptedEvidenceFile(file) {
+  if (!file) return false;
+  if (ACCEPTED_EVIDENCE_MIMES.has(file.type)) return true;
+  // Some browsers leave file.type empty for uncommon archives. Fall back to
+  // the extension so the picker accept= and our guard agree.
+  const name = (file.name || '').toLowerCase();
+  return ACCEPTED_EVIDENCE_EXTENSIONS.some((ext) => name.endsWith(ext));
+}
+
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
 }
@@ -299,6 +321,11 @@ async function loadData() {
     event.target.value = '';
 
     if (!file) {
+      return;
+    }
+
+    if (!isAcceptedEvidenceFile(file)) {
+      toast.error(`File “${file.name}” không được hỗ trợ. ${EVIDENCE_FILE_HINT}`);
       return;
     }
 
@@ -590,6 +617,7 @@ async function loadData() {
                   >
                     <input
                       type="file"
+                      accept="image/jpeg,image/png,image/webp,application/pdf,application/zip,application/x-zip-compressed,.jpg,.jpeg,.png,.webp,.pdf,.zip"
                       onChange={handleEvidenceFileChange}
                       disabled={uploadingEvidence || saving}
                     />
@@ -629,9 +657,13 @@ async function loadData() {
               </div>
             </label>
 
-            {!editingId && pendingEvidenceFile && (
+            {!editingId && pendingEvidenceFile ? (
               <small className="skills-evidence-hint">
-                Đã chọn “{pendingEvidenceFile.name}”. File sẽ được tải lên ngay sau khi bạn lưu kỹ năng.
+                Đã chọn “{pendingEvidenceFile.name}”. File sẽ được tải lên sau khi bạn lưu kỹ năng.
+              </small>
+            ) : (
+              <small className="skills-evidence-hint">
+                {EVIDENCE_FILE_HINT}
               </small>
             )}
             {editingId && form.evidenceUrl.trim() && !isHttpUrl(form.evidenceUrl) && !form.evidenceUrl.startsWith('⏳ ') && (
