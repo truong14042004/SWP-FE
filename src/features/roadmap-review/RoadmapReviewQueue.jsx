@@ -102,12 +102,15 @@ export function RoadmapReviewQueue({ session, role }) {
   }
 
   async function handleApprove(item) {
-    if (!confirm(`Duyệt module "${item.node.title}" của ${item.student.fullName}?`)) return;
+    const confirmed = window.confirm(
+      `Xác nhận duyệt module "${item.node.title}" của sinh viên ${item.student.fullName}?`
+    );
+    if (!confirmed) return;
 
     setActionLoadingId(item.id);
     try {
       await approveReviewRequest(session, item.id, { reviewerNote: null });
-      toast.success('Đã duyệt thành công.');
+      toast.success(`✅ Đã duyệt module "${item.node.title}" thành công.`);
       await loadQueue();
     } catch (error) {
       toast.error(error.message || 'Không duyệt được.');
