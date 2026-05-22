@@ -67,7 +67,7 @@ export function MentorOverview({
       >
         <p className="imentor-hero-eyebrow">Industry Mentor</p>
         <h1 className="imentor-hero-title">
-          Chào {mentorName.split(' ').slice(-1)[0]}, sẵn sàng review portfolio?
+          Chào {mentorName.split(' ').find(w => /^[A-Za-zÀ-ỹ]/.test(w) && !/^\d+$/.test(w)) || mentorName}, sẵn sàng review portfolio?
         </h1>
         <p className="imentor-hero-lede">
           Review queue tổng hợp portfolio đã publish của sinh viên. Mỗi feedback

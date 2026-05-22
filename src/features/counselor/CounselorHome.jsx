@@ -191,16 +191,6 @@ export function CounselorHome({ session, onSignOut }) {
               })}
             </Highlight>
           </div>
-          <span className="counselor-subnav-spacer" />
-          {currentView === 'students' && !selectedStudentId && (
-            <button
-              type="button"
-              className="counselor-subnav-cta"
-              onClick={() => handleNavigate('feedback')}
-            >
-              Xem feedback
-            </button>
-          )}
         </div>
       </nav>
 

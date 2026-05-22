@@ -116,7 +116,7 @@ export function CounselorOverview({
           transition={{ type: 'spring', stiffness: 260, damping: 22 }}
         >
           <span className="counselor-eyebrow">Academic Counselor</span>
-          <h1>Chào {counselorName.split(' ').slice(-1)[0]}, sẵn sàng hướng nghiệp?</h1>
+          <h1>Chào {counselorName.split(' ').find(w => /^[A-Za-zÀ-ỹ]/.test(w) && !/^\d+$/.test(w)) || counselorName}, sẵn sàng hướng nghiệp?</h1>
           <p className="counselor-hero-lead">
             Phân tích hồ sơ, verify kỹ năng và lập lộ trình học tập tối ưu cùng sinh viên của bạn.
           </p>

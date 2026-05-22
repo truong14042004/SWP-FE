@@ -194,16 +194,6 @@ export function MentorHome({ session, onSignOut }) {
               })}
             </Highlight>
           </div>
-          <span className="imentor-subnav-spacer" />
-          {currentView === 'queue' && !selectedStudentId && reviewQueue.length > 0 && (
-            <button
-              type="button"
-              className="imentor-subnav-cta"
-              onClick={() => handleNavigate('feedback')}
-            >
-              Xem lịch sử
-            </button>
-          )}
         </div>
       </nav>
 
