@@ -24,8 +24,24 @@ const NAV_ITEMS = [
 ];
 
 export function CounselorHome({ session, onSignOut }) {
-  const [currentView, setCurrentView] = useState('overview');
-  const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const getInitialViewInfo = () => {
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    if (parts[0] === 'counselor' && parts[1]) {
+      const view = parts[1];
+      const validViews = ['overview', 'students', 'roadmap-reviews', 'feedback'];
+      if (validViews.includes(view)) {
+        return {
+          view,
+          studentId: parts[2] || null
+        };
+      }
+    }
+    return { view: 'overview', studentId: null };
+  };
+
+  const initialInfo = getInitialViewInfo();
+  const [currentView, setCurrentView] = useState(initialInfo.view);
+  const [selectedStudentId, setSelectedStudentId] = useState(initialInfo.studentId);
   const [students, setStudents] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +51,13 @@ export function CounselorHome({ session, onSignOut }) {
 
   useEffect(() => {
     loadInitialData();
+    const handlePopState = () => {
+      const info = getInitialViewInfo();
+      setCurrentView(info.view);
+      setSelectedStudentId(info.studentId);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
