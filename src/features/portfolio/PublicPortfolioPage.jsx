@@ -24,6 +24,15 @@ function resolveStorageUrl(value) {
   return `${apiUrl}/api/storage/public/${normalized.replace(/^\/+/, '')}/download`;
 }
 
+function ensureAbsoluteUrl(url) {
+  if (!url) return '';
+  const trimmed = String(url).trim();
+  if (/^(https?:)?\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
 export function PublicPortfolioPage({ slug, onHome }) {
   const [portfolio, setPortfolio] = useState(null);
   const [status, setStatus] = useState('loading'); // loading | ready | not-found | error
@@ -124,10 +133,10 @@ export function PublicPortfolioPage({ slug, onHome }) {
                   )}
                   <div className="portfolio-preview-links">
                     {project.demoUrl && (
-                      <a href={project.demoUrl} target="_blank" rel="noreferrer">Live Demo</a>
+                      <a href={ensureAbsoluteUrl(project.demoUrl)} target="_blank" rel="noreferrer">Live Demo</a>
                     )}
                     {project.sourceUrl && (
-                      <a href={project.sourceUrl} target="_blank" rel="noreferrer">Source</a>
+                      <a href={ensureAbsoluteUrl(project.sourceUrl)} target="_blank" rel="noreferrer">Source</a>
                     )}
                   </div>
                 </div>
