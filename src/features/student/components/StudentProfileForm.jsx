@@ -17,6 +17,7 @@ export function StudentProfileForm({
   onAvatarFileChange,
   onCvFileChange,
   onAvatarImport,
+  onViewCv,
   onSubmit,
 }) {
   return (
@@ -129,9 +130,8 @@ export function StudentProfileForm({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.05)', padding: '6px 12px', borderRadius: '6px' }}>
                 <span style={{ fontSize: '1.2rem' }}>📄</span>
                 <a
-                  href={`${apiUrl}/api/storage/download?objectName=${encodeURIComponent(form.cvUrl)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="#"
+                  onClick={onViewCv}
                   style={{ color: 'var(--accent)', textDecoration: 'underline', fontSize: '0.9rem' }}
                 >
                   {form.cvName || 'Xem CV hiện tại'}

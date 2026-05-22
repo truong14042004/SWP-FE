@@ -26,7 +26,7 @@ import { NotificationBell } from '../notifications/NotificationBell';
 import { getGithubRepositories } from './githubApi';
 import { getMentorSessions } from './mentorApi';
 import { getRoadmapById, getRoadmaps } from './roadmapApi';
-import { getLatestSkillGap, getUserSkills } from './skillsApi';
+import { getLatestSkillGap, getUserSkills, getSignedUrl } from './skillsApi';
 const STUDENT_SECTIONS = [
   { id: 'overview', label: 'Bảng điều khiển' },
   { id: 'roadmap', label: 'Lộ trình nghề nghiệp' },
@@ -734,6 +734,24 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     }
   }
 
+  async function handleViewCv(event) {
+    event.preventDefault();
+    if (!form.cvUrl) {
+      return;
+    }
+
+    try {
+      const response = await getSignedUrl(session, form.cvUrl);
+      if (response?.url) {
+        window.open(response.url, '_blank', 'noopener,noreferrer');
+      } else {
+        toast.error("Không lấy được đường dẫn tải file CV.");
+      }
+    } catch (requestError) {
+      toast.error(requestError.message || "Không thể tải CV.");
+    }
+  }
+
   async function handleSaveProfile(event) {
     event.preventDefault();
     setSavingProfile(true);
@@ -870,6 +888,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
               onAvatarFileChange={handleAvatarFileChange}
               onCvFileChange={handleCvFileChange}
               onAvatarImport={handleAvatarImport}
+              onViewCv={handleViewCv}
               onSubmit={handleSaveProfile}
             />
           </section>
