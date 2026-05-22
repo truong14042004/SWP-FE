@@ -116,12 +116,19 @@ export function StudentProfileForm({
             Tải lên CV của bạn dưới dạng file PDF (tối đa 10MB) để hệ thống và AI Mentor có thêm thông tin định hướng.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <label className="secondary-action student-avatar-upload" style={{ margin: 0, cursor: 'pointer' }}>
+            <label
+              className="secondary-action student-avatar-upload"
+              style={{
+                margin: 0,
+                cursor: !hasProfile ? 'not-allowed' : 'pointer',
+                opacity: !hasProfile ? 0.6 : 1,
+              }}
+            >
               <input
                 type="file"
                 accept="application/pdf"
                 onChange={onCvFileChange}
-                disabled={loadingProfile || savingProfile || uploadingCv}
+                disabled={loadingProfile || savingProfile || uploadingCv || !hasProfile}
                 style={{ display: 'none' }}
               />
               {uploadingCv ? 'Đang tải CV...' : 'Tải CV mới (PDF)'}
@@ -141,6 +148,11 @@ export function StudentProfileForm({
               <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Chưa có file CV nào được tải lên.</span>
             )}
           </div>
+          {!hasProfile && (
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#ff4d4f', fontWeight: '500', marginTop: '4px' }}>
+              * Bạn vui lòng bấm nút "Tạo hồ sơ" ở góc phải bên dưới để tạo hồ sơ trước khi tải lên CV.
+            </p>
+          )}
         </div>
       </div>
 
