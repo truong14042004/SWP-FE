@@ -6,6 +6,7 @@ import {
   getEvidenceDownloadUrl,
   getMentorRoadmapQueue,
   rejectReviewRequest,
+  getSignedUrl,
 } from './reviewApi';
 import '../../styles/review-queue.css';
 import { Highlight } from '@/components/animate-ui/primitives/effects/highlight';
@@ -281,7 +282,29 @@ export function RoadmapReviewQueue({ session, role }) {
                     </div>
                     <div>
                       <strong>{item.student.fullName}</strong>
-                      <small>{item.student.email}</small>
+                      <small style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span>{item.student.email}</span>
+                        {item.student.cvUrl && (
+                          <button
+                            type="button"
+                            className="underline font-medium hover:opacity-80 text-left"
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--student-primary, #0066cc)', fontSize: '0.75rem', width: 'fit-content' }}
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                const response = await getSignedUrl(session, item.student.cvUrl);
+                                if (response.url) {
+                                  window.open(response.url, '_blank');
+                                }
+                              } catch (error) {
+                                toast.error('Không thể tải CV.');
+                              }
+                            }}
+                          >
+                            📄 CV: {item.student.cvName || 'Xem CV'}
+                          </button>
+                        )}
+                      </small>
                     </div>
                   </div>
 

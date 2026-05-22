@@ -13,6 +13,7 @@ import {
   getStudentSkillGapById,
   getStudentRoadmap,
   getStudentFeedbacks,
+  getSignedUrl,
 } from '../api/counselorApi';
 
 function getInitials(name = '') {
@@ -295,7 +296,7 @@ export function CounselorStudentDetail({
         <div className="counselor-section-inner counselor-section-inner--wide">
           <div className="counselor-tab-content" role="tabpanel">
             <Fade key={activeTab} inView={true} delay={100} transition={{ duration: 0.3 }}>
-              {activeTab === 'profile' && <ProfileTab profile={profileDetails} />}
+              {activeTab === 'profile' && <ProfileTab profile={profileDetails} session={session} />}
 
               {activeTab === 'skills' && (
                 <SkillsTab skills={skills} skillsByCategory={skillsByCategory} />
@@ -354,7 +355,7 @@ export function CounselorStudentDetail({
 }
 
 /* ── Profile Tab ─────────────────────────────────────────── */
-function ProfileTab({ profile }) {
+function ProfileTab({ profile, session }) {
   if (!profile) {
     return (
       <div className="counselor-empty">
@@ -399,6 +400,31 @@ function ProfileTab({ profile }) {
             >
               @{profile.githubUsername}
             </a>
+          }
+        />
+      )}
+      {profile.cvUrl && (
+        <ProfileItem
+          label="CV"
+          fullWidth
+          value={
+            <button
+              type="button"
+              className="underline text-teal-700 hover:text-teal-600 font-medium text-left"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--c-primary, #0f766e)' }}
+              onClick={async () => {
+                try {
+                  const response = await getSignedUrl(session, profile.cvUrl);
+                  if (response.url) {
+                    window.open(response.url, '_blank');
+                  }
+                } catch (error) {
+                  toast.error('Không thể tải CV.');
+                }
+              }}
+            >
+              📄 {profile.cvName || 'Xem CV'}
+            </button>
           }
         />
       )}
