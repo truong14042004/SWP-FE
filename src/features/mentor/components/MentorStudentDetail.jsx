@@ -160,6 +160,28 @@ export function MentorStudentDetail({
             <p>
               {student?.email}
               {student?.username && ` · @${student.username}`}
+              {student?.cvUrl && (
+                <>
+                  {' · '}
+                  <button
+                    type="button"
+                    className="underline text-blue-500 hover:text-blue-400 font-medium"
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, color: '#0066cc' }}
+                    onClick={async () => {
+                      try {
+                        const response = await getSignedUrl(session, student.cvUrl);
+                        if (response.url) {
+                          window.open(response.url, '_blank');
+                        }
+                      } catch (error) {
+                        toast.error('Không thể tải CV.');
+                      }
+                    }}
+                  >
+                    📄 CV: {student.cvName || 'Xem CV'}
+                  </button>
+                </>
+              )}
             </p>
             <div className="imentor-tags">
               {student?.portfolioTitle && (
