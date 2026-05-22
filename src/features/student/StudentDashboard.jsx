@@ -533,27 +533,11 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     loadDashboardOverview();
   }, []);
 
-  // Auto-reload the profile whenever the user lands on the settings tab again,
-  // and whenever the browser tab regains focus while settings is active. This
-  // replaces the old manual "Tải lại" button.
+  // Load the profile whenever the user lands on the settings tab.
   useEffect(() => {
-    if (activeSection !== 'settings') return undefined;
-
-    // Reload on every entry into settings.
-    loadProfile();
-
-    function handleVisibility() {
-      if (document.visibilityState === 'visible') {
-        loadProfile();
-      }
+    if (activeSection === 'settings') {
+      loadProfile();
     }
-
-    document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('focus', handleVisibility);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('focus', handleVisibility);
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection]);
 
