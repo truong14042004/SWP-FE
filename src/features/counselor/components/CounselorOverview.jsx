@@ -219,7 +219,7 @@ export function CounselorOverview({
                         key={student.id}
                         type="button"
                         variant="ghost"
-                        className="counselor-listrow w-full text-left"
+                        className="counselor-listrow w-full text-left h-auto py-3 px-3"
                         onClick={() => onNavigateToStudent(student.id)}
                         hoverScale={1.01}
                         tapScale={0.99}
