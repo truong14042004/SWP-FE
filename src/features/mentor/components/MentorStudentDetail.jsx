@@ -46,6 +46,15 @@ const TABS = [
   { id: 'feedback', label: 'Feedback đã gửi' },
 ];
 
+function ensureAbsoluteUrl(url) {
+  if (!url) return '';
+  const trimmed = String(url).trim();
+  if (/^(https?:)?\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
 export function MentorStudentDetail({
   session,
   studentId,
@@ -221,7 +230,7 @@ export function MentorStudentDetail({
           </div>
         </div>
       </section>
-
+ 
       {/* Sticky tabs navigation wrap */}
       <div className="imentor-tabs-wrap" style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-[600px] mx-auto">
@@ -241,7 +250,7 @@ export function MentorStudentDetail({
           </TabsList>
         </Tabs>
       </div>
-
+ 
       {/* Centered content wrapper */}
       <section className="imentor-section imentor-section--tight">
         <div className="imentor-section-inner imentor-section-inner--wide">
@@ -252,7 +261,7 @@ export function MentorStudentDetail({
                 <p className="imentor-empty-hint">{error}</p>
               </div>
             )}
-
+ 
             {loading ? (
               <div className="imentor-loading">Đang tải dữ liệu sinh viên...</div>
             ) : (
@@ -283,7 +292,7 @@ export function MentorStudentDetail({
     </ScrollProgressProvider>
   );
 }
-
+ 
 function PortfolioPanel({ portfolio }) {
   if (!portfolio) {
     return (
@@ -295,7 +304,7 @@ function PortfolioPanel({ portfolio }) {
       </div>
     );
   }
-
+ 
   return (
     <>
       <section className="imentor-detail-section">
@@ -305,7 +314,7 @@ function PortfolioPanel({ portfolio }) {
           Slug: <code>{portfolio.slug}</code> · Theme: {portfolio.theme || 'Default'}
         </p>
       </section>
-
+ 
       {portfolio.projects && portfolio.projects.length > 0 ? (
         <section className="imentor-detail-section">
           <h3 className="imentor-detail-section-title">
@@ -338,12 +347,12 @@ function PortfolioPanel({ portfolio }) {
                   )}
                   <div className="imentor-project-links">
                     {p.demoUrl && (
-                      <a href={p.demoUrl} target="_blank" rel="noreferrer">
+                      <a href={ensureAbsoluteUrl(p.demoUrl)} target="_blank" rel="noreferrer">
                         Demo →
                       </a>
                     )}
                     {p.sourceUrl && (
-                      <a href={p.sourceUrl} target="_blank" rel="noreferrer">
+                      <a href={ensureAbsoluteUrl(p.sourceUrl)} target="_blank" rel="noreferrer">
                         Source →
                       </a>
                     )}
