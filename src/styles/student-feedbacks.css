@@ -157,13 +157,25 @@
 }
 
 .student-feedback-rating {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 2px;
     color: #ff9500;
-    font-size: 14px;
-    letter-spacing: 1px;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .student-feedback-rating span {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 2px;
     color: rgba(0, 0, 0, 0.12);
+}
+
+.student-feedback-rating svg {
+    flex: 0 0 auto;
 }
 
 .student-feedback-meta small {

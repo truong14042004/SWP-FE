@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
+import { BarChart3, Diamond, LoaderCircle, Pin, Search } from 'lucide-react';
 import { apiUrl } from '../../../config';
 import '../../../styles/skills.css';
 import {
@@ -240,6 +241,9 @@ const [analyzingSkillGap, setAnalyzingSkillGap] = useState(false);
       totalUser,
       verified,
       topLevel,
+      average: totalUser
+        ? Math.round(enrichedUserSkills.reduce((sum, item) => sum + getLevelScore(item.level), 0) / totalUser)
+        : 0,
     };
   }, [skills, enrichedUserSkills]);
 
@@ -336,7 +340,7 @@ async function loadData() {
       setPendingEvidenceFile(file);
       setForm((current) => ({
         ...current,
-        evidenceUrl: current.evidenceUrl || `⏳ ${file.name}`,
+        evidenceUrl: current.evidenceUrl || `Đang chờ upload: ${file.name}`,
       }));
       toast.info('File sẽ được tải lên sau khi bạn lưu kỹ năng.');
       return;
@@ -396,7 +400,7 @@ async function loadData() {
       // as empty so it doesn't get sent to the backend.
       const stagedFile = pendingEvidenceFile;
       const cleanedEvidenceUrl =
-        stagedFile && form.evidenceUrl.startsWith('⏳ ')
+        stagedFile && form.evidenceUrl.startsWith('Đang chờ upload: ')
           ? ''
           : form.evidenceUrl.trim();
 
@@ -498,13 +502,28 @@ async function loadData() {
   return (
     <section className="skills-page">
       <header className="skills-hero">
-        <div>
-          <span className="skills-eyebrow">◇ Kỹ năng & khóa học</span>
+        <div className="skills-hero-copy">
+          <span className="skills-eyebrow"><Diamond size={16} aria-hidden="true" /> Kỹ năng & khóa học</span>
           <h1>Quản lý kỹ năng cá nhân</h1>
           <p>
             Theo dõi kỹ năng đã có, mức độ hiện tại và minh chứng học tập để hệ thống
             đề xuất roadmap phù hợp hơn.
           </p>
+
+          <div className="skills-hero-metrics" aria-label="Skills summary">
+            <div>
+              <span>My skills</span>
+              <strong>{stats.totalUser}</strong>
+            </div>
+            <div>
+              <span>Average</span>
+              <strong>{stats.average}%</strong>
+            </div>
+            <div>
+              <span>Verified</span>
+              <strong>{stats.verified}</strong>
+            </div>
+          </div>
         </div>
 
         <div className="skills-hero-actions">
@@ -667,7 +686,7 @@ async function loadData() {
                 {EVIDENCE_FILE_HINT}
               </small>
             )}
-            {editingId && form.evidenceUrl.trim() && !isHttpUrl(form.evidenceUrl) && !form.evidenceUrl.startsWith('⏳ ') && (
+            {editingId && form.evidenceUrl.trim() && !isHttpUrl(form.evidenceUrl) && !form.evidenceUrl.startsWith('Đang chờ upload: ') && (
               <small className="skills-evidence-hint">
                 Link hiện tại là đường dẫn storage nội bộ. Dùng "Xem minh chứng" sau khi lưu, hoặc nhập URL http/https để import file mới.
               </small>
@@ -690,7 +709,7 @@ async function loadData() {
         <main className="skills-main-panel">
           <section className="skills-toolbar">
             <div className="skills-search">
-              <span>⌕</span>
+              <Search size={16} aria-hidden="true" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -714,7 +733,7 @@ async function loadData() {
 
           {loading ? (
             <section className="skills-empty">
-              <span>⏳</span>
+              <span><LoaderCircle size={28} aria-hidden="true" /></span>
               <h2>Đang tải kỹ năng</h2>
               <p>Vui lòng chờ trong giây lát.</p>
             </section>
@@ -731,7 +750,7 @@ async function loadData() {
 
                 {filteredUserSkills.length === 0 ? (
                   <div className="skills-empty compact">
-                    <span>📌</span>
+                    <span><Pin size={28} aria-hidden="true" /></span>
                     <h2>Chưa có kỹ năng phù hợp</h2>
                     <p>Thêm kỹ năng mới hoặc đổi bộ lọc tìm kiếm.</p>
                   </div>
@@ -942,13 +961,13 @@ function SkillGapPanel({
 
       {loading ? (
         <div className="skill-gap-empty">
-          <span>⏳</span>
+          <span><LoaderCircle size={28} aria-hidden="true" /></span>
           <h3>Đang tải báo cáo skill gap</h3>
           <p>Vui lòng chờ trong giây lát.</p>
         </div>
       ) : !report ? (
         <div className="skill-gap-empty">
-          <span>📊</span>
+          <span><BarChart3 size={28} aria-hidden="true" /></span>
           <h3>Chưa có báo cáo skill gap</h3>
           <p>
             {targetRoleId

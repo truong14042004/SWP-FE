@@ -67,16 +67,27 @@
 }
 
 .student-nav {
+  display: grid;
+  align-content: start;
   padding: 14px 0;
   gap: 8px;
+  min-width: 0;
 }
 
 .student-nav button {
+  width: 100%;
   min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
   border-radius: 16px;
   padding: 0 14px;
+  background: transparent;
   color: rgba(255, 255, 255, 0.7);
   font-size: 14px;
+  text-align: left;
+  cursor: pointer;
 }
 
 .student-nav button:hover {
@@ -130,21 +141,53 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+.student-sidebar .admin-account-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin-bottom: 12px;
+}
+
 .student-sidebar .admin-account-avatar {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  overflow: hidden;
 }
 
 .student-sidebar .admin-account-info > div strong {
+  display: block;
   color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .student-sidebar .admin-account-info > div small {
+  display: block;
   color: rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .student-sidebar .admin-account button {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: transparent;
   border-color: rgba(255, 255, 255, 0.12);
   color: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
 }
 
 .student-main {
@@ -652,9 +695,17 @@
 }
 
 .student-stars {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
   color: #f59e0b;
-  font-size: 14px;
-  letter-spacing: 1px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.student-stars svg {
+  flex: 0 0 auto;
 }
 
 .student-skill-card p {
@@ -797,6 +848,44 @@
   box-shadow: 0 18px 46px rgba(15, 23, 42, 0.07);
 }
 
+.plan-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.plan-form label span {
+  color: #333;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.plan-form input,
+.plan-form textarea,
+.plan-form select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 0 16px;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+}
+
+.plan-form textarea {
+  min-height: 90px;
+  resize: vertical;
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+
+.plan-form input:focus,
+.plan-form textarea:focus,
+.plan-form select:focus {
+  border-color: var(--primary-focus);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.16);
+}
+
 .student-profile-hero {
   display: grid;
   grid-template-columns: 110px minmax(0, 1fr);
@@ -813,6 +902,13 @@
   background: linear-gradient(135deg, #dbeafe, #dcfce7);
   display: grid;
   place-items: center;
+  overflow: hidden;
+}
+
+.student-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .student-profile-avatar span {
@@ -838,6 +934,52 @@
   color: #64748b;
   font-size: 14px;
   line-height: 1.55;
+}
+
+.student-avatar-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.student-avatar-upload {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.student-avatar-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.student-avatar-import {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+}
+
+.student-avatar-import input {
+  min-height: 48px !important;
+  border-radius: 999px !important;
+  background: #f8fafc !important;
+}
+
+.student-avatar-chip img,
+.admin-account-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+img.admin-account-avatar {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  object-fit: cover;
 }
 
 .student-profile-section-label {
@@ -908,13 +1050,12 @@
   }
   .student-brand { padding-bottom: 8px; }
   .student-nav {
-    display: flex;
-    overflow-x: auto;
+    display: grid;
+    overflow: visible;
     padding: 4px 0 8px;
-    scrollbar-width: thin;
   }
   .student-nav button {
-    flex: 0 0 auto;
+    width: 100%;
     white-space: nowrap;
   }
   .student-sidebar-footer {

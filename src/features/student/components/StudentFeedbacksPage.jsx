@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { BriefcaseBusiness, Folder, GraduationCap, Lightbulb, LoaderCircle, MailOpen, Star, Wrench } from 'lucide-react';
 import { authorizedRequest } from '../../../api/http';
 import '../../../styles/student-feedbacks.css';
 
@@ -34,8 +35,8 @@ const SOURCE_LABEL = {
 };
 
 const SOURCE_ICON = {
-  Counselor: '🎓',
-  IndustryMentor: '💼',
+  Counselor: GraduationCap,
+  IndustryMentor: BriefcaseBusiness,
 };
 
 export function StudentFeedbacksPage({ session }) {
@@ -94,22 +95,22 @@ export function StudentFeedbacksPage({ session }) {
           className={filter === 'Counselor' ? 'active' : ''}
           onClick={() => setFilter('Counselor')}
         >
-          🎓 Cố vấn <span>{data.counselorCount}</span>
+          <GraduationCap size={16} aria-hidden="true" /> Cố vấn <span>{data.counselorCount}</span>
         </button>
         <button
           type="button"
           className={filter === 'IndustryMentor' ? 'active' : ''}
           onClick={() => setFilter('IndustryMentor')}
         >
-          💼 Mentor <span>{data.mentorCount}</span>
+          <BriefcaseBusiness size={16} aria-hidden="true" /> Mentor <span>{data.mentorCount}</span>
         </button>
       </div>
 
       {loading ? (
-        <div className="student-feedbacks-empty">⏳ Đang tải...</div>
+        <div className="student-feedbacks-empty"><LoaderCircle size={18} aria-hidden="true" /> Đang tải...</div>
       ) : filtered.length === 0 ? (
         <div className="student-feedbacks-empty">
-          <span>📭</span>
+          <span><MailOpen size={28} aria-hidden="true" /></span>
           <p>Chưa có feedback nào trong danh mục này.</p>
         </div>
       ) : (
@@ -124,6 +125,7 @@ export function StudentFeedbacksPage({ session }) {
 }
 
 function FeedbackCard({ item }) {
+  const SourceIcon = SOURCE_ICON[item.source];
   return (
     <article className={`student-feedback-card source-${item.source.toLowerCase()}`}>
       <header className="student-feedback-head">
@@ -136,7 +138,7 @@ function FeedbackCard({ item }) {
           <div>
             <strong>{item.authorFullName}</strong>
             <small>
-              {SOURCE_ICON[item.source]} {SOURCE_LABEL[item.source] || item.source}
+              {SourceIcon && <SourceIcon size={14} aria-hidden="true" />} {SOURCE_LABEL[item.source] || item.source}
             </small>
           </div>
         </div>
@@ -144,8 +146,8 @@ function FeedbackCard({ item }) {
         <div className="student-feedback-meta">
           {item.rating != null && (
             <div className="student-feedback-rating" title={`${item.rating}/5`}>
-              {'★'.repeat(item.rating)}
-              <span>{'★'.repeat(5 - item.rating)}</span>
+              {Array.from({ length: item.rating }, (_, index) => <Star key={`filled-${index}`} size={13} fill="currentColor" aria-hidden="true" />)}
+              <span>{Array.from({ length: 5 - item.rating }, (_, index) => <Star key={`empty-${index}`} size={13} aria-hidden="true" />)}</span>
             </div>
           )}
           <small>{formatDate(item.createdAt)}</small>
@@ -156,21 +158,21 @@ function FeedbackCard({ item }) {
 
       {item.recommendations && (
         <section className="student-feedback-section">
-          <strong>💡 Khuyến nghị</strong>
+          <strong><Lightbulb size={16} aria-hidden="true" /> Khuyến nghị</strong>
           <p>{item.recommendations}</p>
         </section>
       )}
 
       {item.technicalSkillsAssessment && (
         <section className="student-feedback-section">
-          <strong>🛠 Đánh giá kỹ năng kỹ thuật</strong>
+          <strong><Wrench size={16} aria-hidden="true" /> Đánh giá kỹ năng kỹ thuật</strong>
           <p>{item.technicalSkillsAssessment}</p>
         </section>
       )}
 
       {item.portfolioQualityFeedback && (
         <section className="student-feedback-section">
-          <strong>📁 Nhận xét về portfolio</strong>
+          <strong><Folder size={16} aria-hidden="true" /> Nhận xét về portfolio</strong>
           <p>{item.portfolioQualityFeedback}</p>
         </section>
       )}
