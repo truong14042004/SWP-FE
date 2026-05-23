@@ -396,13 +396,15 @@
     flex: 0 0 auto;
 }
 
-.review-queue-reject-form {
+.review-queue-reject-form,
+.review-queue-action-form {
     width: 100%;
     display: grid;
     gap: 10px;
 }
 
-.review-queue-reject-form textarea {
+.review-queue-reject-form textarea,
+.review-queue-action-form textarea {
     width: 100%;
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 12px;
@@ -412,11 +414,13 @@
     outline: none;
 }
 
-.review-queue-reject-form textarea:focus {
+.review-queue-reject-form textarea:focus,
+.review-queue-action-form textarea:focus {
     border-color: var(--student-primary, #0066cc);
 }
 
-.review-queue-reject-form > div {
+.review-queue-reject-form > div,
+.review-queue-action-form > div {
     display: flex;
     gap: 10px;
     justify-content: flex-end;

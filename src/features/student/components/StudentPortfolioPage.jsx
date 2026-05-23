@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
-import '../../../styles/portfolio.css'
+import '../../../styles/portfolio.css';
 import { apiUrl } from '../../../config';
+import { Button } from '@/components/animate-ui/components/buttons/button';
+import { Fade, Fades } from '@/components/animate-ui/primitives/effects/fade';
 import {
   createPortfolio,
   getMyPortfolio,
@@ -497,22 +499,26 @@ export function StudentPortfolioPage({ session }) {
         </div>
 
         <div className="portfolio-header-actions">
-          <button
+          <Button
             type="button"
             className="portfolio-btn outline"
             onClick={() => setActiveTab('preview')}
+            tapScale={0.96}
+            hoverScale={1.04}
           >
              Xem trước
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
             className="portfolio-btn primary"
             onClick={handlePublish}
             disabled={publishing || unpublishing || loading}
+            tapScale={0.96}
+            hoverScale={1.04}
           >
              {publishing ? 'Đang xuất bản...' : 'Xuất bản Portfolio'}
-          </button>
+          </Button>
         </div>
       </header>
 

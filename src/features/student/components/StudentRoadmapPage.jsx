@@ -179,6 +179,13 @@ function getRejectedReviewRequest(requests) {
 
   return isRejectedReviewStatus(getReviewRequestStatus(latest)) ? latest : null;
 }
+function getApprovedReviewRequest(requests) {
+  const latest = getLatestReviewRequest(requests);
+
+  if (!latest) return null;
+
+  return normalizeStatus(getReviewRequestStatus(latest)) === 'approved' ? latest : null;
+}
 function getReviewRequestId(request) {
   return request?.id || request?.requestId || request?.reviewRequestId;
 }
@@ -1009,8 +1016,10 @@ function RoadmapNodeCard({
   const reviewRequests = node?.id ? reviewRequestsByNodeId[node.id] || [] : [];
   const pendingRequest = getPendingReviewRequest(reviewRequests);
   const rejectedRequest = getRejectedReviewRequest(reviewRequests);
+  const approvedRequest = getApprovedReviewRequest(reviewRequests);
   const rejectedDate = formatReviewDate(getReviewRequestDate(rejectedRequest));
   const pendingDate = formatReviewDate(getReviewRequestDate(pendingRequest));
+  const approvedDate = formatReviewDate(getReviewRequestDate(approvedRequest));
   const pendingRequestId = getReviewRequestId(pendingRequest);
 
   const groupReviewStats = isGroup ? getGroupReviewStats(node) : null;
@@ -1104,6 +1113,25 @@ function RoadmapNodeCard({
             >
               {cancelingReviewRequestId === pendingRequestId ? 'Đang hủy...' : 'Hủy yêu cầu'}
             </button>
+          </div>
+        )}
+
+        {approvedRequest && (
+          <div className="roadmap-review-card approved">
+            <div>
+              <strong>✓ Reviewer đã duyệt verify</strong>
+              {getReviewerNote(approvedRequest) ? (
+                <p>{getReviewerNote(approvedRequest)}</p>
+              ) : (
+                <p style={{ fontStyle: 'italic', color: 'var(--apple-muted)' }}>
+                  Reviewer không để lại ghi chú.
+                </p>
+              )}
+              <small>
+                Reviewer: {getReviewerName(approvedRequest)}
+                {approvedDate ? ` · Phản hồi lúc ${approvedDate}` : ''}
+              </small>
+            </div>
           </div>
         )}
 

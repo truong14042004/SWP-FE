@@ -9,6 +9,9 @@ import {
   parsePlanFeatures,
 } from '../../subscriptions/subscriptionApi';
 import '../../../styles/student-subscription.css';
+import { Button } from '@/components/animate-ui/components/buttons/button';
+import { Fade, Fades } from '@/components/animate-ui/primitives/effects/fade';
+import { motion } from 'motion/react';
 
 function formatPrice(price, currency) {
   if (price === 0) return 'Miễn phí';
@@ -157,53 +160,59 @@ export function StudentSubscriptionPage({ session }) {
         </div>
       ) : (
         <div className="student-subscription-grid">
-          {plans.map((plan, index) => {
-            const features = parsePlanFeatures(plan.featuresJson);
-            const isCurrent = plan.id === activePlanId;
-            const isFeatured = !isCurrent && index === Math.min(1, plans.length - 1);
+          <Fades holdDelay={80} delay={100} inView={true}>
+            {plans.map((plan, index) => {
+              const features = parsePlanFeatures(plan.featuresJson);
+              const isCurrent = plan.id === activePlanId;
+              const isFeatured = !isCurrent && index === Math.min(1, plans.length - 1);
 
-            return (
-              <article
-                key={plan.id}
-                className={`student-subscription-card ${isFeatured ? 'featured' : ''} ${isCurrent ? 'current' : ''}`}
-              >
-                {isFeatured && <span className="student-subscription-tag">Phổ biến</span>}
-                {isCurrent && <span className="student-subscription-tag current">Đang dùng</span>}
-
-                <h3>{plan.name}</h3>
-                {plan.description && <p className="student-subscription-desc">{plan.description}</p>}
-
-                <div className="student-subscription-price">
-                  <strong>{formatPrice(plan.price, plan.currency)}</strong>
-                  <small>{billingLabel(plan.billingCycle)}</small>
-                </div>
-
-                <ul className="student-subscription-features">
-                  {features.mentorReviewLimit > 0 && (
-                    <li><Check size={14} aria-hidden="true" /> {features.mentorReviewLimit} lượt mentor review / chu kỳ</li>
-                  )}
-                  {(features.features || []).map((feature, idx) => (
-                    <li key={idx}><Check size={14} aria-hidden="true" /> {feature}</li>
-                  ))}
-                </ul>
-
-                <button
-                  type="button"
-                  className="student-subscription-cta"
-                  onClick={() => handleCheckout(plan)}
-                  disabled={isCurrent || checkoutLoadingId === plan.id}
+              return (
+                <motion.article
+                  key={plan.id}
+                  className={`student-subscription-card ${isFeatured ? 'featured' : ''} ${isCurrent ? 'current' : ''}`}
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                 >
-                  {isCurrent
-                    ? 'Đang sử dụng'
-                    : checkoutLoadingId === plan.id
-                    ? 'Đang xử lý...'
-                    : plan.price === 0
-                    ? 'Kích hoạt miễn phí'
-                    : 'Mua gói này'}
-                </button>
-              </article>
-            );
-          })}
+                  {isFeatured && <span className="student-subscription-tag">Phổ biến</span>}
+                  {isCurrent && <span className="student-subscription-tag current">Đang dùng</span>}
+
+                  <h3>{plan.name}</h3>
+                  {plan.description && <p className="student-subscription-desc">{plan.description}</p>}
+
+                  <div className="student-subscription-price">
+                    <strong>{formatPrice(plan.price, plan.currency)}</strong>
+                    <small>{billingLabel(plan.billingCycle)}</small>
+                  </div>
+
+                  <ul className="student-subscription-features">
+                    {features.mentorReviewLimit > 0 && (
+                      <li><Check size={14} aria-hidden="true" /> {features.mentorReviewLimit} lượt mentor review / chu kỳ</li>
+                    )}
+                    {(features.features || []).map((feature, idx) => (
+                      <li key={idx}><Check size={14} aria-hidden="true" /> {feature}</li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    type="button"
+                    className="student-subscription-cta"
+                    onClick={() => handleCheckout(plan)}
+                    disabled={isCurrent || checkoutLoadingId === plan.id}
+                    tapScale={0.96}
+                    hoverScale={1.04}
+                  >
+                    {isCurrent
+                      ? 'Đang sử dụng'
+                      : checkoutLoadingId === plan.id
+                      ? 'Đang xử lý...'
+                      : plan.price === 0
+                      ? 'Kích hoạt miễn phí'
+                      : 'Mua gói này'}
+                  </Button>
+                </motion.article>
+              );
+            })}
+          </Fades>
         </div>
       )}
 

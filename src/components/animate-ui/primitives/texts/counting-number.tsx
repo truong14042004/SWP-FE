@@ -9,6 +9,7 @@ import {
 } from '@/hooks/use-is-in-view';
 
 type CountingNumberProps = Omit<React.ComponentProps<'span'>, 'children'> & {
+  as?: React.ElementType;
   number: number;
   fromNumber?: number;
   padStart?: boolean;
@@ -21,6 +22,7 @@ type CountingNumberProps = Omit<React.ComponentProps<'span'>, 'children'> & {
 
 function CountingNumber({
   ref,
+  as: Component = 'span',
   number,
   fromNumber = 0,
   padStart = false,
@@ -28,9 +30,9 @@ function CountingNumber({
   inViewMargin = '0px',
   inViewOnce = true,
   decimalSeparator = '.',
-  transition = { stiffness: 90, damping: 50 },
+  transition = { stiffness: 100, damping: 15 },
   decimalPlaces = 0,
-  delay = 0,
+  delay = 200,
   initiallyStable = false,
   ...props
 }: CountingNumberProps) {
@@ -110,9 +112,9 @@ function CountingNumber({
   const initialText = initiallyStable ? formatValue(number) : zeroText;
 
   return (
-    <span ref={localRef} data-slot="counting-number" {...props}>
+    <Component ref={localRef} data-slot="counting-number" {...props}>
       {initialText}
-    </span>
+    </Component>
   );
 }
 

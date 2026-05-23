@@ -1,5 +1,6 @@
 import { CareerRoleSelect } from './CareerRoleSelect';
 import { FileText, Upload, UserRound } from 'lucide-react';
+import { Button } from '@/components/animate-ui/components/buttons/button';
 
 export function StudentProfileForm({
   initials,
@@ -33,16 +34,19 @@ export function StudentProfileForm({
           <h2>Ảnh đại diện</h2>
           <p>Cập nhật ảnh, thông tin học vấn và mục tiêu để hệ thống đề xuất roadmap chính xác hơn.</p>
           <div className="student-avatar-controls">
-            <label className="secondary-action student-avatar-upload">
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                onChange={onAvatarFileChange}
-                disabled={loadingProfile || savingProfile || uploadingAvatar}
-              />
-              <UserRound size={18} aria-hidden="true" />
-              {uploadingAvatar ? 'Đang tải ảnh...' : 'Chọn ảnh'}
-            </label>
+            <Button asChild tapScale={0.96} hoverScale={1.04}>
+              <label className="secondary-action student-avatar-upload" style={{ cursor: 'pointer' }}>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={onAvatarFileChange}
+                  disabled={loadingProfile || savingProfile || uploadingAvatar}
+                  style={{ display: 'none' }}
+                />
+                <UserRound size={18} aria-hidden="true" />
+                {uploadingAvatar ? 'Đang tải ảnh...' : 'Chọn ảnh'}
+              </label>
+            </Button>
           </div>
         </div>
       </div>
@@ -116,18 +120,22 @@ export function StudentProfileForm({
             Tải lên CV của bạn dưới dạng file PDF (tối đa 10MB) để hệ thống và AI Mentor có thêm thông tin định hướng.
           </p>
           <div className="student-cv-actions">
-            <label
-              className={`secondary-action student-avatar-upload student-cv-upload ${!hasProfile ? 'disabled' : ''}`}
-            >
-              <input
-                type="file"
-                accept="application/pdf"
-                onChange={onCvFileChange}
-                disabled={loadingProfile || savingProfile || uploadingCv || !hasProfile}
-              />
-              <Upload size={18} aria-hidden="true" />
-              {uploadingCv ? 'Đang tải CV...' : 'Tải CV mới (PDF)'}
-            </label>
+            <Button asChild tapScale={0.96} hoverScale={1.04} disabled={loadingProfile || savingProfile || uploadingCv || !hasProfile}>
+              <label
+                className={`secondary-action student-avatar-upload student-cv-upload ${!hasProfile ? 'disabled' : ''}`}
+                style={{ cursor: hasProfile ? 'pointer' : 'not-allowed' }}
+              >
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={onCvFileChange}
+                  disabled={loadingProfile || savingProfile || uploadingCv || !hasProfile}
+                  style={{ display: 'none' }}
+                />
+                <Upload size={18} aria-hidden="true" />
+                {uploadingCv ? 'Đang tải CV...' : 'Tải CV mới (PDF)'}
+              </label>
+            </Button>
             {form.cvUrl ? (
               <div className="student-cv-file">
                 <FileText size={19} aria-hidden="true" />
@@ -151,9 +159,9 @@ export function StudentProfileForm({
       </div>
 
       <div className="student-profile-actions">
-        <button type="submit" className="student-save-btn" disabled={loadingProfile || savingProfile}>
+        <Button type="submit" className="student-save-btn" disabled={loadingProfile || savingProfile} tapScale={0.96} hoverScale={1.04}>
           {savingProfile ? 'Đang lưu...' : hasProfile ? 'Lưu thay đổi' : 'Tạo hồ sơ'}
-        </button>
+        </Button>
       </div>
     </form>
   );

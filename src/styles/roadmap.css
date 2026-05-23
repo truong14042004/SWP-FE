@@ -1220,7 +1220,8 @@
     border-color: rgba(0, 102, 204, 0.14);
 }
 
-.roadmap-review-card.ready {
+.roadmap-review-card.ready,
+.roadmap-review-card.approved {
     background: var(--apple-green-bg);
     border-color: rgba(52, 199, 89, 0.16);
 }

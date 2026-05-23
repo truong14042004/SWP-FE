@@ -60,8 +60,8 @@ export function RoadmapReviewQueue({ session, role }) {
   const [filter, setFilter] = useState('Pending');
   const [expandedId, setExpandedId] = useState(null);
   const [actionLoadingId, setActionLoadingId] = useState('');
-  const [rejectingId, setRejectingId] = useState('');
-  const [rejectNote, setRejectNote] = useState('');
+  const [activeAction, setActiveAction] = useState(null); // { id: string, type: 'approve' | 'reject' }
+  const [actionNote, setActionNote] = useState('');
   const [downloadingId, setDownloadingId] = useState('');
 
   useEffect(() => {
@@ -101,45 +101,39 @@ export function RoadmapReviewQueue({ session, role }) {
     }
   }
 
-  async function handleApprove(item) {
-    const confirmed = window.confirm(
-      `Xác nhận duyệt module "${item.node.title}" của sinh viên ${item.student.fullName}?`
-    );
-    if (!confirmed) return;
-
-    setActionLoadingId(item.id);
-    try {
-      await approveReviewRequest(session, item.id, { reviewerNote: null });
-      toast.success(`✅ Đã duyệt module "${item.node.title}" thành công.`);
-      await loadQueue();
-    } catch (error) {
-      toast.error(error.message || 'Không duyệt được.');
-    } finally {
-      setActionLoadingId('');
-    }
+  function startAction(itemId, type) {
+    setActiveAction({ id: itemId, type });
+    setActionNote('');
   }
 
-  function startReject(itemId) {
-    setRejectingId(itemId);
-    setRejectNote('');
+  function cancelAction() {
+    setActiveAction(null);
+    setActionNote('');
   }
 
-  async function handleReject(item) {
-    const note = rejectNote.trim();
-    if (!note) {
+  async function handleConfirmAction(item) {
+    const note = actionNote.trim();
+    const isApprove = activeAction?.type === 'approve';
+
+    if (!isApprove && !note) {
       toast.warn('Vui lòng nhập lý do từ chối.');
       return;
     }
 
     setActionLoadingId(item.id);
     try {
-      await rejectReviewRequest(session, item.id, { reviewerNote: note });
-      toast.success('Đã từ chối yêu cầu.');
-      setRejectingId('');
-      setRejectNote('');
+      if (isApprove) {
+        await approveReviewRequest(session, item.id, { reviewerNote: note || null });
+        toast.success(`✅ Đã duyệt module "${item.node.title}" thành công.`);
+      } else {
+        await rejectReviewRequest(session, item.id, { reviewerNote: note });
+        toast.success('Đã từ chối yêu cầu.');
+      }
+      setActiveAction(null);
+      setActionNote('');
       await loadQueue();
     } catch (error) {
-      toast.error(error.message || 'Không từ chối được.');
+      toast.error(error.message || (isApprove ? 'Không duyệt được.' : 'Không từ chối được.'));
     } finally {
       setActionLoadingId('');
     }
@@ -369,32 +363,39 @@ export function RoadmapReviewQueue({ session, role }) {
 
                 {item.status === 'Pending' && (
                   <div className="review-queue-actions">
-                    {rejectingId === item.id ? (
-                      <div className="review-queue-reject-form">
+                    {activeAction && activeAction.id === item.id ? (
+                      <div className="review-queue-action-form">
                         <textarea
                           rows={3}
-                          placeholder="Nhập lý do từ chối..."
-                          value={rejectNote}
-                          onChange={(event) => setRejectNote(event.target.value)}
+                          placeholder={
+                            activeAction.type === 'approve'
+                              ? 'Nhập nhận xét/feedback (không bắt buộc)...'
+                              : 'Nhập lý do từ chối (bắt buộc)...'
+                          }
+                          value={actionNote}
+                          onChange={(event) => setActionNote(event.target.value)}
                         />
                         <div>
                           <button
                             type="button"
                             className="review-queue-btn outline"
-                            onClick={() => {
-                              setRejectingId('');
-                              setRejectNote('');
-                            }}
+                            onClick={cancelAction}
                           >
                             Hủy
                           </button>
                           <button
                             type="button"
-                            className="review-queue-btn danger"
-                            onClick={() => handleReject(item)}
+                            className={`review-queue-btn ${
+                              activeAction.type === 'approve' ? 'primary' : 'danger'
+                            }`}
+                            onClick={() => handleConfirmAction(item)}
                             disabled={actionLoadingId === item.id}
                           >
-                            {actionLoadingId === item.id ? 'Đang gửi...' : 'Xác nhận từ chối'}
+                            {actionLoadingId === item.id
+                              ? 'Đang gửi...'
+                              : activeAction.type === 'approve'
+                              ? 'Xác nhận duyệt'
+                              : 'Xác nhận từ chối'}
                           </button>
                         </div>
                       </div>
@@ -403,14 +404,14 @@ export function RoadmapReviewQueue({ session, role }) {
                         <button
                           type="button"
                           className="review-queue-btn outline"
-                          onClick={() => startReject(item.id)}
+                          onClick={() => startAction(item.id, 'reject')}
                         >
                           Từ chối
                         </button>
                         <button
                           type="button"
                           className="review-queue-btn primary"
-                          onClick={() => handleApprove(item)}
+                          onClick={() => startAction(item.id, 'approve')}
                           disabled={actionLoadingId === item.id}
                         >
                           {actionLoadingId === item.id ? 'Đang duyệt...' : '✓ Duyệt verify'}

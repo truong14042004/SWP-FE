@@ -3,6 +3,9 @@ import { toast } from 'react-toastify';
 import { BarChart3, Diamond, LoaderCircle, Pin, Search } from 'lucide-react';
 import { apiUrl } from '../../../config';
 import '../../../styles/skills.css';
+import { CountingNumber } from '@/components/animate-ui/primitives/texts/counting-number';
+import { Button } from '@/components/animate-ui/components/buttons/button';
+import { Fade, Fades } from '@/components/animate-ui/primitives/effects/fade';
 import {
   analyzeSkillGap,
   createUserSkill,
@@ -513,54 +516,56 @@ async function loadData() {
           <div className="skills-hero-metrics" aria-label="Skills summary">
             <div>
               <span>My skills</span>
-              <strong>{stats.totalUser}</strong>
+              <strong><CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={stats.totalUser} /></strong>
             </div>
             <div>
               <span>Average</span>
-              <strong>{stats.average}%</strong>
+              <strong><CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={stats.average} />%</strong>
             </div>
             <div>
               <span>Verified</span>
-              <strong>{stats.verified}</strong>
+              <strong><CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={stats.verified} /></strong>
             </div>
           </div>
         </div>
 
         <div className="skills-hero-actions">
-          <button type="button" onClick={() => startCreate()}>
+          <Button type="button" onClick={() => startCreate()} tapScale={0.96} hoverScale={1.04}>
             + Thêm kỹ năng
-          </button>
-          <button type="button" className="secondary" onClick={loadData}>
+          </Button>
+          <Button type="button" className="secondary" onClick={loadData} tapScale={0.96} hoverScale={1.04}>
             Tải lại dữ liệu
-          </button>
+          </Button>
         </div>
       </header>
 
-    <section className="skills-stats-grid">
-  <article>
-    <span>Kỹ năng của tôi</span>
-    <strong>{stats.totalUser}</strong>
-    <small>đã thêm vào hồ sơ</small>
-  </article>
+      <Fade inView={true}>
+        <section className="skills-stats-grid">
+          <article>
+            <span>Kỹ năng của tôi</span>
+            <strong><CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={stats.totalUser} /></strong>
+            <small>đã thêm vào hồ sơ</small>
+          </article>
 
-  <article>
-    <span>Kho kỹ năng</span>
-    <strong>{stats.totalCatalog}</strong>
-    <small>kỹ năng khả dụng</small>
-  </article>
+          <article>
+            <span>Kho kỹ năng</span>
+            <strong><CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={stats.totalCatalog} /></strong>
+            <small>kỹ năng khả dụng</small>
+          </article>
 
-  <article>
-    <span>Level cao nhất</span>
-    <strong>{stats.topLevel}</strong>
-    <small>trong các kỹ năng đã thêm</small>
-  </article>
+          <article>
+            <span>Level cao nhất</span>
+            <strong>{stats.topLevel}</strong>
+            <small>trong các kỹ năng đã thêm</small>
+          </article>
 
-  <article>
-    <span>Đã xác minh</span>
-    <strong>{stats.verified}</strong>
-    <small>kỹ năng có xác nhận</small>
-  </article>
-</section>
+          <article>
+            <span>Đã xác minh</span>
+            <strong><CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={stats.verified} /></strong>
+            <small>kỹ năng có xác nhận</small>
+          </article>
+        </section>
+      </Fade>
 
 <SkillGapPanel
   profile={profile}
@@ -756,15 +761,17 @@ async function loadData() {
                   </div>
                 ) : (
                   <div className="user-skill-grid">
-                    {filteredUserSkills.map((userSkill) => (
-                      <UserSkillCard
-                        key={userSkill.id}
-                        userSkill={userSkill}
-                        onEdit={startEdit}
-                        onDelete={handleDelete}
-                        session={session}
-                      />
-                    ))}
+                    <Fades holdDelay={60} delay={100} inView={true}>
+                      {filteredUserSkills.map((userSkill) => (
+                        <UserSkillCard
+                          key={userSkill.id}
+                          userSkill={userSkill}
+                          onEdit={startEdit}
+                          onDelete={handleDelete}
+                          session={session}
+                        />
+                      ))}
+                    </Fades>
                   </div>
                 )}
               </section>
@@ -779,27 +786,31 @@ async function loadData() {
                 </div>
 
                 <div className="catalog-skill-grid">
-                  {filteredCatalogSkills.map((skill) => {
-                    const added = addedSkillIds.has(skill.id);
+                  <Fades holdDelay={40} delay={100} inView={true}>
+                    {filteredCatalogSkills.map((skill) => {
+                      const added = addedSkillIds.has(skill.id);
 
-                    return (
-                      <article key={skill.id} className={added ? 'catalog-skill-card added' : 'catalog-skill-card'}>
-                        <div>
-                          <span>{getSkillCategory(skill)}</span>
-                          <h3>{getSkillName(skill)}</h3>
-                          <p>{getSkillDescription(skill)}</p>
-                        </div>
+                      return (
+                        <article key={skill.id} className={added ? 'catalog-skill-card added' : 'catalog-skill-card'}>
+                          <div>
+                            <span>{getSkillCategory(skill)}</span>
+                            <h3>{getSkillName(skill)}</h3>
+                            <p>{getSkillDescription(skill)}</p>
+                          </div>
 
-                        <button
-                          type="button"
-                          disabled={added}
-                          onClick={() => startCreate(skill.id)}
-                        >
-                          {added ? 'Đã thêm' : '+ Thêm'}
-                        </button>
-                      </article>
-                    );
-                  })}
+                          <Button
+                            type="button"
+                            disabled={added}
+                            onClick={() => startCreate(skill.id)}
+                            tapScale={0.96}
+                            hoverScale={1.04}
+                          >
+                            {added ? 'Đã thêm' : '+ Thêm'}
+                          </Button>
+                        </article>
+                      );
+                    })}
+                  </Fades>
                 </div>
               </section>
             </>
@@ -941,13 +952,15 @@ function SkillGapPanel({
         </div>
 
         <div className="skill-gap-actions">
-          <button
+          <Button
             type="button"
             onClick={onAnalyze}
             disabled={analyzing || loading || !targetRoleId}
+            tapScale={0.96}
+            hoverScale={1.04}
           >
             {analyzing ? 'Đang phân tích...' : 'Phân tích lại'}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -980,7 +993,7 @@ function SkillGapPanel({
           <div className="skill-gap-score-card">
             <div>
               <span>Điểm phù hợp</span>
-              <strong>{score}%</strong>
+              <strong><CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={score} />%</strong>
               <small>
                 {reportRoleName ? `Vai trò: ${reportRoleName}` : 'Báo cáo gần nhất'}
               </small>
@@ -994,7 +1007,7 @@ function SkillGapPanel({
           <div className="skill-gap-meta-grid">
             <div>
               <span>Số kỹ năng cần bổ sung</span>
-              <strong>{items.length}</strong>
+              <strong><CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={items.length} /></strong>
             </div>
 
             <div>

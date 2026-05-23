@@ -7,6 +7,15 @@ import {
   uploadRoadmapEvidence,
 } from '../../roadmap-review/reviewApi';
 import '../../../styles/review-modal.css';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/animate-ui/components/radix/dialog';
+import { Button } from '@/components/animate-ui/components/buttons/button';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const MAX_FILE_LABEL = '25MB';
@@ -156,65 +165,67 @@ export function NodeReviewRequestModal({ session, node, onClose, onSubmitted }) 
   }
 
   return (
-    <div className="review-modal-backdrop" onClick={onClose}>
-      <div className="review-modal" onClick={(event) => event.stopPropagation()}>
-        <header className="review-modal-head">
-          <div>
-            <span className="review-eyebrow">Yêu cầu mentor review</span>
-            <h2>{node.title}</h2>
-          </div>
-          <button type="button" className="review-modal-close" onClick={onClose}>
-            <X size={18} aria-hidden="true" />
-          </button>
-        </header>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-[48rem] p-0 overflow-hidden border-0 bg-transparent shadow-none" showCloseButton={false}>
+        <div className="review-modal" onClick={(event) => event.stopPropagation()} style={{ margin: 0, width: '100%', maxWidth: '100%' }}>
+          <header className="review-modal-head">
+            <div>
+              <span className="review-eyebrow">Yêu cầu mentor review</span>
+              <h2>{node.title}</h2>
+            </div>
+            <button type="button" className="review-modal-close" onClick={onClose}>
+              <X size={18} aria-hidden="true" />
+            </button>
+          </header>
 
-        <ol className="review-modal-steps">
-          <li className={step >= 1 ? 'active' : ''}>1. Chọn reviewer</li>
-          <li className={step >= 2 ? 'active' : ''}>2. Evidence</li>
-          <li className={step >= 3 ? 'active' : ''}>3. Xác nhận</li>
-        </ol>
+          <ol className="review-modal-steps">
+            <li className={step >= 1 ? 'active' : ''}>1. Chọn reviewer</li>
+            <li className={step >= 2 ? 'active' : ''}>2. Evidence</li>
+            <li className={step >= 3 ? 'active' : ''}>3. Xác nhận</li>
+          </ol>
 
-        {step === 1 && (
-          <ReviewerStep
-            loading={loadingReviewers}
-            counselor={reviewers.counselor}
-            mentors={reviewers.industryMentors}
-            onSelect={handleSelectReviewer}
-          />
-        )}
+          {step === 1 && (
+            <ReviewerStep
+              loading={loadingReviewers}
+              counselor={reviewers.counselor}
+              mentors={reviewers.industryMentors}
+              onSelect={handleSelectReviewer}
+            />
+          )}
 
-        {step === 2 && (
-          <EvidenceStep
-            mode={evidenceMode}
-            onModeChange={setEvidenceMode}
-            gitUrl={gitUrl}
-            onGitUrlChange={setGitUrl}
-            file={file}
-            onFileChange={handleFileChange}
-            uploading={uploading}
-            uploadedEvidence={uploadedEvidence}
-            studentNote={studentNote}
-            onNoteChange={setStudentNote}
-            onBack={() => setStep(1)}
-            onNext={() => setStep(3)}
-            evidenceReady={evidenceReady()}
-          />
-        )}
+          {step === 2 && (
+            <EvidenceStep
+              mode={evidenceMode}
+              onModeChange={setEvidenceMode}
+              gitUrl={gitUrl}
+              onGitUrlChange={setGitUrl}
+              file={file}
+              onFileChange={handleFileChange}
+              uploading={uploading}
+              uploadedEvidence={uploadedEvidence}
+              studentNote={studentNote}
+              onNoteChange={setStudentNote}
+              onBack={() => setStep(1)}
+              onNext={() => setStep(3)}
+              evidenceReady={evidenceReady()}
+            />
+          )}
 
-        {step === 3 && (
-          <ConfirmStep
-            reviewer={selectedReviewer}
-            evidenceMode={evidenceMode}
-            gitUrl={gitUrl}
-            uploadedEvidence={uploadedEvidence}
-            studentNote={studentNote}
-            submitting={submitting}
-            onBack={() => setStep(2)}
-            onSubmit={handleSubmit}
-          />
-        )}
-      </div>
-    </div>
+          {step === 3 && (
+            <ConfirmStep
+              reviewer={selectedReviewer}
+              evidenceMode={evidenceMode}
+              gitUrl={gitUrl}
+              uploadedEvidence={uploadedEvidence}
+              studentNote={studentNote}
+              submitting={submitting}
+              onBack={() => setStep(2)}
+              onSubmit={handleSubmit}
+            />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
