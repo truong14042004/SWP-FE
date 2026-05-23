@@ -434,6 +434,10 @@ function cleanGithubUsername(value) {
               message={message}
               userInitials={initials}
               session={session}
+              onApplied={(result) => {
+                const rId = result?.roadmapId || result?.RoadmapId;
+                window.location.hash = rId ? `roadmap?id=${rId}` : 'roadmap';
+              }}
             />
           ))}
 
@@ -557,7 +561,7 @@ function cleanGithubUsername(value) {
   );
 }
 
-function ChatMessage({ message, userInitials, session }) {
+function ChatMessage({ message, userInitials, session, onApplied }) {
   const isUser = message.role === 'user';
   const suggestions = message.suggestions;
 
@@ -586,9 +590,7 @@ function ChatMessage({ message, userInitials, session }) {
           <RoadmapPreviewCard
             session={session}
             roadmap={suggestions.roadmap}
-            onApplied={() => {
-              window.location.hash = 'roadmap';
-            }}
+            onApplied={onApplied}
           />
         )}
 

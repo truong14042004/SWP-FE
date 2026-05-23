@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'motion/react';
 import { toast } from 'react-toastify';
 import { Check, Circle, Clock3, Compass, LoaderCircle, Pin, RefreshCw } from 'lucide-react';
-import '../../../styles/roadmap.css'
+import '../../../styles/roadmap.css';
+import { CountingNumber } from '@/components/animate-ui/primitives/texts/counting-number';
+import { Button } from '@/components/animate-ui/components/buttons/button';
+import { Fade, Fades } from '@/components/animate-ui/primitives/effects/fade';
 import {
   generateRoadmap,
   getRoadmapById,
@@ -523,8 +527,15 @@ const [cancelingReviewRequestId, setCancelingReviewRequestId] = useState('');
 
       setRoadmaps(sorted);
 
+      const hash = window.location.hash;
+      const match = hash.match(/[?&]id=([^&]+)/);
+      const targetId = match ? match[1] : null;
+
+      const hasTarget = targetId && sorted.some((r) => r.id === targetId);
+      const activeId = hasTarget ? targetId : (sorted[0]?.id || '');
+
       if (sorted.length > 0) {
-        await loadRoadmapDetail(sorted[0].id);
+        await loadRoadmapDetail(activeId);
       } else {
         setRoadmap(null);
         setSelectedRoadmapId('');
@@ -730,23 +741,26 @@ async function handleCancelReviewRequest(node, request) {
         </div>
 
         <div className="roadmap-actions-card">
-
-          <button
+          <Button
             type="button"
             className="roadmap-main-action"
             onClick={() => setShowGenerateForm((current) => !current)}
+            tapScale={0.96}
+            hoverScale={1.04}
           >
             {showGenerateForm ? 'Ẩn form tạo lộ trình' : '+ Tạo lộ trình mới'}
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
             className="roadmap-secondary-action"
             onClick={loadRoadmaps}
             disabled={loadingList}
+            tapScale={0.96}
+            hoverScale={1.04}
           >
             {loadingList ? 'Đang tải...' : 'Tải lại danh sách'}
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -813,9 +827,9 @@ async function handleCancelReviewRequest(node, request) {
             </label>
           </div>
 
-          <button type="submit" disabled={generating || !form.careerRoleId}>
+          <Button type="submit" disabled={generating || !form.careerRoleId} tapScale={0.96} hoverScale={1.04}>
             {generating ? 'Đang tạo lộ trình...' : 'Tạo lộ trình'}
-          </button>
+          </Button>
         </form>
       )}
 
@@ -885,29 +899,37 @@ async function handleCancelReviewRequest(node, request) {
             </section>
           ) : (
             <>
-              <section className="roadmap-summary">
-                <div>
-                  <span>Tiến độ tổng thể</span>
-                  <strong>{progress}%</strong>
-                  <small>hoàn thành</small>
-                </div>
+              <Fade inView={true}>
+                <section className="roadmap-summary">
+                  <div>
+                    <span>Tiến độ tổng thể</span>
+                    <strong><CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={progress} />%</strong>
+                    <small>hoàn thành</small>
+                  </div>
 
-                <div>
-                  <span>Module đã hoàn thành</span>
-                  <strong>{completedNodes}/{progressNodeCount || 0}</strong>
-                  <small>module</small>
-                </div>
+                  <div>
+                    <span>Module đã hoàn thành</span>
+                    <strong>
+                      <CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={completedNodes} />/<CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={progressNodeCount || 0} />
+                    </strong>
+                    <small>module</small>
+                  </div>
 
-                <div>
-                  <span>Thời gian dự kiến</span>
-                  <strong>{totalHours || 0}</strong>
-                  <small>giờ</small>
-                </div>
+                  <div>
+                    <span>Thời gian dự kiến</span>
+                    <strong><CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={totalHours || 0} /></strong>
+                    <small>giờ</small>
+                  </div>
 
-                <div className="roadmap-summary-progress">
-                  <span style={{ width: `${progress}%` }} />
-                </div>
-              </section>
+                  <div className="roadmap-summary-progress">
+                    <motion.span
+                      initial={{ width: '0%' }}
+                      animate={{ width: `${progress}%` }}
+                      transition={{ type: 'spring', stiffness: 80, damping: 15, delay: 0.2 }}
+                    />
+                  </div>
+                </section>
+              </Fade>
 
               <section className="roadmap-content">
                 {roadmapNodes.length === 0 ? (
@@ -920,20 +942,22 @@ async function handleCancelReviewRequest(node, request) {
                   </section>
                 ) : (
                   <div className="roadmap-timeline">
-                 {roadmapNodes.map((node, index) => (
-  <RoadmapNodeCard
-  key={node.id || `${node.title}-${index}`}
-  node={node}
-  index={index}
-  roadmapStatus={roadmap?.status}
-  updatingNodeId={updatingNodeId}
-  onStatusChange={handleNodeStatusChange}
-  onRequestReview={(reviewNode) => setReviewModalNode(reviewNode)}
-  onCancelReviewRequest={handleCancelReviewRequest}
-  reviewRequestsByNodeId={reviewRequestsByNodeId}
-  cancelingReviewRequestId={cancelingReviewRequestId}
-/>
-))}
+                    <Fades holdDelay={60} delay={100} inView={true}>
+                      {roadmapNodes.map((node, index) => (
+                        <RoadmapNodeCard
+                          key={node.id || `${node.title}-${index}`}
+                          node={node}
+                          index={index}
+                          roadmapStatus={roadmap?.status}
+                          updatingNodeId={updatingNodeId}
+                          onStatusChange={handleNodeStatusChange}
+                          onRequestReview={(reviewNode) => setReviewModalNode(reviewNode)}
+                          onCancelReviewRequest={handleCancelReviewRequest}
+                          reviewRequestsByNodeId={reviewRequestsByNodeId}
+                          cancelingReviewRequestId={cancelingReviewRequestId}
+                        />
+                      ))}
+                    </Fades>
                   </div>
                 )}
               </section>
@@ -1149,7 +1173,11 @@ function RoadmapNodeCard({
               <strong>{progress}%</strong>
             </div>
             <div className="roadmap-progress-line">
-              <span style={{ width: `${progress}%` }} />
+              <motion.span
+                initial={{ width: '0%' }}
+                animate={{ width: `${progress}%` }}
+                transition={{ type: 'spring', stiffness: 80, damping: 15, delay: 0.1 }}
+              />
             </div>
           </div>
         )}

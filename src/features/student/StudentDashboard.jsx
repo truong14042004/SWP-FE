@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'motion/react';
+import { CountingNumber } from '@/components/animate-ui/primitives/texts/counting-number';
+import { Button } from '@/components/animate-ui/components/buttons/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/animate-ui/components/radix/tabs';
+import { Fade, Fades } from '@/components/animate-ui/primitives/effects/fade';
 import { toast } from 'react-toastify';
 import {
   Bot,
@@ -100,6 +105,21 @@ function getInitials(name = '') {
 
 function renderStars(count) {
   return Array.from({ length: count }, (_, index) => <Star key={index} size={12} fill="currentColor" aria-hidden="true" />);
+}
+
+function AnimatedMetricValue({ value }) {
+  const isPercent = String(value || '').endsWith('%');
+  const numericString = String(value || '').replace('%', '');
+  const parsedVal = parseFloat(numericString);
+  if (Number.isNaN(parsedVal)) {
+    return <span>{value}</span>;
+  }
+  return (
+    <>
+      <CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={parsedVal} />
+      {isPercent ? '%' : ''}
+    </>
+  );
 }
 
 function normalizeProfile(profile) {
@@ -567,12 +587,13 @@ function buildDashboardOverview({
 
 export function StudentDashboard({ session, onSignOut, onNavigateHome }) {
   function getInitialStudentSection() {
-  const hashSection = window.location.hash.replace('#', '');
+    const rawHash = window.location.hash.replace('#', '');
+    const hashSection = rawHash.split(/[/?&]/)[0];
 
-  return STUDENT_SECTIONS.some((section) => section.id === hashSection)
-    ? hashSection
-    : 'overview';
-}
+    return STUDENT_SECTIONS.some((section) => section.id === hashSection)
+      ? hashSection
+      : 'overview';
+  }
 
 const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -599,6 +620,18 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   useEffect(() => {
     loadProfile();
     loadDashboardOverview();
+  }, []);
+
+  useEffect(() => {
+    function handleHashChange() {
+      const rawHash = window.location.hash.replace('#', '');
+      const hashSection = rawHash.split(/[/?&]/)[0];
+      if (STUDENT_SECTIONS.some((section) => section.id === hashSection)) {
+        setActiveSection(hashSection);
+      }
+    }
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   // Load the profile whenever the user lands on the settings tab.
@@ -871,16 +904,37 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
         <nav className="admin-nav student-nav" aria-label="Student sections">
           {STUDENT_SECTIONS.map((section) => {
             const SectionIcon = section.Icon;
+            const isActive = activeSection === section.id;
             return (
             <button
               key={section.id}
               type="button"
-              className={activeSection === section.id ? 'active' : ''}
               onClick={() => navigateStudentSection(section.id)}
               title={sidebarCollapsed ? section.label : undefined}
+              style={{
+                color: isActive ? '#ffffff' : undefined,
+                position: 'relative',
+                background: 'transparent'
+              }}
             >
-              <SectionIcon className="student-nav-icon" size={18} aria-hidden="true" />
-              <span className="student-nav-label">{section.label}</span>
+              {isActive && (
+                <motion.span
+                  layoutId="sidebar-active-indicator"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    zIndex: 0
+                  }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                />
+              )}
+              <SectionIcon className="student-nav-icon" size={18} aria-hidden="true" style={{ position: 'relative', zIndex: 1 }} />
+              <span className="student-nav-label" style={{ position: 'relative', zIndex: 1 }}>{section.label}</span>
             </button>
             );
           })}
@@ -935,43 +989,45 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
 </header>
 
      {activeSection === 'portfolio' ? (
-  <StudentPortfolioPage session={session} />
+  <Fade inView={false}><StudentPortfolioPage session={session} /></Fade>
 ) : activeSection === 'roadmap' ? (
-  <StudentRoadmapPage session={session} />
+  <Fade inView={false}><StudentRoadmapPage session={session} /></Fade>
 ) : activeSection === 'skills' ? (
-  <StudentSkillsPage session={session} />
+  <Fade inView={false}><StudentSkillsPage session={session} /></Fade>
 ) : activeSection === 'github' ? (
-  <StudentGithubPage session={session} />
+  <Fade inView={false}><StudentGithubPage session={session} /></Fade>
 ) : activeSection === 'mentors' ? (
-  <StudentMentorPage session={session} />
+  <Fade inView={false}><StudentMentorPage session={session} /></Fade>
 ) : activeSection === 'subscription' ? (
-  <StudentSubscriptionPage session={session} />
+  <Fade inView={false}><StudentSubscriptionPage session={session} /></Fade>
 ) : activeSection === 'feedbacks' ? (
-  <StudentFeedbacksPage session={session} />
+  <Fade inView={false}><StudentFeedbacksPage session={session} /></Fade>
 ) : activeSection === 'settings' ? (
           <section className="student-profile-page">
-            <StudentProfileForm
-              initials={initials}
-              avatarSrc={avatarSrc}
-              form={form}
-              avatarImportDraft={avatarImportDraft}
-              onAvatarImportDraftChange={(value) => setAvatarImportDraft(value)}
-              careerRoles={careerRoles}
-              loadingProfile={loadingProfile}
-              savingProfile={savingProfile}
-              uploadingAvatar={uploadingAvatar}
-              uploadingCv={uploadingCv}
-              hasProfile={hasProfile}
-              onChange={updateField}
-              onAvatarFileChange={handleAvatarFileChange}
-              onCvFileChange={handleCvFileChange}
-              onAvatarImport={handleAvatarImport}
-              onViewCv={handleViewCv}
-              onSubmit={handleSaveProfile}
-            />
+            <Fade inView={false}>
+              <StudentProfileForm
+                initials={initials}
+                avatarSrc={avatarSrc}
+                form={form}
+                avatarImportDraft={avatarImportDraft}
+                onAvatarImportDraftChange={(value) => setAvatarImportDraft(value)}
+                careerRoles={careerRoles}
+                loadingProfile={loadingProfile}
+                savingProfile={savingProfile}
+                uploadingAvatar={uploadingAvatar}
+                uploadingCv={uploadingCv}
+                hasProfile={hasProfile}
+                onChange={updateField}
+                onAvatarFileChange={handleAvatarFileChange}
+                onCvFileChange={handleCvFileChange}
+                onAvatarImport={handleAvatarImport}
+                onViewCv={handleViewCv}
+                onSubmit={handleSaveProfile}
+              />
+            </Fade>
           </section>
         ) : (
-          <>
+          <Fade inView={false}>
             <header className="student-topbar">
               <div className="student-topbar-copy">
                 <h1>{sectionMeta.title}</h1>
@@ -1001,17 +1057,30 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
             )}
 
             <section className="student-overview-grid" aria-label="Student metrics">
-              {dashboardOverview.metrics.map((metric) => (
-                <article key={metric.label} className={`student-metric-card ${metric.tone}`}>
-                  <span>{metric.label}</span>
-                  <strong>{metric.value}</strong>
-                  <small>{metric.caption}</small>
-                </article>
-              ))}
+              <Fades inView={false} delay={100} holdDelay={80}>
+                {dashboardOverview.metrics.map((metric) => (
+                  <motion.article
+                    key={metric.label}
+                    className={`student-metric-card ${metric.tone}`}
+                    whileHover={{ y: -4, scale: 1.02, boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  >
+                    <span>{metric.label}</span>
+                    <strong>
+                      <AnimatedMetricValue value={metric.value} />
+                    </strong>
+                    <small>{metric.caption}</small>
+                  </motion.article>
+                ))}
+              </Fades>
             </section>
 
             <section className="student-dashboard-layout">
-              <article className="student-score-card">
+              <motion.article
+                className="student-score-card"
+                whileHover={{ y: -4, scale: 1.01, boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              >
                 <div className="student-panel-heading">
                   <span>Readiness</span>
                   <h2>Độ phù hợp</h2>
@@ -1023,28 +1092,40 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                   style={{ '--score-angle': `${Math.min(Math.max(dashboardOverview.score, 0), 100) * 3.6}deg` }}
                 >
                   <div className="student-score-ring-inner">
-                    <strong>{dashboardOverview.score}%</strong>
+                    <strong>
+                      <CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={dashboardOverview.score} />%
+                    </strong>
                     <span>Match score</span>
                   </div>
                 </div>
 
                 <div className="student-score-stats">
                   <div>
-                    <strong>{dashboardOverview.scoreStats.done}</strong>
+                    <strong>
+                      <CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={dashboardOverview.scoreStats.done} />
+                    </strong>
                     <span>Đã đạt</span>
                   </div>
                   <div>
-                    <strong>{dashboardOverview.scoreStats.weak}</strong>
+                    <strong>
+                      <CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={dashboardOverview.scoreStats.weak} />
+                    </strong>
                     <span>Còn yếu</span>
                   </div>
                   <div>
-                    <strong>{dashboardOverview.scoreStats.missing}</strong>
+                    <strong>
+                      <CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={dashboardOverview.scoreStats.missing} />
+                    </strong>
                     <span>Thiếu</span>
                   </div>
                 </div>
-              </article>
+              </motion.article>
 
-              <article className="student-roadmap-card">
+              <motion.article
+                className="student-roadmap-card"
+                whileHover={{ y: -4, scale: 1.01, boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              >
                 <div className="student-panel-heading horizontal">
                   <div>
                     <span>Roadmap</span>
@@ -1054,7 +1135,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                 </div>
 
                 <div className="student-roadmap-list">
-                  {dashboardOverview.roadmapSteps.length === 0 && (
+                  {dashboardOverview.roadmapSteps.length === 0 ? (
                     <div className="student-compact-item static">
                       <div>
                         <strong>Chưa có lộ trình</strong>
@@ -1062,25 +1143,31 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                       </div>
                       <span>0%</span>
                     </div>
+                  ) : (
+                    <Fades inView={false} delay={100} holdDelay={80}>
+                      {dashboardOverview.roadmapSteps.map((step, index) => (
+                        <div key={step.title} className="student-roadmap-step">
+                          <span className="student-roadmap-index">{index + 1}</span>
+                          <div>
+                            <div className="student-roadmap-step-head">
+                              <strong>{step.title}</strong>
+                              <small>{step.status}</small>
+                            </div>
+                            <p>{step.detail}</p>
+                            <div className="student-progress slim">
+                              <motion.span
+                                initial={{ width: '0%' }}
+                                animate={{ width: `${step.progress}%` }}
+                                transition={{ type: 'spring', stiffness: 80, damping: 15, delay: 0.2 }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </Fades>
                   )}
-
-                  {dashboardOverview.roadmapSteps.map((step, index) => (
-                    <div key={step.title} className="student-roadmap-step">
-                      <span className="student-roadmap-index">{index + 1}</span>
-                      <div>
-                        <div className="student-roadmap-step-head">
-                          <strong>{step.title}</strong>
-                          <small>{step.status}</small>
-                        </div>
-                        <p>{step.detail}</p>
-                        <div className="student-progress slim">
-                          <span style={{ width: `${step.progress}%` }} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
                 </div>
-              </article>
+              </motion.article>
             </section>
 
             <section className="student-content-grid">
@@ -1092,99 +1179,139 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                   </div>
                 </div>
 
-                <div className="student-skill-tabs">
-                  {skillTabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      className={activeTab === tab.id ? 'active' : ''}
-                      onClick={() => setActiveTab(tab.id)}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
+                <div className="student-skill-tabs" style={{ position: 'relative', zIndex: 1 }}>
+                  {skillTabs.map((tab) => {
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        className={isActive ? 'active' : ''}
+                        onClick={() => setActiveTab(tab.id)}
+                        style={{
+                          background: 'transparent',
+                          position: 'relative',
+                          color: isActive ? '#ffffff' : undefined,
+                          boxShadow: isActive ? 'none' : undefined,
+                          zIndex: 1
+                        }}
+                      >
+                        {isActive && (
+                          <motion.span
+                            layoutId="skill-active-indicator"
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              background: '#0f172a',
+                              borderRadius: '14px',
+                              zIndex: -1,
+                              boxShadow: '0 10px 20px rgba(15, 23, 42, 0.14)'
+                            }}
+                            transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                          />
+                        )}
+                        {tab.label}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {visibleGroups.includes('missing') && (
                   <div className="student-group">
                     <h3 className="student-group-title danger">Kỹ năng đang thiếu</h3>
-                    {dashboardOverview.skillGroups.missing.length === 0 && (
+                    {dashboardOverview.skillGroups.missing.length === 0 ? (
                       <p className="student-empty-note">Chưa có kỹ năng thiếu từ báo cáo skill gap.</p>
-                    )}
-                    {dashboardOverview.skillGroups.missing.map((skill) => (
-                      <div key={skill.name} className="student-skill-card missing">
-                        <div>
-                          <div className="student-skill-title">
-                            <strong>{skill.name}</strong>
-                            <span className="student-stars">{renderStars(3)}</span>
+                    ) : (
+                      <Fades inView={false} delay={100} holdDelay={60}>
+                        {dashboardOverview.skillGroups.missing.map((skill) => (
+                          <div key={skill.name} className="student-skill-card missing">
+                            <div>
+                              <div className="student-skill-title">
+                                <strong>{skill.name}</strong>
+                                <span className="student-stars">{renderStars(3)}</span>
+                              </div>
+                              <p>Hiện tại: <b>{skill.current}</b> <span>→</span> Yêu cầu: <b>{skill.target}</b></p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setActiveSection('skills')}
+                              aria-label={`${skill.action} kỹ năng ${skill.name}`}
+                            >
+                              {skill.action}
+                            </button>
                           </div>
-                          <p>Hiện tại: <b>{skill.current}</b> <span>→</span> Yêu cầu: <b>{skill.target}</b></p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setActiveSection('skills')}
-                          aria-label={`${skill.action} kỹ năng ${skill.name}`}
-                        >
-                          {skill.action}
-                        </button>
-                      </div>
-                    ))}
+                        ))}
+                      </Fades>
+                    )}
                   </div>
                 )}
 
                 {visibleGroups.includes('weak') && (
                   <div className="student-group">
                     <h3 className="student-group-title warning">Kỹ năng cần cải thiện</h3>
-                    {dashboardOverview.skillGroups.weak.length === 0 && (
+                    {dashboardOverview.skillGroups.weak.length === 0 ? (
                       <p className="student-empty-note">Chưa có kỹ năng yếu cần cải thiện.</p>
+                    ) : (
+                      <Fades inView={false} delay={100} holdDelay={60}>
+                        {dashboardOverview.skillGroups.weak.map((skill) => (
+                          <div key={skill.name} className="student-skill-card weak">
+                            <div>
+                              <div className="student-skill-title">
+                                <strong>{skill.name}</strong>
+                                <span className="student-stars">{renderStars(3)}</span>
+                              </div>
+                              <p>Hiện tại: <b>{skill.current}</b> <span>→</span> Yêu cầu: <b>{skill.target}</b></p>
+                              <div className="student-progress">
+                                <motion.span
+                                  initial={{ width: '0%' }}
+                                  animate={{ width: `${skill.progress}%` }}
+                                  transition={{ type: 'spring', stiffness: 80, damping: 15, delay: 0.1 }}
+                                />
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setActiveSection('skills')}
+                              aria-label={`${skill.action} kỹ năng ${skill.name}`}
+                            >
+                              {skill.action}
+                            </button>
+                          </div>
+                        ))}
+                      </Fades>
                     )}
-                    {dashboardOverview.skillGroups.weak.map((skill) => (
-                      <div key={skill.name} className="student-skill-card weak">
-                        <div>
-                          <div className="student-skill-title">
-                            <strong>{skill.name}</strong>
-                            <span className="student-stars">{renderStars(3)}</span>
-                          </div>
-                          <p>Hiện tại: <b>{skill.current}</b> <span>→</span> Yêu cầu: <b>{skill.target}</b></p>
-                          <div className="student-progress">
-                            <span style={{ width: `${skill.progress}%` }} />
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setActiveSection('skills')}
-                          aria-label={`${skill.action} kỹ năng ${skill.name}`}
-                        >
-                          {skill.action}
-                        </button>
-                      </div>
-                    ))}
                   </div>
                 )}
 
                 {visibleGroups.includes('done') && (
                   <div className="student-group">
                     <h3 className="student-group-title success">Kỹ năng đã đạt</h3>
-                    {dashboardOverview.skillGroups.done.length === 0 && (
+                    {dashboardOverview.skillGroups.done.length === 0 ? (
                       <p className="student-empty-note">Chưa có kỹ năng đã đạt hoặc đã xác minh.</p>
-                    )}
-                    {dashboardOverview.skillGroups.done.map((skill) => (
-                      <div key={skill.name} className="student-skill-card done">
-                        <div>
-                          <div className="student-skill-title">
-                            <strong>{skill.name}</strong>
+                    ) : (
+                      <Fades inView={false} delay={100} holdDelay={60}>
+                        {dashboardOverview.skillGroups.done.map((skill) => (
+                          <div key={skill.name} className="student-skill-card done">
+                            <div>
+                              <div className="student-skill-title">
+                                <strong>{skill.name}</strong>
+                              </div>
+                              <p>Hiện tại: <b>{skill.current}</b> <span>→</span> Yêu cầu: <b>{skill.target}</b></p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setActiveSection('skills')}
+                              aria-label={`${skill.action} kỹ năng ${skill.name}`}
+                            >
+                              {skill.action}
+                            </button>
                           </div>
-                          <p>Hiện tại: <b>{skill.current}</b> <span>→</span> Yêu cầu: <b>{skill.target}</b></p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setActiveSection('skills')}
-                          aria-label={`${skill.action} kỹ năng ${skill.name}`}
-                        >
-                          {skill.action}
-                        </button>
-                      </div>
-                    ))}
+                        ))}
+                      </Fades>
+                    )}
                   </div>
                 )}
               </article>
@@ -1196,7 +1323,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                     <h2>Khóa học ưu tiên</h2>
                   </div>
                   <div className="student-compact-list">
-                    {dashboardOverview.learningQueue.length === 0 && (
+                    {dashboardOverview.learningQueue.length === 0 ? (
                       <div className="student-compact-item static">
                         <div>
                           <strong>Chưa có khóa học ưu tiên</strong>
@@ -1204,16 +1331,19 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                         </div>
                         <span>—</span>
                       </div>
+                    ) : (
+                      <Fades inView={false} delay={100} holdDelay={60}>
+                        {dashboardOverview.learningQueue.map((item) => (
+                          <button key={item.title} type="button" className="student-compact-item">
+                            <div>
+                              <strong>{item.title}</strong>
+                              <small>{item.duration}</small>
+                            </div>
+                            <span>{item.level}</span>
+                          </button>
+                        ))}
+                      </Fades>
                     )}
-                    {dashboardOverview.learningQueue.map((item) => (
-                      <button key={item.title} type="button" className="student-compact-item">
-                        <div>
-                          <strong>{item.title}</strong>
-                          <small>{item.duration}</small>
-                        </div>
-                        <span>{item.level}</span>
-                      </button>
-                    ))}
                   </div>
                 </article>
 
@@ -1224,7 +1354,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                     <h2>Repository mới</h2>
                   </div>
                   <div className="student-compact-list">
-                    {dashboardOverview.communityItems.length === 0 && (
+                    {dashboardOverview.communityItems.length === 0 ? (
                       <div className="student-compact-item static">
                         <div>
                           <strong>Chưa có hoạt động GitHub</strong>
@@ -1232,21 +1362,24 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                         </div>
                         <span>—</span>
                       </div>
+                    ) : (
+                      <Fades inView={false} delay={100} holdDelay={60}>
+                        {dashboardOverview.communityItems.map((item) => (
+                          <button key={item.title} type="button" className="student-compact-item">
+                            <div>
+                              <strong>{item.title}</strong>
+                              <small>{item.meta}</small>
+                            </div>
+                            <span>→</span>
+                          </button>
+                        ))}
+                      </Fades>
                     )}
-                    {dashboardOverview.communityItems.map((item) => (
-                      <button key={item.title} type="button" className="student-compact-item">
-                        <div>
-                          <strong>{item.title}</strong>
-                          <small>{item.meta}</small>
-                        </div>
-                        <span>→</span>
-                      </button>
-                    ))}
                   </div>
                 </article>
               </aside>
             </section>
-          </>
+          </Fade>
         )}
       </section>
     </main>
