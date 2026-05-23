@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { Check, ChevronDown, ChevronRight, FileText, Folder } from 'lucide-react';
 import { applyAiRoadmap } from '../mentorApi';
 
 function countNodes(nodes = []) {
@@ -69,7 +70,7 @@ export function RoadmapPreviewCard({ session, roadmap, onApplied }) {
         className="ai-roadmap-toggle"
         onClick={() => setExpanded((value) => !value)}
       >
-        {expanded ? '▼ Thu gọn cấu trúc' : '▶ Xem chi tiết các module'}
+        {expanded ? <><ChevronDown size={16} aria-hidden="true" /> Thu gọn cấu trúc</> : <><ChevronRight size={16} aria-hidden="true" /> Xem chi tiết các module</>}
       </button>
 
       {expanded && (
@@ -86,7 +87,7 @@ export function RoadmapPreviewCard({ session, roadmap, onApplied }) {
         onClick={handleApply}
         disabled={applying}
       >
-        {applying ? 'Đang tạo...' : '✓ Áp dụng roadmap này'}
+        {applying ? 'Đang tạo...' : <><Check size={16} aria-hidden="true" /> Áp dụng roadmap này</>}
       </button>
     </article>
   );
@@ -97,7 +98,7 @@ function RoadmapTreeNode({ node, level }) {
     <div className="ai-roadmap-tree-node" style={{ '--depth': level }}>
       <div className="ai-roadmap-tree-row">
         <strong>
-          {node.nodeType === 'Group' ? '📂' : '📄'} {node.title}
+          {node.nodeType === 'Group' ? <Folder size={15} aria-hidden="true" /> : <FileText size={15} aria-hidden="true" />} {node.title}
         </strong>
         {node.estimatedHours && <small>{node.estimatedHours}h</small>}
       </div>

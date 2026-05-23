@@ -1041,3 +1041,278 @@
         flex-direction: column;
     }
 }
+
+/* ============================================================
+   GITHUB INTEGRATION REFRESH
+   ============================================================ */
+
+.github-page {
+    gap: 22px;
+}
+
+.github-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    align-items: stretch;
+    border-radius: 30px !important;
+    background:
+        radial-gradient(circle at 85% 12%, rgba(88, 166, 255, 0.34), transparent 30%),
+        radial-gradient(circle at 12% 92%, rgba(63, 185, 80, 0.24), transparent 34%),
+        linear-gradient(135deg, #06080d 0%, #101827 45%, #162033 100%) !important;
+}
+
+.github-hero::before {
+    content: "";
+    position: absolute;
+    inset: 20px;
+    z-index: -1;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    pointer-events: none;
+}
+
+.github-hero::after {
+    content: "";
+    position: absolute;
+    right: -110px;
+    bottom: -120px;
+    z-index: -1;
+    width: 340px;
+    height: 340px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    filter: blur(3px);
+}
+
+.github-hero-copy {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    max-width: 760px;
+}
+
+.github-status-pill {
+    width: fit-content;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.82);
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.github-status-pill.connected {
+    border-color: rgba(63, 185, 80, 0.45);
+    background: rgba(63, 185, 80, 0.16);
+    color: #b7f7c6;
+}
+
+.github-status-pill.disconnected {
+    border-color: rgba(255, 214, 10, 0.45);
+    background: rgba(255, 214, 10, 0.14);
+    color: #ffe58a;
+}
+
+.github-hero-metrics {
+    width: min(100%, 680px);
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.github-hero-metrics div {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 14px 16px;
+    backdrop-filter: blur(16px);
+}
+
+.github-hero-metrics span {
+    display: block;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.github-hero-metrics strong {
+    display: block;
+    margin-top: 6px;
+    color: #ffffff;
+    font-size: clamp(22px, 3vw, 34px);
+    line-height: 1;
+}
+
+.github-hero-actions {
+    align-content: start;
+    justify-content: flex-end;
+}
+
+.github-connection-card {
+    grid-template-columns: 82px minmax(0, 1fr) auto;
+    border-radius: 26px;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(246, 248, 250, 0.96)),
+        radial-gradient(circle at 100% 0%, rgba(88, 166, 255, 0.12), transparent 26%);
+    box-shadow: 0 22px 55px rgba(15, 23, 42, 0.08);
+}
+
+.github-connection-card.connected {
+    border-color: rgba(63, 185, 80, 0.28);
+}
+
+.github-connection-icon {
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.16), transparent 32%),
+        #05070b;
+    box-shadow: 0 16px 36px rgba(5, 7, 11, 0.24);
+}
+
+.github-connection-title span {
+    border-color: rgba(63, 185, 80, 0.24);
+    background: rgba(63, 185, 80, 0.1);
+    color: #1f7a37;
+    font-weight: 700;
+}
+
+.github-sync-card {
+    border-radius: 26px;
+    grid-template-columns: minmax(0, 0.8fr) minmax(420px, 1.2fr);
+    background:
+        linear-gradient(135deg, #ffffff 0%, #f7f9fc 100%);
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.07);
+}
+
+.github-sync-form {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 24px;
+    background: #ffffff;
+    padding: 16px;
+}
+
+.github-stats-grid article {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    background: linear-gradient(160deg, #ffffff 0%, #f6f8fb 100%);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+}
+
+.github-stats-grid article::after {
+    content: "";
+    position: absolute;
+    right: -34px;
+    top: -34px;
+    width: 96px;
+    height: 96px;
+    border-radius: 999px;
+    background: rgba(0, 102, 204, 0.08);
+}
+
+.github-repositories-section {
+    border: 1px solid rgba(15, 23, 42, 0.07);
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.72);
+    padding: clamp(18px, 3vw, 28px);
+    box-shadow: 0 20px 54px rgba(15, 23, 42, 0.06);
+}
+
+.github-repo-card {
+    border-radius: 26px;
+    border-top: 4px solid rgba(255, 204, 0, 0.9);
+    background:
+        linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.github-repo-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 28px 68px rgba(15, 23, 42, 0.12);
+}
+
+.github-repo-card.analyzed {
+    border-top-color: rgba(63, 185, 80, 0.92);
+}
+
+.github-folder-icon {
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: rgba(0, 102, 204, 0.08);
+    color: var(--student-primary, #0066cc);
+}
+
+.github-visibility,
+.github-tech-stack span {
+    font-weight: 700;
+}
+
+.github-quality-box,
+.github-ai-summary,
+.github-score-card,
+.github-improvement-item,
+.github-finding-list,
+.github-evidence-panel,
+.github-readme-panel,
+.github-unanalysed-state,
+.github-collapsed-summary {
+    border-radius: 20px;
+}
+
+.github-quality-line {
+    background: rgba(15, 23, 42, 0.08);
+}
+
+.github-quality-line span {
+    background: linear-gradient(90deg, #2f81f7 0%, #3fb950 100%);
+}
+
+.github-details-toggle,
+.github-analyze-btn {
+    justify-self: start;
+}
+
+.github-readme-panel {
+    background:
+        linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+}
+
+.github-card-overlay {
+    background: rgba(255, 255, 255, 0.78);
+}
+
+@media (max-width: 1120px) {
+    .github-sync-card {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 860px) {
+    .github-hero {
+        border-radius: 24px !important;
+    }
+
+    .github-hero-actions {
+        justify-content: stretch;
+    }
+
+    .github-hero-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .github-connection-card {
+        grid-template-columns: 1fr;
+    }
+
+    .github-repositories-section {
+        border-radius: 24px;
+        padding: 16px;
+    }
+}

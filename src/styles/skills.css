@@ -912,3 +912,287 @@
         width: 100%;
     }
 }
+
+/* ============================================================
+   SKILLS DASHBOARD REFRESH
+   ============================================================ */
+
+.skills-page {
+    gap: 22px;
+}
+
+.skills-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    align-items: stretch;
+    border-radius: 30px !important;
+    background:
+        radial-gradient(circle at 86% 12%, rgba(20, 184, 166, 0.34), transparent 30%),
+        radial-gradient(circle at 12% 92%, rgba(245, 158, 11, 0.22), transparent 34%),
+        linear-gradient(135deg, #07120f 0%, #10231e 48%, #173a32 100%) !important;
+}
+
+.skills-hero::before {
+    content: "";
+    position: absolute;
+    inset: 20px;
+    z-index: -1;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    pointer-events: none;
+}
+
+.skills-hero::after {
+    content: "";
+    position: absolute;
+    right: -120px;
+    bottom: -130px;
+    z-index: -1;
+    width: 360px;
+    height: 360px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    filter: blur(3px);
+}
+
+.skills-hero-copy {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    max-width: 780px;
+}
+
+.skills-hero-metrics {
+    width: min(100%, 680px);
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.skills-hero-metrics div {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 14px 16px;
+    backdrop-filter: blur(16px);
+}
+
+.skills-hero-metrics span {
+    display: block;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.skills-hero-metrics strong {
+    display: block;
+    margin-top: 6px;
+    color: #ffffff;
+    font-size: clamp(22px, 3vw, 34px);
+    line-height: 1;
+}
+
+.skills-hero-actions {
+    align-content: start;
+    justify-content: flex-end;
+}
+
+.skills-stats-grid article {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    background: linear-gradient(160deg, #ffffff 0%, #f6fbf9 100%);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+}
+
+.skills-stats-grid article::after {
+    content: "";
+    position: absolute;
+    right: -34px;
+    top: -34px;
+    width: 96px;
+    height: 96px;
+    border-radius: 999px;
+    background: rgba(20, 184, 166, 0.1);
+}
+
+.skill-gap-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 30px;
+    background:
+        linear-gradient(135deg, #ffffff 0%, #f7fbfa 100%);
+    box-shadow: 0 20px 54px rgba(15, 23, 42, 0.07);
+}
+
+.skill-gap-panel::after {
+    content: "";
+    position: absolute;
+    right: -60px;
+    top: -70px;
+    width: 180px;
+    height: 180px;
+    border-radius: 999px;
+    background: rgba(20, 184, 166, 0.09);
+    pointer-events: none;
+}
+
+.skill-gap-head,
+.skill-gap-target,
+.skill-gap-load-form,
+.skill-gap-result,
+.skill-gap-empty {
+    position: relative;
+    z-index: 1;
+}
+
+.skill-gap-target {
+    border-color: rgba(20, 184, 166, 0.22);
+    background: rgba(20, 184, 166, 0.08);
+}
+
+.skill-gap-score-card {
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at 95% 0%, rgba(20, 184, 166, 0.12), transparent 34%),
+        #ffffff;
+}
+
+.skill-gap-score-line,
+.user-skill-progress {
+    background: rgba(15, 23, 42, 0.08);
+}
+
+.skill-gap-score-line span,
+.user-skill-progress span {
+    background: linear-gradient(90deg, #f59e0b 0%, #14b8a6 100%);
+}
+
+.skills-layout {
+    align-items: start;
+}
+
+.skills-form-card,
+.skills-main-panel,
+.skills-section {
+    border-radius: 28px;
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.07);
+}
+
+.skills-form-card {
+    background:
+        linear-gradient(180deg, #ffffff 0%, #f8fbfa 100%);
+}
+
+.skills-main-panel {
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.skills-search {
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+.skills-category-tabs {
+    padding: 4px 2px 8px;
+}
+
+.skills-category-tabs button {
+    border-color: rgba(15, 23, 42, 0.08);
+    background: #ffffff;
+}
+
+.skills-category-tabs button.active {
+    background: #10231e;
+    color: #ffffff;
+}
+
+.user-skill-card,
+.catalog-skill-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.06);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.user-skill-card::before,
+.catalog-skill-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: #f59e0b;
+}
+
+.user-skill-card.medium::before {
+    background: #2f81f7;
+}
+
+.user-skill-card.strong::before {
+    background: #14b8a6;
+}
+
+.catalog-skill-card::before {
+    background: #94a3b8;
+}
+
+.user-skill-card:hover,
+.catalog-skill-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 24px 58px rgba(15, 23, 42, 0.11);
+}
+
+.catalog-skill-card.added {
+    background: #f8fafc;
+}
+
+.catalog-skill-card.added::before {
+    background: #14b8a6;
+}
+
+.skills-empty,
+.skill-gap-empty {
+    border-radius: 24px;
+    background:
+        linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.skills-field input,
+.skills-field select,
+.skill-gap-load-form input {
+    background: #ffffff;
+}
+
+.skills-evidence-actions {
+    align-items: stretch;
+}
+
+.skills-file-action {
+    width: 100%;
+}
+
+@media (max-width: 920px) {
+    .skills-hero {
+        border-radius: 24px !important;
+    }
+
+    .skills-hero-actions {
+        justify-content: stretch;
+    }
+
+    .skills-hero-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .skill-gap-panel,
+    .skills-form-card,
+    .skills-main-panel,
+    .skills-section {
+        border-radius: 24px;
+    }
+}

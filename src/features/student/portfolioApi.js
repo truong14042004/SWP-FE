@@ -24,6 +24,12 @@ export function publishPortfolio(session) {
     });
 }
 
+export function unpublishPortfolio(session) {
+    return authorizedRequest('/api/portfolio/unpublish', session, {
+        method: 'POST',
+    });
+}
+
 export function uploadPortfolioProjectImage(session, projectId, file) {
     const formData = new FormData();
     formData.append('File', file);
@@ -39,4 +45,8 @@ export function importPortfolioProjectImageFromUrl(session, projectId, payload) 
         method: 'POST',
         body: JSON.stringify(payload),
     });
+}
+
+export function getSignedUrl(session, objectName) {
+    return authorizedRequest(`/api/storage/signed-url?objectName=${encodeURIComponent(objectName)}`, session);
 }

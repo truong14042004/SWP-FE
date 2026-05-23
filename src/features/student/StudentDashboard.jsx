@@ -1,7 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
+import {
+  Bell,
+  Bot,
+  BriefcaseBusiness,
+  ChevronLeft,
+  ChevronRight,
+  GitBranch,
+  LayoutDashboard,
+  LogOut,
+  Map as MapIcon,
+  MessageSquareText,
+  Search,
+  Settings,
+  Sparkles,
+  Star,
+  TrendingUp,
+} from 'lucide-react';
 import { apiUrl } from '../../config';
-import '../../styles.css';
 import '../../styles/admin.css';
 import '../../styles/student.css';
 import { StudentProfileForm } from './components/StudentProfileForm';
@@ -10,7 +26,6 @@ import {
   createStudentProfile,
   getCareerRoles,
   getStudentProfile,
-  importStudentAvatarFromUrl,
   updateStudentProfile,
   uploadStudentAvatar,
   uploadStudentCv,
@@ -28,14 +43,14 @@ import { getMentorSessions } from './mentorApi';
 import { getRoadmapById, getRoadmaps } from './roadmapApi';
 import { getLatestSkillGap, getUserSkills, getSignedUrl } from './skillsApi';
 const STUDENT_SECTIONS = [
-  { id: 'overview', label: 'Bảng điều khiển' },
-  { id: 'roadmap', label: 'Lộ trình nghề nghiệp' },
-  { id: 'skills', label: 'Kỹ năng & Phân tích' },
-  { id: 'github', label: 'Tích hợp GitHub' },
-  { id: 'portfolio', label: 'Xây dựng Portfolio' },
-  { id: 'mentors', label:'AI tư vấn'},
-  { id: 'feedbacks', label: 'Feedback nhận được' },
-  { id: 'settings', label: 'Cài đặt' },
+  { id: 'overview', label: 'Bảng điều khiển', Icon: LayoutDashboard },
+  { id: 'roadmap', label: 'Lộ trình nghề nghiệp', Icon: MapIcon },
+  { id: 'skills', label: 'Kỹ năng & Phân tích', Icon: TrendingUp },
+  { id: 'github', label: 'Tích hợp GitHub', Icon: GitBranch },
+  { id: 'portfolio', label: 'Xây dựng Portfolio', Icon: BriefcaseBusiness },
+  { id: 'mentors', label:'AI tư vấn', Icon: Bot },
+  { id: 'feedbacks', label: 'Feedback nhận được', Icon: MessageSquareText },
+  { id: 'settings', label: 'Cài đặt', Icon: Settings },
 ];
 
 const SECTION_META = {
@@ -85,7 +100,7 @@ function getInitials(name = '') {
 }
 
 function renderStars(count) {
-  return Array.from({ length: count }, (_, index) => <span key={index}>★</span>);
+  return Array.from({ length: count }, (_, index) => <Star key={index} size={12} fill="currentColor" aria-hidden="true" />);
 }
 
 function normalizeProfile(profile) {
@@ -282,7 +297,7 @@ function getRoadmapNodes(roadmap) {
   const tree = safeArray(roadmap?.nodeTree);
   if (tree.length > 0) return tree;
 
-  return safeArray(roadmap?.nodes)
+  const nodes = safeArray(roadmap?.nodes)
     .slice()
     .sort((a, b) => {
       const levelA = Number(a.level || 0);
@@ -293,6 +308,29 @@ function getRoadmapNodes(roadmap) {
       if (levelA !== levelB) return levelA - levelB;
       return orderA - orderB;
     });
+
+  if (!nodes.some((node) => node.parentNodeId)) {
+    return nodes;
+  }
+
+  const byId = new Map();
+  nodes.forEach((node) => {
+    byId.set(node.id, { ...node, children: [] });
+  });
+
+  const roots = [];
+  nodes.forEach((node) => {
+    const current = byId.get(node.id);
+    const parent = byId.get(node.parentNodeId);
+
+    if (parent) {
+      parent.children.push(current);
+    } else {
+      roots.push(current);
+    }
+  });
+
+  return roots;
 }
 
 function flattenRoadmapNodes(nodes) {
@@ -316,6 +354,34 @@ function calculateRoadmapProgress(nodes) {
   return Math.round((completed / flatNodes.length) * 100);
 }
 
+function getNodeProgressFromChildren(node) {
+  if (isProgressNode(node)) {
+    return isCompletedStatus(node?.status) ? 100 : clampPercent(node?.progress);
+  }
+
+  return calculateRoadmapProgress(getChildren(node));
+}
+
+function getNodeStatusFromChildren(node) {
+  if (isProgressNode(node)) {
+    return node?.status;
+  }
+
+  const childProgressNodes = flattenRoadmapNodes(getChildren(node)).filter(isProgressNode);
+
+  if (!childProgressNodes.length) {
+    return node?.status;
+  }
+
+  const completedCount = childProgressNodes.filter((child) => isCompletedStatus(child.status)).length;
+
+  if (completedCount === childProgressNodes.length) return 'Completed';
+  if (childProgressNodes.some((child) => normalizeStatus(child.status) === 'needreview' || normalizeStatus(child.status) === 'need_review')) return 'NeedReview';
+  if (childProgressNodes.some((child) => !['notstarted', 'not_started', 'pending'].includes(normalizeStatus(child.status)))) return 'InProgress';
+
+  return node?.status;
+}
+
 function getRoadmapStatusLabel(status) {
   const normalized = normalizeStatus(status);
 
@@ -329,7 +395,8 @@ function getRoadmapStatusLabel(status) {
 function mapRoadmapStep(node, index) {
   const resources = [node?.learningResource, ...safeArray(node?.learningResources)].filter(Boolean);
   const resource = resources[0];
-  const progress = isCompletedStatus(node?.status) ? 100 : clampPercent(node?.progress);
+  const progress = getNodeProgressFromChildren(node);
+  const status = getNodeStatusFromChildren(node);
 
   return {
     title: node?.title || node?.name || resource?.title || `Giai đoạn ${index + 1}`,
@@ -339,7 +406,7 @@ function mapRoadmapStep(node, index) {
       resource?.description ||
       resource?.url ||
       'Chưa có mô tả chi tiết.',
-    status: getRoadmapStatusLabel(node?.status),
+    status: getRoadmapStatusLabel(status),
     progress,
   };
 }
@@ -509,6 +576,8 @@ export function StudentDashboard({ session, onSignOut, onNavigateHome }) {
 }
 
 const [activeSection, setActiveSection] = useState(getInitialStudentSection);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const didMountRef = useRef(false);
   const [activeTab, setActiveTab] = useState('all');
   const [form, setForm] = useState(emptyProfile);
   const [careerRoles, setCareerRoles] = useState([]);
@@ -622,6 +691,15 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     }
   }
 
+  function navigateStudentSection(sectionId) {
+    if (sectionId === activeSection && sectionId === 'overview') {
+      loadDashboardOverview();
+    }
+
+    setActiveSection(sectionId);
+    window.history.replaceState({}, '', `#${sectionId}`);
+  }
+
   async function loadProfile() {
     setLoadingProfile(true);
     try {
@@ -665,9 +743,9 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
 
     setUploadingAvatar(true);
     try {
-      const uploaded = await uploadStudentAvatar(session, file);
-      const nextAvatarUrl = uploaded?.downloadPath || uploaded?.objectName || '';
-      setForm((current) => ({ ...current, avatarUrl: nextAvatarUrl }));
+      const updatedProfile = await uploadStudentAvatar(session, file);
+      setForm(normalizeProfile(updatedProfile));
+      setHasProfile(true);
       toast.success('Da upload avatar.');
     } catch (requestError) {
       toast.error(requestError.message || 'Khong upload duoc avatar.');
@@ -756,31 +834,41 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   }
 
   return (
-    <main className="admin-shell student-shell">
-      <aside className="admin-sidebar student-sidebar">
-        <div className="student-brand">
+    <main className={`admin-shell student-shell ${sidebarCollapsed ? 'student-shell-collapsed' : ''}`}>
+      <aside className={`admin-sidebar student-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+        <button type="button" className="student-brand" onClick={onNavigateHome}>
           <span className="student-brand-mark">SWP</span>
-          <div>
+          <div className="student-brand-copy">
             <strong>Career Compass</strong>
             <span>Chào mừng {firstName} quay trở lại</span>
           </div>
-        </div>
+        </button>
+        <button
+            type="button"
+            className="student-sidebar-toggle"
+            onClick={() => setSidebarCollapsed((value) => !value)}
+            aria-label={sidebarCollapsed ? 'Mở sidebar' : 'Thu gọn sidebar'}
+            title={sidebarCollapsed ? 'Mở sidebar' : 'Thu gọn sidebar'}
+          >
+            {sidebarCollapsed ? <ChevronRight size={18} aria-hidden="true" /> : <ChevronLeft size={18} aria-hidden="true" />}
+          </button>
 
         <nav className="admin-nav student-nav" aria-label="Student sections">
-          {STUDENT_SECTIONS.map((section) => (
+          {STUDENT_SECTIONS.map((section) => {
+            const SectionIcon = section.Icon;
+            return (
             <button
               key={section.id}
               type="button"
               className={activeSection === section.id ? 'active' : ''}
-              onClick={() => {
-                setActiveSection(section.id);
-                window.history.replaceState({}, '', `#${section.id}`);
-              }}
+              onClick={() => navigateStudentSection(section.id)}
+              title={sidebarCollapsed ? section.label : undefined}
             >
-              <span className="student-nav-dot" />
-              {section.label}
+              <SectionIcon className="student-nav-icon" size={18} aria-hidden="true" />
+              <span className="student-nav-label">{section.label}</span>
             </button>
-          ))}
+            );
+          })}
         </nav>
 
         <div className="student-sidebar-footer">
@@ -789,7 +877,8 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
             className="student-upgrade-btn"
             onClick={() => setActiveSection('subscription')}
           >
-            Nâng cấp tài khoản
+            <Sparkles size={18} aria-hidden="true" />
+            <span>Nâng cấp tài khoản</span>
           </button>
           <div className="admin-account">
             <div className="admin-account-info">
@@ -798,39 +887,26 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
               ) : (
                 <span className="admin-account-avatar">{initials}</span>
               )}
-              <div>
+              <div className="admin-account-copy">
                 <strong>{session?.user?.fullName}</strong>
                 <small>{session?.user?.email}</small>
               </div>
             </div>
-            <button type="button" onClick={onSignOut}>Đăng xuất</button>
+            <button type="button" onClick={onSignOut}>
+              <LogOut size={16} aria-hidden="true" />
+              <span>Đăng xuất</span>
+            </button>
           </div>
         </div>
       </aside>
 
       <section className="admin-main student-main">
-      {!['portfolio', 'roadmap','skills','github','mentors','subscription','feedbacks'].includes(activeSection) && (
+      {!['portfolio', 'roadmap','skills','github','mentors','subscription','feedbacks','settings'].includes(activeSection) && (
   <header className="student-header-bar">
-    <button type="button" className="student-search-bar" onClick={() => setActiveSection('skills')}>
-      <span>⌕</span>
+    <button type="button" className="student-search-bar" onClick={() => navigateStudentSection('skills')}>
+      <Search size={16} aria-hidden="true" />
       Tìm kiếm khóa học, mentor, kỹ năng...
     </button>
-
-    <div className="student-header-actions">
-      <NotificationBell
-        session={session}
-        onNavigate={(target) => {
-          // Map BE link target to student section id
-          if (target === 'roadmap') setActiveSection('roadmap');
-          else if (target === 'skills') setActiveSection('skills');
-          else if (target === 'portfolio') setActiveSection('portfolio');
-          else setActiveSection('overview');
-        }}
-      />
-      <button type="button" className="student-avatar-chip" onClick={() => setActiveSection('settings')}>
-        {avatarSrc ? <img src={avatarSrc} alt="Student avatar" /> : initials}
-      </button>
-    </div>
   </header>
 )}
 
@@ -850,12 +926,6 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   <StudentFeedbacksPage session={session} />
 ) : activeSection === 'settings' ? (
           <section className="student-profile-page">
-            <div className="student-profile-heading">
-              <button type="button" className="student-back-link" onClick={() => setActiveSection('overview')}>← Quay lại dashboard</button>
-              <h1>Quản lý hồ sơ</h1>
-              <p>Cập nhật thông tin học vấn và mục tiêu nghề nghiệp của bạn.</p>
-            </div>
-
             <StudentProfileForm
               initials={initials}
               avatarSrc={avatarSrc}
@@ -880,14 +950,12 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
           <>
             <header className="student-topbar">
               <div className="student-topbar-copy">
-                <button type="button" className="student-back-link" onClick={onNavigateHome}>← Quay lại trang chủ</button>
-                <span className="student-eyebrow">{sectionMeta.eyebrow}</span>
                 <h1>{sectionMeta.title}</h1>
                 <p>{sectionMeta.subtitle} <strong>{targetRoleName}</strong>.</p>
               </div>
               <div className="student-topbar-actions">
-                <button type="button" className="student-secondary-btn" onClick={() => setActiveSection('settings')}>Cập nhật hồ sơ</button>
-                <button type="button" className="student-cta-btn" onClick={() => setActiveSection('roadmap')}>Tạo lộ trình cá nhân hóa</button>
+                <button type="button" className="student-secondary-btn" onClick={() => navigateStudentSection('settings')}>Cập nhật hồ sơ</button>
+                <button type="button" className="student-cta-btn" onClick={() => navigateStudentSection('roadmap')}>Tạo lộ trình cá nhân hóa</button>
               </div>
             </header>
 
@@ -913,7 +981,10 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                   <p>Mức độ sẵn sàng hiện tại cho vai trò {targetRoleName}</p>
                 </div>
 
-                <div className="student-score-ring">
+                <div
+                  className="student-score-ring"
+                  style={{ '--score-angle': `${Math.min(Math.max(dashboardOverview.score, 0), 100) * 3.6}deg` }}
+                >
                   <div className="student-score-ring-inner">
                     <strong>{dashboardOverview.score}%</strong>
                     <span>Match score</span>
@@ -942,7 +1013,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                     <span>Roadmap</span>
                     <h2>Lộ trình 4 giai đoạn</h2>
                   </div>
-                  <button type="button" onClick={() => setActiveSection('roadmap')}>Xem chi tiết</button>
+                  <button type="button" onClick={() => navigateStudentSection('roadmap')}>Xem chi tiết</button>
                 </div>
 
                 <div className="student-roadmap-list">
