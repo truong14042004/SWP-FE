@@ -659,6 +659,15 @@ async function loadReviewRequestsForRoadmap(roadmapData) {
   async function handleNodeStatusChange(node, status) {
     if (!node?.id) return;
 
+    const currentStatusNormalized = normalizeStatus(node.status);
+    const isCurrentNotStarted = ['notstarted', 'not_started', 'pending'].includes(currentStatusNormalized);
+    const isNewCompletedOrNeedReview = ['completed', 'needreview', 'need_review'].includes(normalizeStatus(status));
+
+    if (isCurrentNotStarted && isNewCompletedOrNeedReview) {
+      toast.warn('Bạn cần chuyển trạng thái sang "Đang tiến hành" trước khi chuyển sang "Đã hoàn thành" hoặc "Cần review".');
+      return;
+    }
+
     const previousRoadmap = roadmap;
     setUpdatingNodeId(node.id);
     setError('');
@@ -1061,11 +1070,18 @@ function RoadmapNodeCard({
                 onChange={(event) => onStatusChange?.(node, event.target.value)}
                 disabled={!node.id || updatingNodeId === node.id}
               >
-                {ROADMAP_STATUS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
+                {ROADMAP_STATUS_OPTIONS.map((option) => {
+                  const currentStatusNormalized = normalizeStatus(node.status);
+                  const isCurrentNotStarted = ['notstarted', 'not_started', 'pending'].includes(currentStatusNormalized);
+                  const isOptionCompletedOrNeedReview = ['completed', 'needreview', 'need_review'].includes(normalizeStatus(option.value));
+                  const isOptionDisabled = isCurrentNotStarted && isOptionCompletedOrNeedReview;
+
+                  return (
+                    <option key={option.value} value={option.value} disabled={isOptionDisabled}>
+                      {option.label}
+                    </option>
+                  );
+                })}
               </select>
             </label>
           </div>
