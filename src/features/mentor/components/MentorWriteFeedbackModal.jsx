@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getStudentQuota } from '../api/industryMentorApi';
+import { Dialog, DialogContent } from '@/components/animate-ui/components/radix/dialog';
+import { Button } from '@/components/animate-ui/components/buttons/button';
 
 const READINESS_OPTIONS = [
   { value: 'NotReady', label: 'Not Ready', hint: 'Cần học thêm nền tảng' },
@@ -62,174 +64,198 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
   const isQuotaEmpty = quota?.remaining === 0;
 
   return (
-    <div className="imentor-modal-backdrop" role="dialog" aria-modal="true">
-      <div className="imentor-modal">
-        <div className="imentor-modal-head">
-          <div>
-            <h2 className="imentor-modal-title">Gửi feedback cho {student.fullName}</h2>
-            <p className="imentor-modal-subtitle">
-              Đánh giá structured giúp sinh viên hiểu rõ điểm mạnh, gap, và bước cải thiện
-              tiếp theo.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="imentor-modal-close"
-            onClick={onClose}
-            aria-label="Đóng"
-          >
-            ✕
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
-          <div className="imentor-modal-body">
-            {error && <p className="imentor-form-error">{error}</p>}
-
-            {isQuotaEmpty && (
-              <p className="imentor-form-error">
-                Sinh viên đã hết quota review ({quota.used}/{quota.limit}). Họ cần
-                nâng cấp gói trước khi nhận feedback mới.
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-[750px] p-0 overflow-hidden border-none bg-transparent shadow-none" showCloseButton={false}>
+        <div className="imentor-modal" style={{ margin: 0, width: '100%', maxWidth: 'none' }}>
+          <div className="imentor-modal-head">
+            <div>
+              <h2 className="imentor-modal-title">Gửi feedback cho {student.fullName}</h2>
+              <p className="imentor-modal-subtitle">
+                Đánh giá structured giúp sinh viên hiểu rõ điểm mạnh, gap, và bước cải thiện
+                tiếp theo.
               </p>
-            )}
-
-            <div className="imentor-form-row">
-              <label htmlFor="imentor-comment">
-                Nhận xét tổng quan <span style={{ color: '#c52a2a' }}>*</span>
-              </label>
-              <p className="imentor-hint">
-                Tóm tắt ngắn về portfolio, điểm nổi bật và mức độ trưởng thành.
-              </p>
-              <textarea
-                id="imentor-comment"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="VD: Portfolio của bạn rõ ràng, có 3 project tốt. Tuy nhiên cần..."
-                disabled={submitting}
-                required
-              />
             </div>
-
-            <div className="imentor-form-row">
-              <label>Overall rating</label>
-              <div className="imentor-rating">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    className={rating === n ? 'active' : ''}
-                    onClick={() => setRating(rating === n ? null : n)}
-                    disabled={submitting}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="imentor-form-row">
-              <label htmlFor="imentor-portfolio-quality">Portfolio quality</label>
-              <p className="imentor-hint">Cấu trúc, trình bày, story telling.</p>
-              <textarea
-                id="imentor-portfolio-quality"
-                value={portfolioQualityFeedback}
-                onChange={(e) => setPortfolioQualityFeedback(e.target.value)}
-                placeholder="VD: Layout tốt, nhưng phần About còn ngắn..."
-                disabled={submitting}
-              />
-            </div>
-
-            <div className="imentor-form-row">
-              <label htmlFor="imentor-tech-skills">Technical skills assessment</label>
-              <p className="imentor-hint">
-                Đánh giá kỹ năng kỹ thuật dựa trên repo, code quality, kiến trúc.
-              </p>
-              <textarea
-                id="imentor-tech-skills"
-                value={technicalSkillsAssessment}
-                onChange={(e) => setTechnicalSkillsAssessment(e.target.value)}
-                placeholder="VD: Code clean, biết dùng patterns. Cần học thêm về testing..."
-                disabled={submitting}
-              />
-            </div>
-
-            <div className="imentor-form-row">
-              <label htmlFor="imentor-project-quality">Project quality</label>
-              <p className="imentor-hint">Scope, độ hoàn thiện, độ phức tạp.</p>
-              <textarea
-                id="imentor-project-quality"
-                value={projectQualityFeedback}
-                onChange={(e) => setProjectQualityFeedback(e.target.value)}
-                placeholder="VD: 2 project có README tốt, 1 project chưa deploy..."
-                disabled={submitting}
-              />
-            </div>
-
-            <div className="imentor-form-row">
-              <label htmlFor="imentor-recommendations">Recommendations</label>
-              <p className="imentor-hint">3-5 hành động cụ thể trong 1-2 tháng tới.</p>
-              <textarea
-                id="imentor-recommendations"
-                value={recommendations}
-                onChange={(e) => setRecommendations(e.target.value)}
-                placeholder="VD: 1. Viết unit test cho project chính... 2. Deploy lên Vercel..."
-                disabled={submitting}
-              />
-            </div>
-
-            <div className="imentor-form-row">
-              <label>Job readiness level</label>
-              <div className="imentor-readiness-grid">
-                {READINESS_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    className={jobReadinessLevel === opt.value ? 'active' : ''}
-                    onClick={() =>
-                      setJobReadinessLevel(
-                        jobReadinessLevel === opt.value ? '' : opt.value,
-                      )
-                    }
-                    disabled={submitting}
-                  >
-                    <strong>{opt.label}</strong>
-                    <span>{opt.hint}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="imentor-modal-foot">
-            <span className="imentor-modal-quota">
-              {quota
-                ? (
-                  <>
-                    Quota: <strong>{quota.remaining}</strong>/{quota.limit} ({quota.planName})
-                  </>
-                )
-                : 'Đang tải quota...'}
-            </span>
-            <div className="imentor-modal-actions">
+            <Button
+              asChild
+              hoverScale={1.1}
+              tapScale={0.9}
+            >
               <button
                 type="button"
-                className="imentor-btn-ghost"
+                className="imentor-modal-close"
                 onClick={onClose}
-                disabled={submitting}
+                aria-label="Đóng"
               >
-                Huỷ
+                ✕
               </button>
-              <button
-                type="submit"
-                className="imentor-btn-primary"
-                disabled={submitting || isQuotaEmpty || !comment.trim()}
-              >
-                {submitting ? 'Đang gửi...' : 'Gửi feedback'}
-              </button>
-            </div>
+            </Button>
           </div>
-        </form>
-      </div>
-    </div>
+
+          <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
+            <div className="imentor-modal-body">
+              {error && <p className="imentor-form-error">{error}</p>}
+
+              {isQuotaEmpty && (
+                <p className="imentor-form-error">
+                  Sinh viên đã hết quota review ({quota.used}/{quota.limit}). Họ cần
+                  nâng cấp gói trước khi nhận feedback mới.
+                </p>
+              )}
+
+              <div className="imentor-form-row">
+                <label htmlFor="imentor-comment">
+                  Nhận xét tổng quan <span style={{ color: '#c52a2a' }}>*</span>
+                </label>
+                <p className="imentor-hint">
+                  Tóm tắt ngắn về portfolio, điểm nổi bật và mức độ trưởng thành.
+                </p>
+                <textarea
+                  id="imentor-comment"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="VD: Portfolio của bạn rõ ràng, có 3 project tốt. Tuy nhiên cần..."
+                  disabled={submitting}
+                  required
+                />
+              </div>
+
+              <div className="imentor-form-row">
+                <label>Overall rating</label>
+                <div className="imentor-rating">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Button
+                      key={n}
+                      asChild
+                      hoverScale={1.1}
+                      tapScale={0.9}
+                    >
+                      <button
+                        type="button"
+                        className={rating === n ? 'active' : ''}
+                        onClick={() => setRating(rating === n ? null : n)}
+                        disabled={submitting}
+                      >
+                        {n}
+                      </button>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="imentor-form-row">
+                <label htmlFor="imentor-portfolio-quality">Portfolio quality</label>
+                <p className="imentor-hint">Cấu trúc, trình bày, story telling.</p>
+                <textarea
+                  id="imentor-portfolio-quality"
+                  value={portfolioQualityFeedback}
+                  onChange={(e) => setPortfolioQualityFeedback(e.target.value)}
+                  placeholder="VD: Layout tốt, nhưng phần About còn ngắn..."
+                  disabled={submitting}
+                />
+              </div>
+
+              <div className="imentor-form-row">
+                <label htmlFor="imentor-tech-skills">Technical skills assessment</label>
+                <p className="imentor-hint">
+                  Đánh giá kỹ năng kỹ thuật dựa trên repo, code quality, kiến trúc.
+                </p>
+                <textarea
+                  id="imentor-tech-skills"
+                  value={technicalSkillsAssessment}
+                  onChange={(e) => setTechnicalSkillsAssessment(e.target.value)}
+                  placeholder="VD: Code clean, biết dùng patterns. Cần học thêm về testing..."
+                  disabled={submitting}
+                />
+              </div>
+
+              <div className="imentor-form-row">
+                <label htmlFor="imentor-project-quality">Project quality</label>
+                <p className="imentor-hint">Scope, độ hoàn thiện, độ phức tạp.</p>
+                <textarea
+                  id="imentor-project-quality"
+                  value={projectQualityFeedback}
+                  onChange={(e) => setProjectQualityFeedback(e.target.value)}
+                  placeholder="VD: 2 project có README tốt, 1 project chưa deploy..."
+                  disabled={submitting}
+                />
+              </div>
+
+              <div className="imentor-form-row">
+                <label htmlFor="imentor-recommendations">Recommendations</label>
+                <p className="imentor-hint">3-5 hành động cụ thể trong 1-2 tháng tới.</p>
+                <textarea
+                  id="imentor-recommendations"
+                  value={recommendations}
+                  onChange={(e) => setRecommendations(e.target.value)}
+                  placeholder="VD: 1. Viết unit test cho project chính... 2. Deploy lên Vercel..."
+                  disabled={submitting}
+                />
+              </div>
+
+              <div className="imentor-form-row">
+                <label>Job readiness level</label>
+                <div className="imentor-readiness-grid">
+                  {READINESS_OPTIONS.map((opt) => (
+                    <Button
+                      key={opt.value}
+                      asChild
+                      hoverScale={1.02}
+                      tapScale={0.98}
+                    >
+                      <button
+                        type="button"
+                        className={jobReadinessLevel === opt.value ? 'active' : ''}
+                        onClick={() =>
+                          setJobReadinessLevel(
+                            jobReadinessLevel === opt.value ? '' : opt.value,
+                          )
+                        }
+                        disabled={submitting}
+                      >
+                        <strong>{opt.label}</strong>
+                        <span>{opt.hint}</span>
+                      </button>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="imentor-modal-foot">
+              <span className="imentor-modal-quota">
+                {quota
+                  ? (
+                    <>
+                      Quota: <strong>{quota.remaining}</strong>/{quota.limit} ({quota.planName})
+                    </>
+                  )
+                  : 'Đang tải quota...'}
+              </span>
+              <div className="imentor-modal-actions">
+                <Button
+                  type="button"
+                  className="imentor-btn-ghost"
+                  onClick={onClose}
+                  disabled={submitting}
+                  hoverScale={1.05}
+                  tapScale={0.95}
+                >
+                  Huỷ
+                </Button>
+                <Button
+                  type="submit"
+                  className="imentor-btn-primary"
+                  disabled={submitting || isQuotaEmpty || !comment.trim()}
+                  hoverScale={1.05}
+                  tapScale={0.95}
+                >
+                  {submitting ? 'Đang gửi...' : 'Gửi feedback'}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

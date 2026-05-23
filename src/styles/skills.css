@@ -81,7 +81,6 @@
 
 .skills-hero-actions button,
 .skills-form-actions button,
-.skills-evidence-actions button,
 .skills-file-action,
 .skills-category-tabs button,
 .user-skill-actions button,
@@ -132,7 +131,6 @@
 
 .skills-hero-actions button:active,
 .skills-form-actions button:active,
-.skills-evidence-actions button:active,
 .skills-file-action:active,
 .skills-category-tabs button:active,
 .user-skill-actions button:active,
@@ -144,7 +142,6 @@
 
 .skills-hero-actions button:disabled,
 .skills-form-actions button:disabled,
-.skills-evidence-actions button:disabled,
 .skills-file-action.disabled,
 .catalog-skill-card button:disabled,
 .skill-gap-actions button:disabled,
@@ -332,25 +329,90 @@
     margin-top: 18px;
 }
 
-.skills-evidence-actions {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 10px;
-    margin-top: 10px;
-}
+/* =========================
+   EVIDENCE INPUT WITH ICON CONTROLS
+   ========================= */
 
-.skills-evidence-actions button,
-.skills-file-action {
-    min-height: 42px;
+.skills-evidence-field .skills-evidence-input {
     position: relative;
-    overflow: hidden;
+    display: block;
 }
 
-.skills-file-action input {
+.skills-evidence-field .skills-evidence-input input[name="evidenceUrl"] {
+    /* Reserve space for the two trailing icon buttons. */
+    padding-right: 92px;
+    text-overflow: ellipsis;
+}
+
+.skills-evidence-tools {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.skills-evidence-tool {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    background: var(--student-pearl, #fafafc);
+    color: var(--student-primary, #0066cc);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 120ms ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.skills-evidence-tool svg {
+    width: 16px;
+    height: 16px;
+}
+
+.skills-evidence-tool:hover:not(:disabled) {
+    background: var(--student-canvas, #ffffff);
+    border-color: var(--student-primary, #0066cc);
+}
+
+.skills-evidence-tool:active:not(:disabled) {
+    transform: scale(0.94);
+}
+
+.skills-evidence-tool:disabled,
+.skills-evidence-tool.skills-file-action.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Hide the native file input but keep it interactive over the entire chip. */
+.skills-evidence-tool.skills-file-action input[type="file"] {
     position: absolute;
     inset: 0;
+    width: 100%;
+    height: 100%;
     opacity: 0;
-    cursor: pointer;
+    cursor: inherit;
+}
+
+/* Animated upload spinner for the file button */
+.skills-evidence-spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 102, 204, 0.25);
+    border-top-color: var(--student-primary, #0066cc);
+    animation: skills-evidence-spin 700ms linear infinite;
+}
+
+@keyframes skills-evidence-spin {
+    to { transform: rotate(360deg); }
 }
 
 .skills-evidence-hint {
@@ -840,7 +902,6 @@
         flex-direction: column;
     }
 
-    .skills-evidence-actions,
     .user-skill-actions {
         grid-template-columns: 1fr;
         flex-direction: column;

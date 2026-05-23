@@ -377,11 +377,6 @@ export function StudentGithubPage({ session }) {
       return;
     }
 
-    if (!analyzeForm.readmeContent.trim()) {
-      showWarning('Vui lòng dán nội dung README trước khi phân tích.');
-      return;
-    }
-
     setAnalyzingRepoId(repositoryId);
     setError('');
 
@@ -389,7 +384,6 @@ export function StudentGithubPage({ session }) {
       const result = await analyzeGithubReadme(session, {
         repositoryId,
         repoUrl: analyzeForm.repoUrl.trim() || getRepoUrl(repo),
-        readmeContent: analyzeForm.readmeContent.trim(),
       });
 
       setRepositories((current) =>
@@ -804,16 +798,9 @@ function RepositoryCard({
             />
           </label>
 
-          <label>
-            <span>README content</span>
-            <textarea
-              name="readmeContent"
-              value={analyzeForm.readmeContent}
-              onChange={onAnalyzeFormChange}
-              rows={8}
-              placeholder="Dán nội dung README.md vào đây để AI phân tích..."
-            />
-          </label>
+          <p className="github-analyze-hint">
+            AI sẽ tự đọc README và source code từ repository public, bạn không cần dán thủ công.
+          </p>
 
           <button
             type="button"

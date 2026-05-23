@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { Dialog, DialogContent } from '@/components/animate-ui/components/radix/dialog';
+import { Button } from '@/components/animate-ui/components/buttons/button';
 import {
   getStudentRoadmap,
   getStudentSkillGapHistory,
@@ -159,28 +161,32 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
   const skillGapAvailable = skillGapReports.length > 0;
 
   return (
-    <div
-      className="counselor-modal-overlay"
-      onClick={handleOverlayClick}
-      role="presentation"
-    >
-      <div
-        className="counselor-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="counselor-modal-title"
-      >
-        <header className="counselor-modal-header">
-          <h3 id="counselor-modal-title">Viết feedback</h3>
-          <button
-            type="button"
-            className="counselor-modal-close"
-            onClick={onClose}
-            aria-label="Đóng modal"
-          >
-            ✕
-          </button>
-        </header>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-[750px] p-0 overflow-hidden border-none bg-transparent shadow-none" showCloseButton={false}>
+        <div
+          className="counselor-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="counselor-modal-title"
+          style={{ margin: 0, width: '100%', maxWidth: 'none' }}
+        >
+          <header className="counselor-modal-header">
+            <h3 id="counselor-modal-title">Viết feedback</h3>
+            <Button
+              asChild
+              hoverScale={1.1}
+              tapScale={0.9}
+            >
+              <button
+                type="button"
+                className="counselor-modal-close"
+                onClick={onClose}
+                aria-label="Đóng modal"
+              >
+                ✕
+              </button>
+            </Button>
+          </header>
 
         <form onSubmit={handleSubmit}>
           <div className="counselor-modal-body">
@@ -207,27 +213,33 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
                     (type.id === 'roadmap' && !roadmapAvailable) ||
                     (type.id === 'skillgap' && !skillGapAvailable);
                   return (
-                    <button
+                    <Button
                       key={type.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={form.feedbackType === type.id}
-                      disabled={disabled || linkingDataLoading}
-                      className={`counselor-feedback-type-option ${
-                        form.feedbackType === type.id ? 'active' : ''
-                      }`}
-                      onClick={() => setFeedbackType(type.id)}
-                      title={
-                        disabled
-                          ? type.id === 'roadmap'
-                            ? 'Sinh viên chưa có roadmap'
-                            : 'Sinh viên chưa có báo cáo skill gap'
-                          : undefined
-                      }
+                      asChild
+                      hoverScale={1.02}
+                      tapScale={0.98}
                     >
-                      <strong>{type.label}</strong>
-                      <small>{type.desc}</small>
-                    </button>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={form.feedbackType === type.id}
+                        disabled={disabled || linkingDataLoading}
+                        className={`counselor-feedback-type-option ${
+                          form.feedbackType === type.id ? 'active' : ''
+                        }`}
+                        onClick={() => setFeedbackType(type.id)}
+                        title={
+                          disabled
+                            ? type.id === 'roadmap'
+                              ? 'Sinh viên chưa có roadmap'
+                              : 'Sinh viên chưa có báo cáo skill gap'
+                            : undefined
+                        }
+                      >
+                        <strong>{type.label}</strong>
+                        <small>{type.desc}</small>
+                      </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -277,19 +289,25 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
                 aria-label="Chọn số sao đánh giá"
               >
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <button
+                  <Button
                     key={star}
-                    type="button"
-                    role="radio"
-                    aria-checked={star === form.rating}
-                    aria-label={`${star} sao`}
-                    className={`counselor-rating-star ${
-                      star <= form.rating ? 'active' : ''
-                    }`}
-                    onClick={() => updateField('rating', star)}
+                    asChild
+                    hoverScale={1.2}
+                    tapScale={0.8}
                   >
-                    ★
-                  </button>
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={star === form.rating}
+                      aria-label={`${star} sao`}
+                      className={`counselor-rating-star ${
+                        star <= form.rating ? 'active' : ''
+                      }`}
+                      onClick={() => updateField('rating', star)}
+                    >
+                      ★
+                    </button>
+                  </Button>
                 ))}
               </div>
               <div className="counselor-form-row">
@@ -356,24 +374,29 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
           </div>
 
           <footer className="counselor-modal-footer">
-            <button
+            <Button
               type="button"
               className="counselor-btn counselor-btn-secondary"
               onClick={onClose}
               disabled={saving}
+              hoverScale={1.05}
+              tapScale={0.95}
             >
               Hủy
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               className="counselor-btn counselor-btn-primary"
               disabled={saving}
+              hoverScale={1.05}
+              tapScale={0.95}
             >
               {saving ? 'Đang gửi...' : 'Gửi feedback'}
-            </button>
+            </Button>
           </footer>
         </form>
       </div>
-    </div>
+    </DialogContent>
+  </Dialog>
   );
 }

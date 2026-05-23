@@ -11,6 +11,7 @@ import {
   getStudentProfile,
   updateStudentProfile,
   uploadStudentAvatar,
+  uploadStudentCv,
 } from './studentApi';
 import { StudentPortfolioPage } from './components/StudentPortfolioPage';
 import { StudentRoadmapPage } from './components/StudentRoadmapPage';
@@ -23,7 +24,7 @@ import { NotificationBell } from '../notifications/NotificationBell';
 import { getGithubRepositories } from './githubApi';
 import { getMentorSessions } from './mentorApi';
 import { getRoadmapById, getRoadmaps } from './roadmapApi';
-import { getLatestSkillGap, getUserSkills } from './skillsApi';
+import { getLatestSkillGap, getUserSkills, getSignedUrl } from './skillsApi';
 const STUDENT_SECTIONS = [
   { id: 'overview', label: 'Bảng điều khiển' },
   { id: 'roadmap', label: 'Lộ trình nghề nghiệp' },
@@ -73,6 +74,8 @@ const emptyProfile = {
   githubUsername: '',
   careerGoal: '',
   preferredLearningHoursPerWeek: '',
+  cvUrl: '',
+  cvName: '',
 };
 
 function getInitials(name = '') {
@@ -95,6 +98,8 @@ function normalizeProfile(profile) {
     githubUsername: profile.githubUsername || '',
     careerGoal: profile.careerGoal || '',
     preferredLearningHoursPerWeek: profile.preferredLearningHoursPerWeek ?? '',
+    cvUrl: profile.cvUrl || '',
+    cvName: profile.cvName || '',
   };
 }
 
@@ -370,14 +375,33 @@ function mapGapToSkillCard(item) {
   };
 }
 
-function mapUserSkillToCard(item) {
+function mapUserSkillToCard(item, gapByName) {
   const score = getLevelScore(item?.level);
+  const isAchieved = item?.isVerified || score >= 50;
+  const skillName = item?.skillName || item?.name;
+  const matchingGap = skillName ? gapByName?.get(skillName.trim().toLowerCase()) : null;
+  const requiredLevel =
+    matchingGap?.requiredLevel ||
+    matchingGap?.targetLevel ||
+    matchingGap?.expectedLevel ||
+    null;
+
+  let target;
+  if (requiredLevel) {
+    target = requiredLevel;
+  } else if (item?.isVerified) {
+    target = 'Đã verified';
+  } else if (isAchieved) {
+    target = 'Chờ verify';
+  } else {
+    target = 'Cần cải thiện';
+  }
 
   return {
-    name: item?.skillName || item?.name || 'Kỹ năng chưa xác định',
+    name: skillName || 'Kỹ năng chưa xác định',
     current: item?.level || 'N/A',
-    target: item?.isVerified ? 'Verified' : 'Cần xác minh',
-    action: score >= 75 ? 'Đạt yêu cầu' : 'Cải thiện',
+    target,
+    action: isAchieved ? 'Đạt yêu cầu' : 'Cải thiện',
     progress: score,
   };
 }
@@ -401,20 +425,35 @@ function buildDashboardOverview({
 
   const matchScore = getReportScore(skillGap) || averageSkillScore;
 
-  const achievedSkills = skills.filter((item) => item.isVerified || getLevelScore(item.level) >= 75);
-  const weakSkills = skills.filter((item) => {
-    const score = getLevelScore(item.level);
-    return score > 0 && score < 75;
-  });
+  // Phân loại sẽ tính trong skillGroups bên dưới.
 
   const roadmapNodes = getRoadmapNodes(roadmap);
   const roadmapProgress = calculateRoadmapProgress(roadmapNodes);
   const roadmapSteps = roadmapNodes.slice(0, 4).map(mapRoadmapStep);
 
+  // Index gap items by skill name (lowercased) so we can look them up when rendering user-skills.
+  const gapByName = new Map();
+  for (const item of gapItems) {
+    const key = (item?.skillName || item?.name || item?.title || '').trim().toLowerCase();
+    if (key) gapByName.set(key, item);
+  }
+
+  // Skills that are achieved (verified OR ≥ Intermediate) — match the 'Đã đạt' label.
+  const achievedSkills = skills.filter((item) => item.isVerified || getLevelScore(item.level) >= 50);
+
+  // Skills that are 'còn yếu' = has some level (>0) but below Intermediate (50)
+  // AND is NOT already listed in the skill-gap report as 'thiếu' (avoid duplication).
+  const weakSkills = skills.filter((item) => {
+    const score = getLevelScore(item.level);
+    if (score === 0 || score >= 50) return false;
+    const key = (item.skillName || item.name || '').trim().toLowerCase();
+    return !gapByName.has(key);
+  });
+
   const skillGroups = {
     missing: gapItems.slice(0, 5).map(mapGapToSkillCard),
-    weak: weakSkills.slice(0, 5).map(mapUserSkillToCard),
-    done: achievedSkills.slice(0, 5).map(mapUserSkillToCard),
+    weak: weakSkills.slice(0, 5).map((item) => mapUserSkillToCard(item, gapByName)),
+    done: achievedSkills.slice(0, 5).map((item) => mapUserSkillToCard(item, gapByName)),
   };
 
   const learningQueue = gapItems.slice(0, 3).map((item) => ({
@@ -499,6 +538,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingCv, setUploadingCv] = useState(false);
   const [avatarImportDraft, setAvatarImportDraft] = useState('');
   const [dashboardOverview, setDashboardOverview] = useState(DEFAULT_DASHBOARD_OVERVIEW);
   const [loadingOverview, setLoadingOverview] = useState(false);
@@ -515,16 +555,30 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     loadDashboardOverview();
   }, []);
 
+  // Load the profile whenever the user lands on the settings tab.
   useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true;
-      return;
+    if (activeSection === 'settings') {
+      loadProfile();
     }
-
-    if (activeSection === 'overview') {
-      loadDashboardOverview();
-    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection]);
+
+  // First-time onboarding: if the student doesn't have a profile yet, push them
+  // straight to the settings tab so they fill in school / major / career goal first.
+  // We only do this once per session (forcedOnboardingRef) so the user can leave
+  // the settings tab manually after seeing the toast.
+  const forcedOnboardingRef = useRef(false);
+  useEffect(() => {
+    if (loadingProfile) return;
+    if (hasProfile) return;
+    if (forcedOnboardingRef.current) return;
+
+    forcedOnboardingRef.current = true;
+    setActiveSection('settings');
+    toast.info('Hãy hoàn tất hồ sơ sinh viên để hệ thống gợi ý lộ trình phù hợp.', {
+      autoClose: 6000,
+    });
+  }, [loadingProfile, hasProfile]);
 
   const visibleGroups = useMemo(() => {
     if (activeTab === 'missing') return ['missing'];
@@ -550,7 +604,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
 
   const targetRoleName = useMemo(() => {
     const selectedRole = careerRoles.find((role) => String(getRoleId(role)) === String(form.targetRoleId));
-    return getRoleName(selectedRole) || 'Backend Developer';
+    return getRoleName(selectedRole) || 'mục tiêu chưa thiết lập';
   }, [careerRoles, form.targetRoleId]);
 
   async function loadDashboardOverview() {
@@ -650,6 +704,66 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
       toast.error(requestError.message || 'Khong upload duoc avatar.');
     } finally {
       setUploadingAvatar(false);
+    }
+  }
+
+  async function handleAvatarImport() {
+    const avatarUrl = avatarImportDraft.trim();
+    if (!avatarUrl) {
+      toast.error('Vui long nhap URL avatar.');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const fileName = avatarUrl.split('/').pop()?.split('?')[0] || 'avatar';
+      const imported = await importStudentAvatarFromUrl(session, { url: avatarUrl, fileName });
+      const nextAvatarUrl = imported?.downloadPath || imported?.objectName || avatarUrl;
+      setForm((current) => ({ ...current, avatarUrl: nextAvatarUrl }));
+      setAvatarImportDraft('');
+      toast.success('Da import avatar tu URL.');
+    } catch (requestError) {
+      toast.error(requestError.message || 'Khong import duoc avatar tu URL.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
+  async function handleCvFileChange(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    setUploadingCv(true);
+    try {
+      const uploaded = await uploadStudentCv(session, file);
+      setForm(normalizeProfile(uploaded));
+      toast.success('Đã tải lên CV thành công.');
+    } catch (requestError) {
+      toast.error(requestError.message || 'Không tải được CV.');
+    } finally {
+      setUploadingCv(false);
+    }
+  }
+
+  async function handleViewCv(event) {
+    event.preventDefault();
+    if (!form.cvUrl) {
+      return;
+    }
+
+    try {
+      const response = await getSignedUrl(session, form.cvUrl);
+      if (response?.url) {
+        window.open(response.url, '_blank', 'noopener,noreferrer');
+      } else {
+        toast.error("Không lấy được đường dẫn tải file CV.");
+      }
+    } catch (requestError) {
+      toast.error(requestError.message || "Không thể tải CV.");
     }
   }
 
@@ -771,10 +885,13 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
               loadingProfile={loadingProfile}
               savingProfile={savingProfile}
               uploadingAvatar={uploadingAvatar}
+              uploadingCv={uploadingCv}
               hasProfile={hasProfile}
               onChange={updateField}
               onAvatarFileChange={handleAvatarFileChange}
-              onReload={loadProfile}
+              onCvFileChange={handleCvFileChange}
+              onAvatarImport={handleAvatarImport}
+              onViewCv={handleViewCv}
               onSubmit={handleSaveProfile}
             />
           </section>
@@ -914,7 +1031,13 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                           </div>
                           <p>Hiện tại: <b>{skill.current}</b> <span>→</span> Yêu cầu: <b>{skill.target}</b></p>
                         </div>
-                        <button type="button">{skill.action}</button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveSection('skills')}
+                          aria-label={`${skill.action} kỹ năng ${skill.name}`}
+                        >
+                          {skill.action}
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -938,7 +1061,13 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                             <span style={{ width: `${skill.progress}%` }} />
                           </div>
                         </div>
-                        <button type="button">{skill.action}</button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveSection('skills')}
+                          aria-label={`${skill.action} kỹ năng ${skill.name}`}
+                        >
+                          {skill.action}
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -958,7 +1087,13 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                           </div>
                           <p>Hiện tại: <b>{skill.current}</b> <span>→</span> Yêu cầu: <b>{skill.target}</b></p>
                         </div>
-                        <button type="button">{skill.action}</button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveSection('skills')}
+                          aria-label={`${skill.action} kỹ năng ${skill.name}`}
+                        >
+                          {skill.action}
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -993,32 +1128,6 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                   </div>
                 </article>
 
-                <article className="student-side-card">
-                  <div className="student-panel-heading">
-                    <span>Mentor</span>
-                    <h2>Lịch tư vấn</h2>
-                  </div>
-                  <div className="student-compact-list">
-                    {dashboardOverview.mentorSessions.length === 0 && (
-                      <div className="student-compact-item static">
-                        <div>
-                          <strong>Chưa có lịch tư vấn</strong>
-                          <small>Vào AI tư vấn để bắt đầu phiên mới.</small>
-                        </div>
-                        <span>—</span>
-                      </div>
-                    )}
-                    {dashboardOverview.mentorSessions.map((sessionItem) => (
-                      <div key={sessionItem.topic} className="student-compact-item static">
-                        <div>
-                          <strong>{sessionItem.topic}</strong>
-                          <small>{sessionItem.mentor}</small>
-                        </div>
-                        <span>{sessionItem.time}</span>
-                      </div>
-                    ))}
-                  </div>
-                </article>
 
                 <article className="student-side-card">
                   <div className="student-panel-heading">

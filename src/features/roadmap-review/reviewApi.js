@@ -60,3 +60,10 @@ export function getEvidenceDownloadUrl(session, requestId) {
     session
   );
 }
+
+export function getSignedUrl(session, objectName) {
+  return authorizedRequest(
+    `/api/storage/signed-url?objectName=${encodeURIComponent(objectName)}`,
+    session
+  );
+}

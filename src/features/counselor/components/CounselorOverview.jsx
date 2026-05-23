@@ -1,4 +1,8 @@
 import { useMemo } from 'react';
+import { Button } from '@/components/animate-ui/components/buttons/button';
+import { Fades } from '@/components/animate-ui/primitives/effects/fade';
+import { motion } from 'motion/react';
+import { AnimateNumber as MotionNumber } from 'motion-number';
 
 function getInitials(name = '') {
   return (
@@ -47,6 +51,7 @@ export function CounselorOverview({
   students = [],
   feedbacks = [],
   loading,
+  counselorName = 'Counselor',
   onNavigateToStudents,
   onNavigateToStudent,
   onNavigateToFeedback,
@@ -63,8 +68,8 @@ export function CounselorOverview({
 
   const avgRating = useMemo(() => {
     const rated = feedbacks.filter((f) => f.rating);
-    if (rated.length === 0) return '—';
-    return (rated.reduce((s, f) => s + (f.rating || 0), 0) / rated.length).toFixed(1);
+    if (rated.length === 0) return 0;
+    return Number((rated.reduce((s, f) => s + (f.rating || 0), 0) / rated.length).toFixed(1));
   }, [feedbacks]);
 
   const studentsNeedReview = useMemo(
@@ -102,61 +107,101 @@ export function CounselorOverview({
   return (
     <section className="counselor-section counselor-section--tight">
       <div className="counselor-section-inner">
+        {/* Welcome Hero — Apple Editorial style */}
+        <motion.header
+          className="counselor-hero counselor-hero--left"
+          style={{ marginBottom: 48 }}
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+        >
+          <span className="counselor-eyebrow">Academic Counselor</span>
+          <h1>Chào {counselorName.split(' ').find(w => /^[A-Za-zÀ-ỹ]/.test(w) && !/^\d+$/.test(w)) || counselorName}, sẵn sàng hướng nghiệp?</h1>
+          <p className="counselor-hero-lead">
+            Phân tích hồ sơ, verify kỹ năng và lập lộ trình học tập tối ưu cùng sinh viên của bạn.
+          </p>
+        </motion.header>
+
         {/* KPI strip — first thing staff sees */}
         <div className="counselor-kpi-strip" style={{ marginTop: 0 }}>
-          <article className="counselor-kpi-cell">
+          <motion.article 
+            className="counselor-kpi-cell"
+            whileHover={{ scale: 1.02, backgroundColor: 'rgba(0,102,204,0.015)' }}
+            transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          >
             <span className="counselor-kpi-cell-label">Sinh viên</span>
-            <span className="counselor-kpi-cell-value">{totalStudents}</span>
+            <span className="counselor-kpi-cell-value">
+              <MotionNumber transition={{ type: 'spring', duration: 0.8 }}>{totalStudents}</MotionNumber>
+            </span>
             <span className="counselor-kpi-cell-caption">
               Đang phân công
             </span>
-          </article>
+          </motion.article>
 
-          <article className="counselor-kpi-cell">
+          <motion.article 
+            className="counselor-kpi-cell"
+            whileHover={{ scale: 1.02, backgroundColor: 'rgba(0,102,204,0.015)' }}
+            transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          >
             <span className="counselor-kpi-cell-label">Cần review</span>
             <span className="counselor-kpi-cell-value">
-              {studentsNeedReview.length}
+              <MotionNumber transition={{ type: 'spring', duration: 0.8 }}>{studentsNeedReview.length}</MotionNumber>
             </span>
             <span className="counselor-kpi-cell-caption">
               Match dưới 60%
             </span>
-          </article>
+          </motion.article>
 
-          <article className="counselor-kpi-cell">
+          <motion.article 
+            className="counselor-kpi-cell"
+            whileHover={{ scale: 1.02, backgroundColor: 'rgba(0,102,204,0.015)' }}
+            transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          >
             <span className="counselor-kpi-cell-label">Chưa phân tích</span>
             <span className="counselor-kpi-cell-value">
-              {studentsWithoutGap.length}
+              <MotionNumber transition={{ type: 'spring', duration: 0.8 }}>{studentsWithoutGap.length}</MotionNumber>
             </span>
             <span className="counselor-kpi-cell-caption">
               Chưa có skill gap
             </span>
-          </article>
+          </motion.article>
 
-          <article className="counselor-kpi-cell">
+          <motion.article 
+            className="counselor-kpi-cell"
+            whileHover={{ scale: 1.02, backgroundColor: 'rgba(0,102,204,0.015)' }}
+            transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          >
             <span className="counselor-kpi-cell-label">Feedback tháng</span>
             <span className="counselor-kpi-cell-value">
-              {thisMonthFeedbacks.length}
+              <MotionNumber transition={{ type: 'spring', duration: 0.8 }}>{thisMonthFeedbacks.length}</MotionNumber>
             </span>
             <span className="counselor-kpi-cell-caption">
-              Trung bình {avgRating}/5 sao
+              Trung bình {avgRating > 0 ? avgRating : '—'}/5 sao
             </span>
-          </article>
+          </motion.article>
         </div>
 
         {/* Two-col: priority + recent feedback */}
         <div className="counselor-twocol" style={{ marginTop: 56 }}>
-          <article className="counselor-panel">
+          <motion.article 
+            className="counselor-panel"
+            whileHover={{ y: -4, boxShadow: '0 8px 24px rgba(0,0,0,0.04)', borderColor: 'rgba(0,102,204,0.1)' }}
+            transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          >
             <header className="counselor-panel-head">
               <h3>
                 {studentsNeedReview.length > 0 ? 'Cần review' : 'Sinh viên'}
               </h3>
-              <button
+              <Button
                 type="button"
+                variant="link"
                 className="counselor-panel-link"
                 onClick={onNavigateToStudents}
+                hoverScale={1.02}
+                tapScale={0.98}
               >
                 Xem tất cả
-              </button>
+              </Button>
             </header>
             {priorityList.length === 0 ? (
               <div className="counselor-empty">
@@ -166,46 +211,58 @@ export function CounselorOverview({
               </div>
             ) : (
               <div>
-                {priorityList.map((student) => {
-                  const cls = getMatchScoreClass(student.latestMatchScore);
-                  return (
-                    <button
-                      key={student.id}
-                      type="button"
-                      className="counselor-listrow"
-                      onClick={() => onNavigateToStudent(student.id)}
-                    >
-                      <div className="counselor-avatar" aria-hidden>
-                        {getInitials(student.fullName)}
-                      </div>
-                      <div className="counselor-listrow-info">
-                        <strong>{student.fullName}</strong>
-                        <small>
-                          {student.targetRoleName || 'Chưa chọn target role'}
-                        </small>
-                      </div>
-                      <span className={`counselor-listrow-meta ${cls}`}>
-                        {student.latestMatchScore != null
-                          ? `${Math.round(Number(student.latestMatchScore))}%`
-                          : '—'}
-                      </span>
-                    </button>
-                  );
-                })}
+                <Fades holdDelay={50} inView={true}>
+                  {priorityList.map((student) => {
+                    const cls = getMatchScoreClass(student.latestMatchScore);
+                    return (
+                      <Button
+                        key={student.id}
+                        type="button"
+                        variant="ghost"
+                        className="counselor-listrow w-full text-left h-auto py-3 px-3"
+                        onClick={() => onNavigateToStudent(student.id)}
+                        hoverScale={1.01}
+                        tapScale={0.99}
+                      >
+                        <div className="counselor-avatar" aria-hidden>
+                          {getInitials(student.fullName)}
+                        </div>
+                        <div className="counselor-listrow-info">
+                          <strong>{student.fullName}</strong>
+                          <small>
+                            {student.targetRoleName || 'Chưa chọn target role'}
+                          </small>
+                        </div>
+                        <span className={`counselor-listrow-meta ${cls}`}>
+                          {student.latestMatchScore != null
+                            ? `${Math.round(Number(student.latestMatchScore))}%`
+                            : '—'}
+                        </span>
+                      </Button>
+                    );
+                  })}
+                </Fades>
               </div>
             )}
-          </article>
+          </motion.article>
 
-          <article className="counselor-panel">
+          <motion.article 
+            className="counselor-panel"
+            whileHover={{ y: -4, boxShadow: '0 8px 24px rgba(0,0,0,0.04)', borderColor: 'rgba(0,102,204,0.1)' }}
+            transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          >
             <header className="counselor-panel-head">
               <h3>Feedback gần nhất</h3>
-              <button
+              <Button
                 type="button"
+                variant="link"
                 className="counselor-panel-link"
                 onClick={onNavigateToFeedback}
+                hoverScale={1.02}
+                tapScale={0.98}
               >
                 Xem tất cả
-              </button>
+              </Button>
             </header>
             {recentFeedbacks.length === 0 ? (
               <div className="counselor-empty">
@@ -215,27 +272,29 @@ export function CounselorOverview({
               </div>
             ) : (
               <div>
-                {recentFeedbacks.map((fb) => (
-                  <div key={fb.id} className="counselor-feedback-row">
-                    <div className="counselor-feedback-row-head">
-                      <strong>{fb.studentFullName || 'Sinh viên'}</strong>
-                      <time dateTime={fb.createdAt}>
-                        {formatRelativeTime(fb.createdAt)}
-                      </time>
-                    </div>
-                    {fb.rating > 0 && (
-                      <div className="counselor-feedback-row-stars" aria-hidden>
-                        {renderStars(fb.rating)}
+                <Fades holdDelay={50} inView={true}>
+                  {recentFeedbacks.map((fb) => (
+                    <div key={fb.id} className="counselor-feedback-row">
+                      <div className="counselor-feedback-row-head">
+                        <strong>{fb.studentFullName || 'Sinh viên'}</strong>
+                        <time dateTime={fb.createdAt}>
+                          {formatRelativeTime(fb.createdAt)}
+                        </time>
                       </div>
-                    )}
-                    <p className="counselor-feedback-row-text">
-                      {fb.feedbackText}
-                    </p>
-                  </div>
-                ))}
+                      {fb.rating > 0 && (
+                        <div className="counselor-feedback-row-stars" aria-hidden>
+                          {renderStars(fb.rating)}
+                        </div>
+                      )}
+                      <p className="counselor-feedback-row-text">
+                        {fb.feedbackText}
+                      </p>
+                    </div>
+                  ))}
+                </Fades>
               </div>
             )}
-          </article>
+          </motion.article>
         </div>
       </div>
     </section>

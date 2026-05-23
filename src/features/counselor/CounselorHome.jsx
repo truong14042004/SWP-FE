@@ -13,6 +13,8 @@ import {
   createFeedback,
 } from './api/counselorApi';
 import { getCounselorRoadmapQueue } from '../roadmap-review/reviewApi';
+import { Highlight } from '@/components/animate-ui/primitives/effects/highlight';
+import { AnimatePresence, motion } from 'motion/react';
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Tổng quan' },
@@ -22,8 +24,24 @@ const NAV_ITEMS = [
 ];
 
 export function CounselorHome({ session, onSignOut }) {
-  const [currentView, setCurrentView] = useState('overview');
-  const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const getInitialViewInfo = () => {
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    if (parts[0] === 'counselor' && parts[1]) {
+      const view = parts[1];
+      const validViews = ['overview', 'students', 'roadmap-reviews', 'feedback'];
+      if (validViews.includes(view)) {
+        return {
+          view,
+          studentId: parts[2] || null
+        };
+      }
+    }
+    return { view: 'overview', studentId: null };
+  };
+
+  const initialInfo = getInitialViewInfo();
+  const [currentView, setCurrentView] = useState(initialInfo.view);
+  const [selectedStudentId, setSelectedStudentId] = useState(initialInfo.studentId);
   const [students, setStudents] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +51,13 @@ export function CounselorHome({ session, onSignOut }) {
 
   useEffect(() => {
     loadInitialData();
+    const handlePopState = () => {
+      const info = getInitialViewInfo();
+      setCurrentView(info.view);
+      setSelectedStudentId(info.studentId);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -129,88 +154,132 @@ export function CounselorHome({ session, onSignOut }) {
         <div className="counselor-subnav-inner">
           <span className="counselor-subnav-title">Counselor</span>
           <div className="counselor-subnav-links">
-            {NAV_ITEMS.map((item) => {
-              const isActive = currentView === item.id && !selectedStudentId;
-              const badge =
-                item.id === 'students' && students.length > 0
-                  ? students.length
-                  : item.id === 'roadmap-reviews' && pendingReviewCount > 0
-                  ? pendingReviewCount
-                  : item.id === 'feedback' && feedbacks.length > 0
-                  ? feedbacks.length
-                  : null;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`counselor-subnav-link ${isActive ? 'active' : ''}`}
-                  onClick={() => handleNavigate(item.id)}
-                >
-                  {item.label}
-                  {badge != null && (
-                    <span className="counselor-subnav-badge">{badge}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          <span className="counselor-subnav-spacer" />
-          {currentView === 'students' && !selectedStudentId && (
-            <button
-              type="button"
-              className="counselor-subnav-cta"
-              onClick={() => handleNavigate('feedback')}
+            <Highlight
+              value={selectedStudentId ? null : currentView}
+              onValueChange={(val) => {
+                if (val) handleNavigate(val);
+              }}
+              className="absolute inset-0 bg-[rgba(0,102,204,0.08)] rounded-md"
+              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              hover={false}
+              click={true}
             >
-              Xem feedback
-            </button>
-          )}
+              {NAV_ITEMS.map((item) => {
+                const isActive = currentView === item.id && !selectedStudentId;
+                const badge =
+                  item.id === 'students' && students.length > 0
+                    ? students.length
+                    : item.id === 'roadmap-reviews' && pendingReviewCount > 0
+                    ? pendingReviewCount
+                    : item.id === 'feedback' && feedbacks.length > 0
+                    ? feedbacks.length
+                    : null;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    data-value={item.id}
+                    className={`counselor-subnav-link relative z-10 ${isActive ? 'active' : ''}`}
+                    style={{ background: 'transparent' }}
+                  >
+                    {item.label}
+                    {badge != null && (
+                      <span className="counselor-subnav-badge">{badge}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </Highlight>
+          </div>
         </div>
       </nav>
 
       {/* Main */}
       <main className="counselor-main">
-        {currentView === 'overview' && !selectedStudentId && (
-          <CounselorOverview
-            students={students}
-            feedbacks={feedbacks}
-            loading={loading}
-            counselorName={counselorName}
-            onNavigateToStudents={() => handleNavigate('students')}
-            onNavigateToStudent={(id) => handleNavigate('students', id)}
-            onNavigateToFeedback={() => handleNavigate('feedback')}
-          />
-        )}
+        <AnimatePresence mode="wait">
+          {currentView === 'overview' && !selectedStudentId && (
+            <motion.div
+              key="overview"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.18, ease: 'easeInOut' }}
+            >
+              <CounselorOverview
+                students={students}
+                feedbacks={feedbacks}
+                loading={loading}
+                counselorName={counselorName}
+                onNavigateToStudents={() => handleNavigate('students')}
+                onNavigateToStudent={(id) => handleNavigate('students', id)}
+                onNavigateToFeedback={() => handleNavigate('feedback')}
+              />
+            </motion.div>
+          )}
 
-        {currentView === 'students' && !selectedStudentId && (
-          <CounselorStudentList
-            students={students}
-            loading={loading}
-            onSelectStudent={(id) => handleNavigate('students', id)}
-            onOpenFeedbackModal={handleOpenFeedbackModal}
-          />
-        )}
+          {currentView === 'students' && !selectedStudentId && (
+            <motion.div
+              key="students"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.18, ease: 'easeInOut' }}
+            >
+              <CounselorStudentList
+                students={students}
+                loading={loading}
+                onSelectStudent={(id) => handleNavigate('students', id)}
+                onOpenFeedbackModal={handleOpenFeedbackModal}
+              />
+            </motion.div>
+          )}
 
-        {currentView === 'students' && selectedStudentId && (
-          <CounselorStudentDetail
-            session={session}
-            studentId={selectedStudentId}
-            students={students}
-            onBack={handleBack}
-            onOpenFeedbackModal={handleOpenFeedbackModal}
-          />
-        )}
+          {currentView === 'students' && selectedStudentId && (
+            <motion.div
+              key={`student-detail-${selectedStudentId}`}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+            >
+              <CounselorStudentDetail
+                session={session}
+                studentId={selectedStudentId}
+                students={students}
+                onBack={handleBack}
+                onOpenFeedbackModal={handleOpenFeedbackModal}
+              />
+            </motion.div>
+          )}
 
-        {currentView === 'roadmap-reviews' && (
-          <RoadmapReviewQueue session={session} role="AcademicCounselor" />
-        )}
+          {currentView === 'roadmap-reviews' && (
+            <motion.div
+              key="roadmap-reviews"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.18, ease: 'easeInOut' }}
+            >
+              <RoadmapReviewQueue session={session} role="AcademicCounselor" />
+            </motion.div>
+          )}
 
-        {currentView === 'feedback' && !selectedStudentId && (
-          <CounselorFeedbackHistory
-            feedbacks={feedbacks}
-            students={students}
-            onSelectStudent={(id) => handleNavigate('students', id)}
-          />
-        )}
+          {currentView === 'feedback' && !selectedStudentId && (
+            <motion.div
+              key="feedback"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.18, ease: 'easeInOut' }}
+            >
+              <CounselorFeedbackHistory
+                feedbacks={feedbacks}
+                students={students}
+                onSelectStudent={(id) => handleNavigate('students', id)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
       {showFeedbackModal && feedbackModalStudent && (

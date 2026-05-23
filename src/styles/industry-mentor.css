@@ -1,7 +1,7 @@
 /* Industry Mentor Workspace — Apple editorial palette
    Maps DESIGN.md tokens to a staff dashboard density. */
 
-.imentor-shell {
+:root {
   --imentor-action: #0066cc;
   --imentor-action-focus: #0071e3;
   --imentor-ink: #1d1d1f;
@@ -18,7 +18,9 @@
   --imentor-success: #0a7d3d;
   --imentor-warning: #c4501c;
   --imentor-danger: #c52a2a;
+}
 
+.imentor-shell {
   min-height: 100vh;
   background: var(--imentor-parchment);
   color: var(--imentor-ink);
@@ -1133,5 +1135,349 @@
   }
   .imentor-modal-actions {
     justify-content: flex-end;
+  }
+}
+
+/* ===== Skill verification panel (Mentor C5) ===== */
+
+.mentor-skill-group {
+    margin-top: 18px;
+}
+
+.mentor-skill-group-title {
+    margin: 0 0 10px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--imentor-muted, #6e6e73);
+}
+
+.mentor-skill-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mentor-skill-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(60, 60, 67, 0.12);
+    border-radius: 12px;
+}
+
+.mentor-skill-row-main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.mentor-skill-row-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mentor-skill-name {
+    font-weight: 600;
+    color: var(--imentor-ink, #1d1d1f);
+}
+
+.mentor-skill-level {
+    padding: 2px 9px;
+    border-radius: 9999px;
+    background: rgba(0, 122, 255, 0.1);
+    color: #0066cc;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.mentor-skill-badge {
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.mentor-skill-badge.verified-mine {
+    background: rgba(52, 199, 89, 0.15);
+    color: #1f7a3a;
+}
+
+.mentor-skill-badge.verified-other {
+    background: rgba(142, 142, 147, 0.15);
+    color: #555;
+}
+
+.mentor-skill-evidence {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 13px;
+    color: #0066cc;
+    text-decoration: none;
+}
+
+.mentor-skill-evidence:hover {
+    text-decoration: underline;
+}
+
+.mentor-skill-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.imentor-btn-secondary {
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: 9999px;
+    border: 1px solid rgba(60, 60, 67, 0.2);
+    background: transparent;
+    color: var(--imentor-ink, #1d1d1f);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.imentor-btn-secondary:hover:not(:disabled) {
+    background: rgba(60, 60, 67, 0.06);
+}
+
+.imentor-btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.mentor-skill-locked {
+    font-size: 13px;
+    color: var(--imentor-muted, #6e6e73);
+    font-style: italic;
+}
+
+/* ============================================================
+   Industry Mentor Student Detail Page — Premium Reskin
+   Restructured editorial chassis matching Counselor Student Detail
+   ============================================================ */
+
+/* --- Full-bleed dark hero with atmospheric mesh --- */
+.imentor-detail-hero {
+  position: relative;
+  background-color: var(--imentor-tile, #1d1d1f);
+  background-image: 
+    radial-gradient(circle at 12% 20%, rgba(0, 102, 204, 0.15) 0%, transparent 45%),
+    radial-gradient(circle at 88% 80%, rgba(0, 204, 204, 0.15) 0%, transparent 45%);
+  color: var(--imentor-on-dark, #ffffff);
+  padding: 48px 0;
+  margin: -40px 0 0;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.imentor-detail-hero-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 28px;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.imentor-avatar--xl {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  font-size: 28px;
+  background-color: var(--imentor-parchment, #f5f5f7);
+  color: var(--imentor-ink, #1d1d1f);
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.imentor-detail-hero-info {
+  min-width: 0;
+}
+
+.imentor-detail-hero-info h1 {
+  font-family: 'SF Pro Display', system-ui, -apple-system, sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.125;
+  letter-spacing: 0.004em;
+  color: var(--imentor-on-dark, #ffffff);
+  margin: 0 0 6px;
+}
+
+.imentor-detail-hero-info p {
+  font-size: 17px;
+  letter-spacing: -0.022em;
+  color: var(--imentor-ink-muted, #7a7a7a);
+  margin: 0;
+}
+
+.imentor-eyebrow {
+  display: inline-block;
+  font-family: 'SF Pro Text', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.016em;
+  color: var(--imentor-action, #0066cc);
+  margin-bottom: 12px;
+}
+
+.imentor-detail-hero-info .imentor-eyebrow {
+  color: #2997ff;
+  margin-bottom: 8px;
+}
+
+.imentor-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.imentor-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  font-size: 12px;
+  letter-spacing: -0.12px;
+  color: var(--imentor-ink-muted, #7a7a7a);
+}
+
+.imentor-tag--accent {
+  background: rgba(41, 151, 255, 0.15);
+  color: #2997ff;
+}
+
+.imentor-tag--accent.is-low {
+  background: rgba(196, 80, 28, 0.15);
+  color: var(--imentor-warning, #c4501c);
+}
+
+.imentor-tag--accent.is-empty {
+  background: rgba(197, 42, 42, 0.15);
+  color: var(--imentor-danger, #c52a2a);
+}
+
+/* --- Sticky Editorial Tabs --- */
+.imentor-tabs-wrap {
+  background: var(--imentor-canvas, #ffffff);
+  border-bottom: 1px solid var(--imentor-hairline, #e0e0e0);
+  position: sticky;
+  top: 96px; /* 44px globalnav + 52px subnav */
+  z-index: 30;
+  margin-bottom: 32px;
+}
+
+.imentor-tabs {
+  display: flex;
+  gap: 0;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+  overflow-x: auto;
+}
+
+.imentor-tab {
+  padding: 14px 18px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--imentor-ink-soft, #333333);
+  font-family: inherit;
+  font-size: 14px;
+  letter-spacing: -0.016em;
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease;
+  white-space: nowrap;
+}
+
+.imentor-tab:hover {
+  color: var(--imentor-ink, #1d1d1f);
+}
+
+.imentor-tab.active {
+  color: var(--imentor-ink, #1d1d1f);
+  font-weight: 600;
+  border-bottom-color: var(--imentor-ink, #1d1d1f);
+}
+
+/* --- Content Chassis --- */
+.imentor-section {
+  padding: 40px 0;
+  background: transparent;
+}
+
+.imentor-section--tight {
+  padding: 32px 0;
+}
+
+.imentor-section-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.imentor-section-inner--wide {
+  max-width: 1180px;
+}
+
+.imentor-tab-content {
+  padding: 0;
+}
+
+/* --- Buttons & UI helper overrides --- */
+.imentor-btn-lg {
+  font-size: 17px;
+  padding: 12px 24px;
+  border-radius: 9999px;
+  font-weight: 500;
+}
+
+.imentor-btn-secondary.on-dark {
+  background: transparent;
+  color: var(--imentor-on-dark, #ffffff);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.imentor-btn-secondary.on-dark:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: var(--imentor-on-dark, #ffffff);
+}
+
+/* --- Detail page responsiveness --- */
+@media (max-width: 833px) {
+  .imentor-detail-hero {
+    padding: 64px 0;
+  }
+  .imentor-detail-hero-inner {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    text-align: center;
+  }
+  .imentor-detail-hero-info h1 {
+    font-size: 36px;
+  }
+  .imentor-tags {
+    justify-content: center;
+  }
+  .imentor-avatar--xl {
+    margin: 0 auto;
   }
 }
