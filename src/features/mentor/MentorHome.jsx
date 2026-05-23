@@ -13,6 +13,8 @@ import {
   createMentorFeedback,
 } from './api/industryMentorApi';
 import { getMentorRoadmapQueue } from '../roadmap-review/reviewApi';
+import { Highlight } from '@/components/animate-ui/primitives/effects/highlight';
+import { AnimatePresence, motion } from 'motion/react';
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Tổng quan' },
@@ -22,8 +24,24 @@ const NAV_ITEMS = [
 ];
 
 export function MentorHome({ session, onSignOut }) {
-  const [currentView, setCurrentView] = useState('overview');
-  const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const getInitialViewInfo = () => {
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    if (parts[0] === 'mentor' && parts[1]) {
+      const view = parts[1];
+      const validViews = ['overview', 'queue', 'roadmap-reviews', 'feedback'];
+      if (validViews.includes(view)) {
+        return {
+          view,
+          studentId: parts[2] || null
+        };
+      }
+    }
+    return { view: 'overview', studentId: null };
+  };
+
+  const initialInfo = getInitialViewInfo();
+  const [currentView, setCurrentView] = useState(initialInfo.view);
+  const [selectedStudentId, setSelectedStudentId] = useState(initialInfo.studentId);
   const [reviewQueue, setReviewQueue] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +51,13 @@ export function MentorHome({ session, onSignOut }) {
 
   useEffect(() => {
     loadInitialData();
+    const handlePopState = () => {
+      const info = getInitialViewInfo();
+      setCurrentView(info.view);
+      setSelectedStudentId(info.studentId);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -132,87 +157,131 @@ export function MentorHome({ session, onSignOut }) {
         <div className="imentor-subnav-inner">
           <span className="imentor-subnav-title">Industry Mentor</span>
           <div className="imentor-subnav-links">
-            {NAV_ITEMS.map((item) => {
-              const isActive = currentView === item.id && !selectedStudentId;
-              const badge =
-                item.id === 'queue' && reviewQueue.length > 0
-                  ? reviewQueue.length
-                  : item.id === 'roadmap-reviews' && pendingReviewCount > 0
-                  ? pendingReviewCount
-                  : item.id === 'feedback' && feedbacks.length > 0
-                  ? feedbacks.length
-                  : null;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`imentor-subnav-link ${isActive ? 'active' : ''}`}
-                  onClick={() => handleNavigate(item.id)}
-                >
-                  {item.label}
-                  {badge != null && (
-                    <span className="imentor-subnav-badge">{badge}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          <span className="imentor-subnav-spacer" />
-          {currentView === 'queue' && !selectedStudentId && reviewQueue.length > 0 && (
-            <button
-              type="button"
-              className="imentor-subnav-cta"
-              onClick={() => handleNavigate('feedback')}
+            <Highlight
+              value={selectedStudentId ? null : currentView}
+              onValueChange={(val) => {
+                if (val) handleNavigate(val);
+              }}
+              className="absolute inset-0 bg-[rgba(0,102,204,0.08)] rounded-md"
+              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              hover={false}
+              click={true}
             >
-              Xem lịch sử
-            </button>
-          )}
+              {NAV_ITEMS.map((item) => {
+                const isActive = currentView === item.id && !selectedStudentId;
+                const badge =
+                  item.id === 'queue' && reviewQueue.length > 0
+                    ? reviewQueue.length
+                    : item.id === 'roadmap-reviews' && pendingReviewCount > 0
+                    ? pendingReviewCount
+                    : item.id === 'feedback' && feedbacks.length > 0
+                    ? feedbacks.length
+                    : null;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    data-value={item.id}
+                    className={`imentor-subnav-link relative z-10 ${isActive ? 'active' : ''}`}
+                    style={{ background: 'transparent' }}
+                  >
+                    {item.label}
+                    {badge != null && (
+                      <span className="imentor-subnav-badge">{badge}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </Highlight>
+          </div>
         </div>
       </nav>
 
       <main className="imentor-main">
-        {currentView === 'overview' && !selectedStudentId && (
-          <MentorOverview
-            reviewQueue={reviewQueue}
-            feedbacks={feedbacks}
-            loading={loading}
-            mentorName={mentorName}
-            onNavigateToQueue={() => handleNavigate('queue')}
-            onNavigateToFeedback={() => handleNavigate('feedback')}
-            onSelectStudent={handleSelectStudent}
-          />
-        )}
+        <AnimatePresence mode="wait">
+          {currentView === 'overview' && !selectedStudentId && (
+            <motion.div
+              key="overview"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.18, ease: 'easeInOut' }}
+            >
+              <MentorOverview
+                reviewQueue={reviewQueue}
+                feedbacks={feedbacks}
+                loading={loading}
+                mentorName={mentorName}
+                onNavigateToQueue={() => handleNavigate('queue')}
+                onNavigateToFeedback={() => handleNavigate('feedback')}
+                onSelectStudent={handleSelectStudent}
+              />
+            </motion.div>
+          )}
 
-        {currentView === 'queue' && !selectedStudentId && (
-          <MentorReviewQueue
-            reviewQueue={reviewQueue}
-            loading={loading}
-            onSelectStudent={handleSelectStudent}
-            onWriteFeedback={handleOpenFeedbackModal}
-          />
-        )}
+          {currentView === 'queue' && !selectedStudentId && (
+            <motion.div
+              key="queue"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.18, ease: 'easeInOut' }}
+            >
+              <MentorReviewQueue
+                reviewQueue={reviewQueue}
+                loading={loading}
+                onSelectStudent={handleSelectStudent}
+                onWriteFeedback={handleOpenFeedbackModal}
+              />
+            </motion.div>
+          )}
 
-        {currentView === 'queue' && selectedStudentId && (
-          <MentorStudentDetail
-            session={session}
-            studentId={selectedStudentId}
-            reviewQueue={reviewQueue}
-            onBack={handleBack}
-            onWriteFeedback={handleOpenFeedbackModal}
-          />
-        )}
+          {currentView === 'queue' && selectedStudentId && (
+            <motion.div
+              key={`student-detail-${selectedStudentId}`}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+            >
+              <MentorStudentDetail
+                session={session}
+                studentId={selectedStudentId}
+                reviewQueue={reviewQueue}
+                onBack={handleBack}
+                onWriteFeedback={handleOpenFeedbackModal}
+              />
+            </motion.div>
+          )}
 
-        {currentView === 'roadmap-reviews' && (
-          <RoadmapReviewQueue session={session} role="IndustryMentor" />
-        )}
+          {currentView === 'roadmap-reviews' && (
+            <motion.div
+              key="roadmap-reviews"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.18, ease: 'easeInOut' }}
+            >
+              <RoadmapReviewQueue session={session} role="IndustryMentor" />
+            </motion.div>
+          )}
 
-        {currentView === 'feedback' && !selectedStudentId && (
-          <MentorFeedbackHistory
-            feedbacks={feedbacks}
-            reviewQueue={reviewQueue}
-            onSelectStudent={handleSelectStudent}
-          />
-        )}
+          {currentView === 'feedback' && !selectedStudentId && (
+            <motion.div
+              key="feedback"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.18, ease: 'easeInOut' }}
+            >
+              <MentorFeedbackHistory
+                feedbacks={feedbacks}
+                reviewQueue={reviewQueue}
+                onSelectStudent={handleSelectStudent}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
       {showFeedbackModal && feedbackModalStudent && (

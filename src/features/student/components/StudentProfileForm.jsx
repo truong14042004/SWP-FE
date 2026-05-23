@@ -1,4 +1,5 @@
 import { CareerRoleSelect } from './CareerRoleSelect';
+import { apiUrl } from '../../../config';
 
 export function StudentProfileForm({
   initials,
@@ -8,10 +9,13 @@ export function StudentProfileForm({
   loadingProfile,
   savingProfile,
   uploadingAvatar,
+  uploadingCv,
   hasProfile,
   onChange,
   onAvatarFileChange,
-  onReload,
+  onCvFileChange,
+  onAvatarImport,
+  onViewCv,
   onSubmit,
 }) {
   return (
@@ -102,8 +106,54 @@ export function StudentProfileForm({
         </label>
       </div>
 
+      <div className="student-profile-section-label">Hồ sơ cá nhân (CV)</div>
+      <div className="student-profile-grid single">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+            Tải lên CV của bạn dưới dạng file PDF (tối đa 10MB) để hệ thống và AI Mentor có thêm thông tin định hướng.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <label
+              className="secondary-action student-avatar-upload"
+              style={{
+                margin: 0,
+                cursor: !hasProfile ? 'not-allowed' : 'pointer',
+                opacity: !hasProfile ? 0.6 : 1,
+              }}
+            >
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={onCvFileChange}
+                disabled={loadingProfile || savingProfile || uploadingCv || !hasProfile}
+                style={{ display: 'none' }}
+              />
+              {uploadingCv ? 'Đang tải CV...' : 'Tải CV mới (PDF)'}
+            </label>
+            {form.cvUrl ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.05)', padding: '6px 12px', borderRadius: '6px' }}>
+                <span style={{ fontSize: '1.2rem' }}>📄</span>
+                <a
+                  href="#"
+                  onClick={onViewCv}
+                  style={{ color: 'var(--accent)', textDecoration: 'underline', fontSize: '0.9rem' }}
+                >
+                  {form.cvName || 'Xem CV hiện tại'}
+                </a>
+              </div>
+            ) : (
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Chưa có file CV nào được tải lên.</span>
+            )}
+          </div>
+          {!hasProfile && (
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#ff4d4f', fontWeight: '500', marginTop: '4px' }}>
+              * Bạn vui lòng bấm nút "Tạo hồ sơ" ở góc phải bên dưới để tạo hồ sơ trước khi tải lên CV.
+            </p>
+          )}
+        </div>
+      </div>
+
       <div className="student-profile-actions">
-        <button type="button" className="secondary-action" onClick={onReload} disabled={loadingProfile || savingProfile}>Tải lại</button>
         <button type="submit" className="student-save-btn" disabled={loadingProfile || savingProfile}>
           {savingProfile ? 'Đang lưu...' : hasProfile ? 'Lưu thay đổi' : 'Tạo hồ sơ'}
         </button>

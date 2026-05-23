@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import {
+  cancelSubscription,
   createSubscriptionCheckout,
   getMySubscriptions,
   getSubscriptionPlans,
@@ -41,6 +42,7 @@ export function StudentSubscriptionPage({ session }) {
   const [mySubscriptions, setMySubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [checkoutLoadingId, setCheckoutLoadingId] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,6 +92,27 @@ export function StudentSubscriptionPage({ session }) {
     }
   }
 
+  async function handleCancel() {
+    if (!activeSubscription) return;
+    const planLabel = activeSubscription.planName || 'gói hiện tại';
+    const confirmed = window.confirm(
+      `Bạn có chắc muốn hủy “${planLabel}”?\n\nSau khi hủy, bạn sẽ mất các quyền lợi đi kèm (lượt mentor review, tính năng cao cấp) và cần mua lại nếu muốn dùng tiếp.`,
+    );
+    if (!confirmed) return;
+
+    setCancelling(true);
+    try {
+      await cancelSubscription(session);
+      toast.success('Đã hủy gói. Các quyền lợi sẽ kết thúc ngay.');
+      const mine = await getMySubscriptions(session).catch(() => []);
+      setMySubscriptions(Array.isArray(mine) ? mine : []);
+    } catch (error) {
+      toast.error(error.message || 'Không hủy được gói.');
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   return (
     <section className="student-subscription">
       <header className="student-subscription-hero">
@@ -113,6 +136,14 @@ export function StudentSubscriptionPage({ session }) {
               )}
             </p>
           </div>
+          <button
+            type="button"
+            className="student-subscription-cancel"
+            onClick={handleCancel}
+            disabled={cancelling}
+          >
+            {cancelling ? 'Đang hủy...' : 'Hủy gói'}
+          </button>
         </article>
       )}
 

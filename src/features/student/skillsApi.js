@@ -63,3 +63,9 @@ export function getLatestSkillGap(session) {
 export function getSkillGapById(session, id) {
     return authorizedRequest(`/api/skill-gap/${id}`, session);
 }
+
+export function getSignedUrl(session, objectName) {
+    return authorizedRequest(`/api/storage/signed-url?objectName=${encodeURIComponent(objectName)}`, session);
+}
+
+

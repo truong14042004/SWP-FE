@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Button } from '@/components/animate-ui/components/buttons/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/animate-ui/components/radix/tabs';
+import { ScrollProgress, ScrollProgressProvider } from '@/components/animate-ui/primitives/animate/scroll-progress';
+import { Fade } from '@/components/animate-ui/primitives/effects/fade';
+import { motion } from 'motion/react';
 import { toast } from 'react-toastify';
 import {
   getStudentProfile,
@@ -8,6 +13,7 @@ import {
   getStudentSkillGapById,
   getStudentRoadmap,
   getStudentFeedbacks,
+  getSignedUrl,
 } from '../api/counselorApi';
 
 function getInitials(name = '') {
@@ -191,13 +197,15 @@ export function CounselorStudentDetail({
     return (
       <section className="counselor-section counselor-section--tight">
         <div className="counselor-section-inner counselor-section-inner--wide">
-          <button
+          <Button
             type="button"
             className="counselor-back-btn"
             onClick={onBack}
+            hoverScale={1.05}
+            tapScale={0.95}
           >
             Quay lại
-          </button>
+          </Button>
           <div className="counselor-loading">
             <div className="counselor-spinner" aria-hidden />
             <p>Đang tải...</p>
@@ -208,7 +216,13 @@ export function CounselorStudentDetail({
   }
 
   return (
-    <>
+    <ScrollProgressProvider global={true} direction="horizontal">
+      <ScrollProgress
+        className="fixed top-0 left-0 right-0 h-1 z-50 transform origin-left"
+        mode="scaleX"
+        style={{ backgroundColor: 'var(--c-primary, #0f766e)' }}
+      />
+
       {/* Full-bleed dark hero */}
       <section className="counselor-detail-hero">
         <div className="counselor-detail-hero-inner">
@@ -237,108 +251,111 @@ export function CounselorStudentDetail({
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
-            <button
+            <Button
               type="button"
               className="counselor-btn counselor-btn-on-dark counselor-btn-lg"
               onClick={() => onOpenFeedbackModal(student)}
+              hoverScale={1.05}
+              tapScale={0.95}
             >
               Viết feedback
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               className="counselor-btn counselor-btn-link on-dark"
               onClick={onBack}
+              hoverScale={1.05}
+              tapScale={0.95}
             >
               Quay lại danh sách
-            </button>
+            </Button>
           </div>
         </div>
       </section>
 
-      {/* Sticky tabs */}
-      <div className="counselor-tabs-wrap">
-        <nav
-          className="counselor-tabs"
-          role="tablist"
-          aria-label="Tabs chi tiết sinh viên"
-        >
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              className={`counselor-tab ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+      {/* Sticky tabs navigation wrap */}
+      <div className="counselor-tabs-wrap" style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-[600px] mx-auto">
+          <TabsList className="w-full bg-[#f4f1ea] dark:bg-[#252422] p-1 rounded-xl flex gap-1 border dark:border-neutral-800">
+            {TABS.map((t) => (
+              <TabsTrigger
+                key={t.id}
+                value={t.id}
+                className="py-2 text-sm font-medium transition-all"
+              >
+                {t.label}
+                {t.id === 'skills' && skills.length > 0 && ` (${skills.length})`}
+                {t.id === 'feedback' && feedbacks.length > 0 && ` (${feedbacks.length})`}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
 
       <section className="counselor-section counselor-section--tight">
         <div className="counselor-section-inner counselor-section-inner--wide">
           <div className="counselor-tab-content" role="tabpanel">
-            {activeTab === 'profile' && <ProfileTab profile={profileDetails} />}
+            <Fade key={activeTab} inView={true} delay={100} transition={{ duration: 0.3 }}>
+              {activeTab === 'profile' && <ProfileTab profile={profileDetails} session={session} />}
 
-            {activeTab === 'skills' && (
-              <SkillsTab skills={skills} skillsByCategory={skillsByCategory} />
-            )}
+              {activeTab === 'skills' && (
+                <SkillsTab skills={skills} skillsByCategory={skillsByCategory} />
+              )}
 
-            {activeTab === 'skillgap' && (
-              <SkillGapTab
-                latest={skillGapLatest}
-                history={skillGapHistory}
-                selected={selectedSkillGapReport}
-                stats={gapStats}
-                loadingDetail={skillGapLoading}
-                onSelect={async (report) => {
-                  if (skillGapLatest && report.id === skillGapLatest.id) {
-                    setSelectedSkillGapReport(skillGapLatest);
-                    return;
-                  }
-                  setSkillGapLoading(true);
-                  try {
-                    const full = await getStudentSkillGapById(
-                      session,
-                      studentId,
-                      report.id,
-                    );
-                    setSelectedSkillGapReport(full);
-                  } catch (error) {
-                    toast.error(error.message || 'Không thể tải chi tiết báo cáo');
-                    setSelectedSkillGapReport(report);
-                  } finally {
-                    setSkillGapLoading(false);
-                  }
-                }}
-              />
-            )}
+              {activeTab === 'skillgap' && (
+                <SkillGapTab
+                  latest={skillGapLatest}
+                  history={skillGapHistory}
+                  selected={selectedSkillGapReport}
+                  stats={gapStats}
+                  loadingDetail={skillGapLoading}
+                  onSelect={async (report) => {
+                    if (skillGapLatest && report.id === skillGapLatest.id) {
+                      setSelectedSkillGapReport(skillGapLatest);
+                      return;
+                    }
+                    setSkillGapLoading(true);
+                    try {
+                      const full = await getStudentSkillGapById(
+                        session,
+                        studentId,
+                        report.id,
+                      );
+                      setSelectedSkillGapReport(full);
+                    } catch (error) {
+                      toast.error(error.message || 'Không thể tải chi tiết báo cáo');
+                      setSelectedSkillGapReport(report);
+                    } finally {
+                      setSkillGapLoading(false);
+                    }
+                  }}
+                />
+              )}
 
-            {activeTab === 'roadmap' && (
-              <RoadmapTab
-                roadmap={roadmap}
-                topLevelNodes={roadmapTopLevelNodes}
-                totalHours={roadmapTotalHours}
-              />
-            )}
+              {activeTab === 'roadmap' && (
+                <RoadmapTab
+                  roadmap={roadmap}
+                  topLevelNodes={roadmapTopLevelNodes}
+                  totalHours={roadmapTotalHours}
+                />
+              )}
 
-            {activeTab === 'feedback' && (
-              <FeedbackTab
-                feedbacks={feedbacks}
-                onOpenFeedback={() => onOpenFeedbackModal(student)}
-              />
-            )}
+              {activeTab === 'feedback' && (
+                <FeedbackTab
+                  feedbacks={feedbacks}
+                  onOpenFeedback={() => onOpenFeedbackModal(student)}
+                />
+              )}
+            </Fade>
           </div>
         </div>
       </section>
-    </>
+    </ScrollProgressProvider>
   );
 }
 
 /* ── Profile Tab ─────────────────────────────────────────── */
-function ProfileTab({ profile }) {
+function ProfileTab({ profile, session }) {
   if (!profile) {
     return (
       <div className="counselor-empty">
@@ -386,6 +403,31 @@ function ProfileTab({ profile }) {
           }
         />
       )}
+      {profile.cvUrl && (
+        <ProfileItem
+          label="CV"
+          fullWidth
+          value={
+            <button
+              type="button"
+              className="underline text-teal-700 hover:text-teal-600 font-medium text-left"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--c-primary, #0f766e)' }}
+              onClick={async () => {
+                try {
+                  const response = await getSignedUrl(session, profile.cvUrl);
+                  if (response.url) {
+                    window.open(response.url, '_blank');
+                  }
+                } catch (error) {
+                  toast.error('Không thể tải CV.');
+                }
+              }}
+            >
+              📄 {profile.cvName || 'Xem CV'}
+            </button>
+          }
+        />
+      )}
     </div>
   );
 }
@@ -426,7 +468,12 @@ function SkillsTab({ skills, skillsByCategory }) {
             <span>{list.length} kỹ năng</span>
           </header>
           {list.map((skill) => (
-            <div key={skill.id} className="counselor-skill-row">
+            <motion.div
+              key={skill.id}
+              className="counselor-skill-row"
+              whileHover={{ x: 6, backgroundColor: 'rgba(0,102,204,0.015)' }}
+              transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+            >
               <div
                 className={`counselor-skill-icon ${
                   skill.isVerified ? 'verified' : 'unverified'
@@ -448,7 +495,7 @@ function SkillsTab({ skills, skillsByCategory }) {
                   Verify: {skill.verifiedByFullName}
                 </span>
               )}
-            </div>
+            </motion.div>
           ))}
         </div>
       ))}
@@ -523,9 +570,11 @@ function SkillGapTab({ latest, history, selected, stats, loadingDetail, onSelect
                 {selected.items.map((item, index) => {
                   const cls = getGapStatusClass(item.status);
                   return (
-                    <div
+                    <motion.div
                       key={item.skillId}
                       className={`counselor-gap-item ${cls}`}
+                      whileHover={{ x: 6 }}
+                      transition={{ type: 'spring', stiffness: 350, damping: 25 }}
                     >
                       <div className="counselor-gap-item-priority">
                         #{index + 1}
@@ -547,7 +596,7 @@ function SkillGapTab({ latest, history, selected, stats, loadingDetail, onSelect
                       <span className={`counselor-gap-status ${cls}`}>
                         {item.status}
                       </span>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -560,23 +609,32 @@ function SkillGapTab({ latest, history, selected, stats, loadingDetail, onSelect
         <div className="counselor-gap-history">
           <h4 className="counselor-tab-section-title">Lịch sử báo cáo</h4>
           {history.map((report) => (
-            <button
+            <Button
               key={report.id}
-              type="button"
-              className={`counselor-gap-history-row ${
-                selected?.id === report.id ? 'active' : ''
-              }`}
-              onClick={() => onSelect(report)}
+              asChild
+              hoverScale={1.02}
+              tapScale={0.98}
             >
-              <div className="counselor-gap-history-info">
-                <strong>{formatShortDate(report.createdAt)}</strong>
-                <span>
-                  {Math.round(Number(report.matchScore))}% ·{' '}
-                  {report.careerRoleName}
-                </span>
-              </div>
-              <span className="counselor-btn counselor-btn-link">Xem</span>
-            </button>
+              <button
+                type="button"
+                className={`counselor-gap-history-row ${
+                  selected?.id === report.id ? 'active' : ''
+                }`}
+                style={{
+                  transition: 'border-color 0.2s, box-shadow 0.2s',
+                }}
+                onClick={() => onSelect(report)}
+              >
+                <div className="counselor-gap-history-info">
+                  <strong>{formatShortDate(report.createdAt)}</strong>
+                  <span>
+                    {Math.round(Number(report.matchScore))}% ·{' '}
+                    {report.careerRoleName}
+                  </span>
+                </div>
+                <span className="counselor-btn counselor-btn-link">Xem</span>
+              </button>
+            </Button>
           ))}
         </div>
       )}
@@ -645,7 +703,11 @@ function RoadmapNode({ node }) {
 
   const statusClass = getRoadmapStatusClass(node.status);
   return (
-    <div className="counselor-roadmap-node">
+    <motion.div
+      className="counselor-roadmap-node"
+      whileHover={{ x: 6, backgroundColor: 'rgba(0,102,204,0.015)' }}
+      transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+    >
       <div
         className={`counselor-roadmap-node-status ${statusClass}`}
         aria-hidden
@@ -659,7 +721,7 @@ function RoadmapNode({ node }) {
       <span className={`counselor-roadmap-node-badge ${statusClass}`}>
         {node.status}
       </span>
-    </div>
+    </motion.div>
   );
 }
 
@@ -669,13 +731,15 @@ function FeedbackTab({ feedbacks, onOpenFeedback }) {
     <div>
       <header className="counselor-feedback-tab-head">
         <h3>Feedback đã gửi ({feedbacks.length})</h3>
-        <button
+        <Button
           type="button"
           className="counselor-btn counselor-btn-primary"
           onClick={onOpenFeedback}
+          hoverScale={1.05}
+          tapScale={0.95}
         >
           + Mới
-        </button>
+        </Button>
       </header>
 
       {feedbacks.length === 0 ? (
@@ -687,7 +751,12 @@ function FeedbackTab({ feedbacks, onOpenFeedback }) {
       ) : (
         <div className="counselor-feedback-list">
           {feedbacks.map((fb) => (
-            <article key={fb.id} className="counselor-feedback-item">
+            <motion.article
+              key={fb.id}
+              className="counselor-feedback-item"
+              whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(0, 102, 204, 0.05)', borderColor: 'rgba(0, 102, 204, 0.15)' }}
+              transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+            >
               <header className="counselor-feedback-header">
                 <span className="counselor-feedback-date">
                   {formatDate(fb.createdAt)}
@@ -730,7 +799,7 @@ function FeedbackTab({ feedbacks, onOpenFeedback }) {
                   <p>{fb.privateNotes}</p>
                 </div>
               )}
-            </article>
+            </motion.article>
           ))}
         </div>
       )}

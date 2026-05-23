@@ -1,10 +1,11 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AuthPage } from './features/auth/AuthPage';
 import { AdminDashboard } from './features/admin/AdminDashboard';
 import { CounselorHome } from './features/counselor/CounselorHome';
 import { HomePage } from './features/home/HomePage';
 import { MentorHome } from './features/mentor/MentorHome';
 import { PaymentResultPage } from './features/subscriptions/PaymentResultPage';
+import { PublicPortfolioPage } from './features/portfolio/PublicPortfolioPage';
 import { UnsupportedRoleHome } from './features/member/UnsupportedRoleHome';
 import { StudentDashboard } from './features/student/StudentDashboard';
 import { normalizeRole, userRoles } from './auth/roles';
@@ -36,6 +37,18 @@ export default function App() {
   function handleAuthenticated(nextSession) {
     setSession(nextSession);
     setShowLogin(false);
+  }
+
+  // Public portfolio route: /portfolio/{slug}
+  // Doesn't require authentication and isn't gated by role.
+  const portfolioMatch = currentPath.match(/^\/portfolio\/([^/]+)\/?$/);
+  if (portfolioMatch) {
+    return (
+      <PublicPortfolioPage
+        slug={decodeURIComponent(portfolioMatch[1])}
+        onHome={() => navigateTo('/')}
+      />
+    );
   }
 
   if (currentPath === '/payment/success') {

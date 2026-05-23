@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useState } from 'react';
+
 const NAV_ICONS = {
   overview: (
     <svg className="nav-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -64,8 +66,12 @@ const NAV_ICONS = {
   ),
 };
 
-export const adminSections = [
-  { id: 'overview',     label: 'Overview' },
+/**
+ * Section ids that live UNDER the Overview parent. Clicking the chevron next
+ * to Overview expands/collapses this group. They are still individual sections
+ * — the parent only acts as a folder.
+ */
+const MANAGEMENT_SECTIONS = [
   { id: 'users',        label: 'Users' },
   { id: 'assignments',  label: 'Assignments' },
   { id: 'payments',     label: 'Payments' },
@@ -74,6 +80,17 @@ export const adminSections = [
   { id: 'resources',    label: 'Resources' },
   { id: 'requirements', label: 'Requirements' },
   { id: 'careerRoles',  label: 'Career roles' },
+];
+
+const MANAGEMENT_IDS = new Set(MANAGEMENT_SECTIONS.map((s) => s.id));
+
+/**
+ * Backwards-compatible flat list. AdminDashboard imports this only for its
+ * switch statement; the visual structure is decided here.
+ */
+export const adminSections = [
+  { id: 'overview', label: 'Overview' },
+  ...MANAGEMENT_SECTIONS,
 ];
 
 const SECTION_LABELS = {
@@ -88,6 +105,8 @@ const SECTION_LABELS = {
   careerRoles:  { title: 'Career roles',       sub: 'Target roles students can pursue' },
 };
 
+const MGMT_OPEN_STORAGE_KEY = 'admin.sidebar.mgmtOpen';
+
 function getInitials(name = '') {
   return name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'A';
 }
@@ -96,34 +115,115 @@ export function AdminLayout({ session, activeSection, onSectionChange, onRefresh
   const initials = getInitials(session?.user?.fullName);
   const meta = SECTION_LABELS[activeSection] || SECTION_LABELS.overview;
 
+  const isManagementActive = MANAGEMENT_IDS.has(activeSection);
+
+  // The management group is open when:
+  //  (a) the user is currently on one of its children, OR
+  //  (b) the user explicitly toggled it open via the chevron.
+  // We persist the "explicit" choice so it survives reloads.
+  const [mgmtOpen, setMgmtOpen] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem(MGMT_OPEN_STORAGE_KEY);
+      if (stored === '1') return true;
+      if (stored === '0') return false;
+    } catch { /* ignore */ }
+    return isManagementActive; // default: open if a child is active
+  });
+
+  // Auto-open when the user navigates into a child section.
+  useEffect(() => {
+    if (isManagementActive) setMgmtOpen(true);
+  }, [isManagementActive]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(MGMT_OPEN_STORAGE_KEY, mgmtOpen ? '1' : '0');
+    } catch { /* ignore */ }
+  }, [mgmtOpen]);
+
+  const showGroup = useMemo(() => mgmtOpen || isManagementActive, [mgmtOpen, isManagementActive]);
+
+  function handleOverviewClick() {
+    onSectionChange('overview');
+    setMgmtOpen((prev) => !prev); // also toggle the group when the parent itself is clicked
+  }
+
+  function handleChevronClick(event) {
+    event.stopPropagation(); // don't trigger the parent's navigate-to-overview
+    setMgmtOpen((prev) => !prev);
+  }
+
   return (
     <main className="admin-shell">
       <aside className="admin-rail" aria-label="Admin navigation">
         <div className="admin-rail-brand">
           <span className="admin-rail-mark">CM</span>
-          <div>
+          <div className="admin-rail-brand-text">
             <strong>CareerMap</strong>
             <small>Admin Console</small>
           </div>
         </div>
 
         <nav className="admin-rail-nav" aria-label="Admin sections">
-          {adminSections.map((section) => (
+          {/* Overview parent — its label routes to the overview, the chevron toggles the children. */}
+          <div className={`admin-rail-parent${activeSection === 'overview' ? ' active' : ''}`}>
             <button
-              key={section.id}
               type="button"
-              className={activeSection === section.id ? 'active' : ''}
-              onClick={() => onSectionChange(section.id)}
+              className="admin-rail-parent-main"
+              onClick={handleOverviewClick}
+              aria-current={activeSection === 'overview' ? 'page' : undefined}
             >
-              {NAV_ICONS[section.id]}
-              {section.label}
+              {NAV_ICONS.overview}
+              <span className="admin-rail-nav-label">Overview</span>
             </button>
-          ))}
+            <button
+              type="button"
+              className={`admin-rail-chevron${showGroup ? ' is-open' : ''}`}
+              onClick={handleChevronClick}
+              aria-expanded={showGroup}
+              aria-controls="admin-rail-mgmt"
+              aria-label={showGroup ? 'Thu gọn danh mục quản lý' : 'Mở rộng danh mục quản lý'}
+              title={showGroup ? 'Thu gọn' : 'Mở rộng'}
+            >
+              <svg viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path
+                  d="M3.5 5.5L7 9l3.5-3.5"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {/* Management subgroup — collapses with a CSS animation. */}
+          <div
+            id="admin-rail-mgmt"
+            className={`admin-rail-subnav${showGroup ? ' is-open' : ''}`}
+            role="group"
+            aria-label="Quản lý"
+          >
+            {MANAGEMENT_SECTIONS.map((section) => (
+              <button
+                key={section.id}
+                type="button"
+                className={`admin-rail-subnav-item${activeSection === section.id ? ' active' : ''}`}
+                onClick={() => onSectionChange(section.id)}
+                aria-current={activeSection === section.id ? 'page' : undefined}
+              >
+                {NAV_ICONS[section.id]}
+                <span className="admin-rail-nav-label">{section.label}</span>
+              </button>
+            ))}
+          </div>
         </nav>
 
         <div className="admin-rail-account">
           <div className="admin-rail-id">
-            <span className="admin-rail-avatar">{initials}</span>
+            <span className="admin-rail-avatar" title={session?.user?.fullName || 'Admin'}>
+              {initials}
+            </span>
             <div>
               <strong>{session?.user?.fullName || 'Admin'}</strong>
               <small>{session?.user?.email}</small>

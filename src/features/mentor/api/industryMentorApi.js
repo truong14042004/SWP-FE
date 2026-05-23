@@ -30,3 +30,24 @@ export function createMentorFeedback(session, payload) {
     body: JSON.stringify(payload),
   });
 }
+
+export function getStudentSkills(session, studentId) {
+  return authorizedRequest(`/api/industry-mentor/students/${studentId}/skills`, session);
+}
+
+export function verifyStudentSkill(session, userSkillId) {
+  return authorizedRequest(`/api/industry-mentor/user-skills/${userSkillId}/verify`, session, {
+    method: 'POST',
+  });
+}
+
+export function unverifyStudentSkill(session, userSkillId) {
+  return authorizedRequest(`/api/industry-mentor/user-skills/${userSkillId}/unverify`, session, {
+    method: 'POST',
+  });
+}
+
+export function getSignedUrl(session, objectName) {
+  return authorizedRequest(`/api/storage/signed-url?objectName=${encodeURIComponent(objectName)}`, session);
+}
+

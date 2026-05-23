@@ -132,6 +132,15 @@ function buildPayload(form) {
   };
 }
 
+function ensureAbsoluteUrl(url) {
+  if (!url) return '';
+  const trimmed = String(url).trim();
+  if (/^(https?:)?\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
 function getPublicUrl(slug) {
   if (!slug) return '';
   return `${window.location.origin}/portfolio/${slug}`;
@@ -285,22 +294,66 @@ export function StudentPortfolioPage({ session }) {
     });
   }
 
+  // Make sure the portfolio + every project has an ID so child uploads can target them.
+  // Returns the up-to-date project object (with `id`) for the given localId, or null on failure.
+  async function ensureProjectPersisted(localId) {
+    const targetIndex = form.projects.findIndex((p) => p.localId === localId);
+    if (targetIndex < 0) return null;
+
+    const existing = form.projects[targetIndex];
+    if (existing.id) return existing;
+
+    setSaving(true);
+    try {
+      const payload = buildPayload(form);
+      const saved = hasPortfolio
+        ? await updatePortfolio(session, payload)
+        : await createPortfolio(session, payload);
+
+      const normalized = normalizePortfolio(saved);
+      setForm(normalized);
+      setHasPortfolio(true);
+
+      // Map back by orderIndex (server preserves the input order in the response).
+      const persisted = normalized.projects[targetIndex];
+      if (persisted?.id) {
+        return { ...persisted, localId };
+      }
+      return null;
+    } catch (requestError) {
+      const message = requestError.message || 'Không lưu được portfolio.';
+      setError(message);
+      toast.error(message);
+      return null;
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleProjectImageFileChange(project, event) {
     const file = event.target.files?.[0];
     event.target.value = '';
 
-    if (!file || !project.id) {
+    if (!file) {
       return;
     }
 
-    setUploadingProjectId(project.localId);
+    let target = project;
+    if (!target.id) {
+      const persisted = await ensureProjectPersisted(project.localId);
+      if (!persisted) return;
+      target = persisted;
+    }
+
+    setUploadingProjectId(target.localId);
     setError('');
     try {
-      const uploaded = await uploadPortfolioProjectImage(session, project.id, file);
-      updateProject(project.localId, 'imageUrl', getStorageValue(uploaded, project.imageUrl));
-      toast.success('Da upload anh du an.');
+      const uploaded = await uploadPortfolioProjectImage(session, target.id, file);
+      updateProject(target.localId, 'imageUrl', getStorageValue(uploaded, target.imageUrl));
+      setNotice('Đã upload ảnh dự án.');
+      toast.success('Đã upload ảnh dự án.');
     } catch (requestError) {
-      const message = requestError.message || 'Khong upload duoc anh du an.';
+      const message = requestError.message || 'Không upload được ảnh dự án.';
       setError(message);
       toast.error(message);
     } finally {
@@ -311,21 +364,29 @@ export function StudentPortfolioPage({ session }) {
   async function handleProjectImageImport(project) {
     const url = project.imageUrl.trim();
 
-    if (!project.id || !url) {
+    if (!url) {
       return;
     }
 
-    setUploadingProjectId(project.localId);
+    let target = project;
+    if (!target.id) {
+      const persisted = await ensureProjectPersisted(project.localId);
+      if (!persisted) return;
+      target = { ...persisted, imageUrl: url };
+    }
+
+    setUploadingProjectId(target.localId);
     setError('');
     try {
-      const imported = await importPortfolioProjectImageFromUrl(session, project.id, {
+      const imported = await importPortfolioProjectImageFromUrl(session, target.id, {
         url,
         fileName: getFileNameFromUrl(url),
       });
-      updateProject(project.localId, 'imageUrl', getStorageValue(imported, url));
-      toast.success('Da import anh du an tu URL.');
+      updateProject(target.localId, 'imageUrl', getStorageValue(imported, url));
+      setNotice('Đã import ảnh từ URL.');
+      toast.success('Đã import ảnh từ URL.');
     } catch (requestError) {
-      const message = requestError.message || 'Khong import duoc anh du an.';
+      const message = requestError.message || 'Không import được ảnh dự án.';
       setError(message);
       toast.error(message);
     } finally {
@@ -681,7 +742,6 @@ function ProjectEditor({
   uploadingImage,
 }) {
   const tags = parseTechStack(project.techStack);
-  const hasProjectId = Boolean(project.id);
 
   return (
     <article className="portfolio-project-editor">
@@ -714,17 +774,6 @@ function ProjectEditor({
           />
         </label>
 
-        <label className="portfolio-field">
-          <span>GitHub Repository Id</span>
-          <input
-            value={project.githubRepositoryId}
-            onChange={(event) =>
-              onChange(project.localId, 'githubRepositoryId', event.target.value)
-            }
-            placeholder="Có thể bỏ trống"
-          />
-        </label>
-
         <label className="portfolio-field span-2">
           <span>Mô tả</span>
           <textarea
@@ -752,35 +801,55 @@ function ProjectEditor({
           )}
         </label>
 
-        <label className="portfolio-field span-2">
-          <span>Image URL</span>
-          <input
-            value={project.imageUrl}
-            onChange={(event) => onChange(project.localId, 'imageUrl', event.target.value)}
-            placeholder="https://..."
-          />
-        </label>
+        <div className="portfolio-image-block span-2">
+          <div className="portfolio-image-block-head">
+            <span>Ảnh dự án</span>
+            <small>JPEG / PNG / WebP / GIF</small>
+          </div>
 
-        <div className="portfolio-image-actions span-2">
-          <label className={hasProjectId ? 'portfolio-image-upload' : 'portfolio-image-upload disabled'}>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={(event) => onImageFileChange(project, event)}
-              disabled={!hasProjectId || uploadingImage}
-            />
-            {uploadingImage ? 'Đang tải...' : 'Upload ảnh'}
-          </label>
-          <button
-            type="button"
-            onClick={() => onImageImport(project)}
-            disabled={!hasProjectId || uploadingImage || !project.imageUrl.trim()}
-          >
-            Import URL
-          </button>
-          {!hasProjectId && (
-            <small>Lưu portfolio trước để project có ID, sau đó có thể upload ảnh.</small>
+          {project.imageUrl && (
+            <div className="portfolio-image-preview">
+              <img src={resolveStorageUrl(project.imageUrl)} alt={project.title || 'Project'} />
+              <button
+                type="button"
+                className="portfolio-image-remove"
+                onClick={() => onChange(project.localId, 'imageUrl', '')}
+              >
+                Xóa ảnh
+              </button>
+            </div>
           )}
+
+          <div className="portfolio-image-actions">
+            <label className="portfolio-image-upload">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={(event) => onImageFileChange(project, event)}
+                disabled={uploadingImage}
+              />
+              {uploadingImage ? 'Đang tải...' : project.imageUrl ? 'Đổi ảnh' : 'Chọn ảnh từ máy'}
+            </label>
+          </div>
+
+          <details className="portfolio-image-advanced">
+            <summary>Hoặc dán URL ảnh có sẵn</summary>
+            <div className="portfolio-image-url-row">
+              <input
+                type="url"
+                value={project.imageUrl}
+                onChange={(event) => onChange(project.localId, 'imageUrl', event.target.value)}
+                placeholder="https://..."
+              />
+              <button
+                type="button"
+                onClick={() => onImageImport(project)}
+                disabled={uploadingImage || !project.imageUrl.trim()}
+              >
+                Import
+              </button>
+            </div>
+          </details>
         </div>
 
         <label className="portfolio-field">
@@ -806,73 +875,64 @@ function ProjectEditor({
 }
 
 function PortfolioPreview({ form }) {
-  const projects = form.projects.length
-    ? form.projects
-    : [
-        {
-          localId: 'sample',
-          title: 'Fintech Dashboard Redesign',
-          description:
-            'Thiết kế dashboard quản lý tài chính cá nhân, cải thiện trải nghiệm người dùng.',
-          techStack: 'React, Figma, Dashboard',
-          imageUrl:
-            'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80',
-          demoUrl: '#',
-          sourceUrl: '#',
-        },
-      ];
+  const hasProjects = form.projects.length > 0;
 
   return (
     <section className={`portfolio-preview portfolio-preview-${form.theme}`}>
       <div className="portfolio-preview-hero">
         <div>
           <span>Portfolio Preview</span>
-          <h2>{form.title || 'Your Career Title'}</h2>
+          <h2>{form.title || 'Chưa đặt tiêu đề nghề nghiệp'}</h2>
           <p>
-            {form.bio ||
-              'Giới thiệu ngắn về định hướng nghề nghiệp, kỹ năng và các dự án nổi bật của bạn.'}
+            {form.bio || 'Chưa có giới thiệu. Hãy thêm ở tab Chỉnh sửa.'}
           </p>
         </div>
       </div>
 
-      <div className="portfolio-preview-projects">
-        {projects.map((project) => (
-          <article key={project.localId} className="portfolio-preview-project">
-              <img
-              src={
-                resolveStorageUrl(project.imageUrl) ||
-                'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80'
-              }
-              alt={project.title || 'Project'}
-            />
+      {!hasProjects && (
+        <div className="portfolio-empty">
+          <strong>Chưa có dự án nào</strong>
+          <p>Quay lại tab “Chỉnh sửa” để thêm dự án đầu tiên vào portfolio.</p>
+        </div>
+      )}
 
-            <div>
-              <h3>{project.title || 'Tên dự án'}</h3>
-              <p>{project.description || 'Mô tả ngắn về dự án.'}</p>
+      {hasProjects && (
+        <div className="portfolio-preview-projects">
+          {form.projects.map((project) => {
+            const imageSrc = resolveStorageUrl(project.imageUrl);
+            return (
+              <article key={project.localId} className="portfolio-preview-project">
+                {imageSrc && <img src={imageSrc} alt={project.title || 'Dự án'} />}
 
-              <div className="portfolio-preview-tags">
-                {parseTechStack(project.techStack).map((tag) => (
-                  <span key={tag}>{tag}</span>
-                ))}
-              </div>
+                <div>
+                  <h3>{project.title || 'Dự án chưa đặt tên'}</h3>
+                  <p>{project.description || 'Chưa có mô tả.'}</p>
 
-              <div className="portfolio-preview-links">
-                {project.demoUrl && (
-                  <a href={project.demoUrl} target="_blank" rel="noreferrer">
-                    Live Demo
-                  </a>
-                )}
+                  <div className="portfolio-preview-tags">
+                    {parseTechStack(project.techStack).map((tag) => (
+                      <span key={tag}>{tag}</span>
+                    ))}
+                  </div>
 
-                {project.sourceUrl && (
-                  <a href={project.sourceUrl} target="_blank" rel="noreferrer">
-                    Source
-                  </a>
-                )}
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
+                  <div className="portfolio-preview-links">
+                    {project.demoUrl && (
+                      <a href={ensureAbsoluteUrl(project.demoUrl)} target="_blank" rel="noreferrer">
+                        Live Demo
+                      </a>
+                    )}
+
+                    {project.sourceUrl && (
+                      <a href={ensureAbsoluteUrl(project.sourceUrl)} target="_blank" rel="noreferrer">
+                        Source
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

@@ -95,6 +95,20 @@ const PRESETS = [
   { id: 'custom',    label: 'Tuỳ chỉnh' },
 ];
 
+/* Chart sizing constants — keep all four cards visually identical. */
+const CHART_HEIGHT     = 240;
+const Y_AXIS_WIDTH     = 52;
+const CHART_MARGIN     = { top: 12, right: 16, left: 4, bottom: 0 };
+
+/* Compact tick formatter for currency (e.g. 1.500.000 ₫ → 1.5tr). */
+function compactMoney(value) {
+  const n = Number(value) || 0;
+  if (Math.abs(n) >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1).replace(/\.0$/, '')}tỷ`;
+  if (Math.abs(n) >= 1_000_000)     return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}tr`;
+  if (Math.abs(n) >= 1_000)         return `${(n / 1_000).toFixed(0)}k`;
+  return String(n);
+}
+
 /* ────────────────────────────────────────────────────────────
    Tooltip & utilities.
    ──────────────────────────────────────────────────────────── */
@@ -358,7 +372,6 @@ export function OverviewView({ stats, session }) {
           legend="New users"
           color={ACTION_BLUE}
           fill={ACTION_BLUE_SOFT}
-          wide
         />
 
         <DailyLineCard
@@ -376,8 +389,8 @@ export function OverviewView({ stats, session }) {
           legend="Revenue"
           color={ACTION_BLUE}
           fill={ACTION_BLUE_SOFT}
+          tickFormatter={compactMoney}
           formatter={(value) => formatMoney(value)}
-          wide
         />
 
         <DailyLineCard
@@ -406,7 +419,7 @@ function formatTickLabel(date, range) {
 /* ────────────────────────────────────────────────────────────
    Chart cards — area + line.
    ──────────────────────────────────────────────────────────── */
-function DailyAreaCard({ title, series, dataKey, legend, color, fill, formatter, wide }) {
+function DailyAreaCard({ title, series, dataKey, legend, color, fill, tickFormatter, formatter, wide }) {
   if (!series.length) {
     return (
       <article className={`chart-card${wide ? ' wide' : ''}`}>
@@ -420,9 +433,9 @@ function DailyAreaCard({ title, series, dataKey, legend, color, fill, formatter,
   return (
     <article className={`chart-card${wide ? ' wide' : ''}`}>
       <h3 className="chart-title">{title}</h3>
-      <div style={{ width: '100%', height: 260 }}>
+      <div className="chart-canvas" style={{ width: '100%', height: CHART_HEIGHT }}>
         <ResponsiveContainer>
-          <AreaChart data={series} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
+          <AreaChart data={series} margin={CHART_MARGIN}>
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={fill} stopOpacity={0.65} />
@@ -443,8 +456,8 @@ function DailyAreaCard({ title, series, dataKey, legend, color, fill, formatter,
               fontSize={12}
               tickLine={false}
               axisLine={{ stroke: HAIRLINE }}
-              tickFormatter={formatter}
-              width={formatter ? 80 : 36}
+              tickFormatter={tickFormatter}
+              width={Y_AXIS_WIDTH}
             />
             <Tooltip
               content={<ChartTooltip formatter={formatter} />}
@@ -479,9 +492,9 @@ function DailyLineCard({ title, series, dataKey, legend, color }) {
   return (
     <article className="chart-card">
       <h3 className="chart-title">{title}</h3>
-      <div style={{ width: '100%', height: 260 }}>
+      <div className="chart-canvas" style={{ width: '100%', height: CHART_HEIGHT }}>
         <ResponsiveContainer>
-          <LineChart data={series} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
+          <LineChart data={series} margin={CHART_MARGIN}>
             <CartesianGrid stroke={SOFT} strokeDasharray="0" vertical={false} />
             <XAxis
               dataKey="label"
@@ -496,7 +509,7 @@ function DailyLineCard({ title, series, dataKey, legend, color }) {
               fontSize={12}
               tickLine={false}
               axisLine={{ stroke: HAIRLINE }}
-              width={36}
+              width={Y_AXIS_WIDTH}
               allowDecimals={false}
             />
             <Tooltip

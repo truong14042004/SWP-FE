@@ -21,6 +21,12 @@ export function createSubscriptionCheckout(session, planId) {
   });
 }
 
+export function cancelSubscription(session) {
+  return authorizedRequest('/api/subscriptions/cancel', session, {
+    method: 'POST',
+  });
+}
+
 export function parsePlanFeatures(featuresJson) {
   if (!featuresJson) {
     return { mentorReviewLimit: 0, features: [] };

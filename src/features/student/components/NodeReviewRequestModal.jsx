@@ -8,6 +8,7 @@ import {
 import '../../../styles/review-modal.css';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
+const MAX_FILE_LABEL = '25MB';
 const ALLOWED_EXTENSIONS = ['.zip', '.pdf', '.png', '.jpg', '.jpeg'];
 
 function isValidGitUrl(value) {
@@ -69,33 +70,35 @@ export function NodeReviewRequestModal({ session, node, onClose, onSubmitted }) 
     setStep(2);
   }
 
-  function handleFileChange(event) {
+  async function handleFileChange(event) {
     const picked = event.target.files?.[0];
     if (!picked) return;
 
     const ext = picked.name.toLowerCase().slice(picked.name.lastIndexOf('.'));
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
       toast.error(`Chỉ cho phép ${ALLOWED_EXTENSIONS.join(', ')}`);
+      event.target.value = '';
       return;
     }
     if (picked.size > MAX_FILE_BYTES) {
-      toast.error('File vượt quá 25MB.');
+      toast.error(`File vượt quá ${MAX_FILE_LABEL}.`);
+      event.target.value = '';
       return;
     }
 
     setFile(picked);
     setUploadedEvidence(null);
-  }
 
-  async function handleUploadFile() {
-    if (!file) return;
+    // Auto-upload immediately so the student doesn't have to click another button.
     setUploading(true);
     try {
-      const result = await uploadRoadmapEvidence(session, file);
+      const result = await uploadRoadmapEvidence(session, picked);
       setUploadedEvidence(result);
       toast.success('Đã upload file evidence.');
     } catch (error) {
       toast.error(error.message || 'Upload thất bại.');
+      setFile(null);
+      event.target.value = '';
     } finally {
       setUploading(false);
     }
@@ -188,7 +191,6 @@ export function NodeReviewRequestModal({ session, node, onClose, onSubmitted }) 
             file={file}
             onFileChange={handleFileChange}
             uploading={uploading}
-            onUpload={handleUploadFile}
             uploadedEvidence={uploadedEvidence}
             studentNote={studentNote}
             onNoteChange={setStudentNote}
@@ -294,7 +296,6 @@ function EvidenceStep({
   file,
   onFileChange,
   uploading,
-  onUpload,
   uploadedEvidence,
   studentNote,
   onNoteChange,
@@ -340,38 +341,33 @@ function EvidenceStep({
 
       {mode === 'file' && (
         <div className="review-evidence-content">
-          <label className="review-file-drop">
+          <label className={`review-file-drop ${uploading ? 'uploading' : ''} ${uploadedEvidence ? 'uploaded' : ''}`}>
             <input
               type="file"
               accept=".zip,.pdf,.png,.jpg,.jpeg"
               onChange={onFileChange}
+              disabled={uploading}
               hidden
             />
             <div>
-              <strong>{file ? file.name : 'Chọn file để upload'}</strong>
+              <strong>
+                {uploading
+                  ? '⏳ Đang upload...'
+                  : uploadedEvidence
+                  ? `✓ Đã upload: ${uploadedEvidence.fileName}`
+                  : file
+                  ? file.name
+                  : 'Chọn file để upload'}
+              </strong>
               <small>
-                {file ? formatFileSize(file.size) : 'ZIP / PDF / PNG / JPG, tối đa 25MB'}
+                {uploadedEvidence
+                  ? `${uploadedEvidence.evidenceType} · ${formatFileSize(uploadedEvidence.fileSize)}`
+                  : file
+                  ? formatFileSize(file.size)
+                  : `ZIP / PDF / PNG / JPG, tối đa 25MB`}
               </small>
             </div>
           </label>
-
-          {file && !uploadedEvidence && (
-            <button
-              type="button"
-              className="review-btn primary"
-              onClick={onUpload}
-              disabled={uploading}
-            >
-              {uploading ? 'Đang upload...' : 'Upload file'}
-            </button>
-          )}
-
-          {uploadedEvidence && (
-            <div className="review-evidence-uploaded">
-              ✓ Đã upload: <strong>{uploadedEvidence.fileName}</strong>{' '}
-              <small>{formatFileSize(uploadedEvidence.fileSize)}</small>
-            </div>
-          )}
         </div>
       )}
 
