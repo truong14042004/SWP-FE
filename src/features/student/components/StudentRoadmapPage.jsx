@@ -11,7 +11,10 @@ import {
 import { getCareerRoles } from '../studentApi';
 import { getLatestSkillGap } from '../skillsApi';
 import { NodeReviewRequestModal } from './NodeReviewRequestModal';
-
+import {
+  cancelReviewRequest,
+  getReviewRequestsForNode,
+} from '../../roadmap-review/reviewApi';
 const EMPTY_FORM = {
   careerRoleId: '',
   skillGapReportId: '',
@@ -89,6 +92,119 @@ const ROADMAP_STATUS_OPTIONS = [
   { value: 'NeedReview', label: 'Cần mentor review' },
 ];
 
+function extractReviewRequestList(result) {
+  if (Array.isArray(result)) return result;
+  if (Array.isArray(result?.items)) return result.items;
+  if (Array.isArray(result?.data)) return result.data;
+  if (Array.isArray(result?.requests)) return result.requests;
+  if (Array.isArray(result?.reviewRequests)) return result.reviewRequests;
+  return [];
+}
+
+function getReviewRequestStatus(request) {
+  return request?.status || request?.reviewStatus || request?.requestStatus || '';
+}
+
+function isRejectedReviewStatus(status) {
+  return normalizeStatus(status) === 'rejected';
+}
+
+function getReviewerName(request) {
+  return (
+    request?.reviewerFullName ||
+    request?.reviewerName ||
+    request?.reviewer?.fullName ||
+    request?.reviewer?.name ||
+    request?.reviewerEmail ||
+    request?.reviewer?.email ||
+    'Reviewer'
+  );
+}
+
+function getReviewerNote(request) {
+  return (
+    request?.reviewerNote ||
+    request?.note ||
+    request?.feedback ||
+    request?.comment ||
+    ''
+  );
+}
+
+function getReviewRequestDate(request) {
+  return (
+    request?.respondedAt ||
+    request?.reviewedAt ||
+    request?.updatedAt ||
+    request?.createdAt ||
+    request?.submittedAt
+  );
+}
+
+function formatReviewDate(value) {
+  if (!value) return '';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
+function getLatestReviewRequest(requests) {
+  return (
+    safeArray(requests)
+      .slice()
+      .sort((a, b) => {
+        const dateA = new Date(getReviewRequestDate(a) || 0).getTime();
+        const dateB = new Date(getReviewRequestDate(b) || 0).getTime();
+        return dateB - dateA;
+      })[0] || null
+  );
+}
+
+function getRejectedReviewRequest(requests) {
+  const latest = getLatestReviewRequest(requests);
+
+  if (!latest) return null;
+
+  return isRejectedReviewStatus(getReviewRequestStatus(latest)) ? latest : null;
+}
+function getReviewRequestId(request) {
+  return request?.id || request?.requestId || request?.reviewRequestId;
+}
+
+function isPendingReviewStatus(status) {
+  const normalized = normalizeStatus(status);
+  return normalized === 'pending' || normalized === 'needreview' || normalized === 'need_review';
+}
+
+function getPendingReviewRequest(requests) {
+  return (
+    safeArray(requests).find((request) =>
+      isPendingReviewStatus(getReviewRequestStatus(request))
+    ) || null
+  );
+}
+
+function getGroupReviewStats(node) {
+  const reviewableChildren = getChildren(node).filter(isProgressNode);
+  const total = reviewableChildren.length;
+  const completed = reviewableChildren.filter((child) =>
+    isCompletedStatus(child.status)
+  ).length;
+
+  return {
+    total,
+    completed,
+    canRequest: Boolean(node?.id) && total > 0 && completed === total,
+  };
+}
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
 }
@@ -355,6 +471,8 @@ export function StudentRoadmapPage({ session }) {
   const [error, setError] = useState('');
   const detailRequestRef = useRef(0);
 
+const [reviewRequestsByNodeId, setReviewRequestsByNodeId] = useState({});
+const [cancelingReviewRequestId, setCancelingReviewRequestId] = useState('');
   useEffect(() => {
     loadRoadmaps();
     loadFormReferences();
@@ -431,10 +549,14 @@ export function StudentRoadmapPage({ session }) {
     setSelectedRoadmapId(id);
 
     try {
-      const result = await getRoadmapById(session, id);
-      if (detailRequestRef.current !== requestId) return;
-      setRoadmap(summarizeRoadmap(result));
-      setShowGenerateForm(false);
+     const result = await getRoadmapById(session, id);
+if (detailRequestRef.current !== requestId) return;
+
+const summarizedRoadmap = summarizeRoadmap(result);
+
+setRoadmap(summarizedRoadmap);
+setShowGenerateForm(false);
+loadReviewRequestsForRoadmap(summarizedRoadmap);
     } catch (requestError) {
       if (detailRequestRef.current !== requestId) return;
       const message = requestError.message || 'Không tải được chi tiết lộ trình.';
@@ -446,7 +568,33 @@ export function StudentRoadmapPage({ session }) {
       }
     }
   }
+async function loadReviewRequestsForRoadmap(roadmapData) {
+  const nodes = flattenNodes(getRoadmapNodes(roadmapData)).filter((node) => node?.id);
+  const nodeIds = Array.from(new Set(nodes.map((node) => node.id)));
 
+  if (!nodeIds.length) {
+    setReviewRequestsByNodeId({});
+    return;
+  }
+
+  const results = await Promise.allSettled(
+    nodeIds.map(async (nodeId) => {
+      const response = await getReviewRequestsForNode(session, nodeId);
+      return [nodeId, extractReviewRequestList(response)];
+    })
+  );
+
+  const nextRequests = {};
+
+  results.forEach((result) => {
+    if (result.status === 'fulfilled') {
+      const [nodeId, requests] = result.value;
+      nextRequests[nodeId] = requests;
+    }
+  });
+
+  setReviewRequestsByNodeId(nextRequests);
+}
   function updateField(event) {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
@@ -537,7 +685,35 @@ export function StudentRoadmapPage({ session }) {
       setUpdatingNodeId('');
     }
   }
+async function handleCancelReviewRequest(node, request) {
+  const requestId = getReviewRequestId(request);
 
+  if (!requestId) {
+    toast.error('Không tìm thấy yêu cầu review cần hủy.');
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Bạn chắc chắn muốn hủy yêu cầu review cho "${node?.title || 'module này'}"?`
+  );
+
+  if (!confirmed) return;
+
+  setCancelingReviewRequestId(requestId);
+
+  try {
+    await cancelReviewRequest(session, requestId);
+    toast.success('Đã hủy yêu cầu review.');
+
+    if (selectedRoadmapId) {
+      await loadRoadmapDetail(selectedRoadmapId);
+    }
+  } catch (requestError) {
+    toast.error(requestError.message || 'Không hủy được yêu cầu review.');
+  } finally {
+    setCancelingReviewRequestId('');
+  }
+}
   return (
     <>
     <section className="roadmap-page">
@@ -554,11 +730,6 @@ export function StudentRoadmapPage({ session }) {
         </div>
 
         <div className="roadmap-actions-card">
-          <div className="roadmap-current-status">
-            <strong className={`roadmap-status ${getStatusMeta(roadmap?.status).className}`}>
-              <RoadmapStatusIcon size={14} aria-hidden="true" /> {getStatusMeta(roadmap?.status).label}
-            </strong>
-          </div>
 
           <button
             type="button"
@@ -749,17 +920,20 @@ export function StudentRoadmapPage({ session }) {
                   </section>
                 ) : (
                   <div className="roadmap-timeline">
-                    {roadmapNodes.map((node, index) => (
-                      <RoadmapNodeCard
-                        key={node.id || `${node.title}-${index}`}
-                        node={node}
-                        index={index}
-                        roadmapStatus={roadmap?.status}
-                        updatingNodeId={updatingNodeId}
-                        onStatusChange={handleNodeStatusChange}
-                        onRequestGroupReview={(groupNode) => setReviewModalNode(groupNode)}
-                      />
-                    ))}
+                 {roadmapNodes.map((node, index) => (
+  <RoadmapNodeCard
+  key={node.id || `${node.title}-${index}`}
+  node={node}
+  index={index}
+  roadmapStatus={roadmap?.status}
+  updatingNodeId={updatingNodeId}
+  onStatusChange={handleNodeStatusChange}
+  onRequestReview={(reviewNode) => setReviewModalNode(reviewNode)}
+  onCancelReviewRequest={handleCancelReviewRequest}
+  reviewRequestsByNodeId={reviewRequestsByNodeId}
+  cancelingReviewRequestId={cancelingReviewRequestId}
+/>
+))}
                   </div>
                 )}
               </section>
@@ -775,18 +949,30 @@ export function StudentRoadmapPage({ session }) {
           node={reviewModalNode}
           onClose={() => setReviewModalNode(null)}
           onSubmitted={() => {
-            // Refresh roadmap detail để lấy node status mới (NeedReview).
-            if (selectedRoadmapId) {
-              loadRoadmapDetail(selectedRoadmapId);
-            }
-          }}
+  setReviewModalNode(null);
+
+  if (selectedRoadmapId) {
+    loadRoadmapDetail(selectedRoadmapId);
+  }
+}}
         />
       )}
     </>
   );
 }
 
-function RoadmapNodeCard({ node, index, level = 0, roadmapStatus = '', updatingNodeId = '', onStatusChange, onRequestGroupReview }) {
+function RoadmapNodeCard({
+  node,
+  index,
+  level = 0,
+  roadmapStatus = '',
+  updatingNodeId = '',
+  onStatusChange,
+  onRequestReview,
+  onCancelReviewRequest,
+  reviewRequestsByNodeId = {},
+  cancelingReviewRequestId = '',
+}) {
   const displayStatus = getDisplayNodeStatus(node, roadmapStatus);
   const statusMeta = getStatusMeta(displayStatus);
   const StatusIcon = statusMeta.Icon;
@@ -795,6 +981,22 @@ function RoadmapNodeCard({ node, index, level = 0, roadmapStatus = '', updatingN
   const priority = Number(node.priority || 0);
   const isGroup = !isProgressNode(node);
   const progress = getNodeProgress(node);
+
+  const reviewRequests = node?.id ? reviewRequestsByNodeId[node.id] || [] : [];
+  const pendingRequest = getPendingReviewRequest(reviewRequests);
+  const rejectedRequest = getRejectedReviewRequest(reviewRequests);
+  const rejectedDate = formatReviewDate(getReviewRequestDate(rejectedRequest));
+  const pendingDate = formatReviewDate(getReviewRequestDate(pendingRequest));
+  const pendingRequestId = getReviewRequestId(pendingRequest);
+
+  const groupReviewStats = isGroup ? getGroupReviewStats(node) : null;
+
+  const canRequestReview =
+    !isGroup &&
+    Boolean(node?.id) &&
+    isCompletedStatus(node.status) &&
+    normalizeStatus(node.status) !== 'verified' &&
+    !pendingRequest;
 
   return (
     <article
@@ -818,22 +1020,112 @@ function RoadmapNodeCard({ node, index, level = 0, roadmapStatus = '', updatingN
         </div>
 
         {!isGroup && (
-        <div className="roadmap-status-control">
-          <label>
-            <span>Trạng thái</span>
-            <select
-              value={getRoadmapStatusValue(node.status)}
-              onChange={(event) => onStatusChange?.(node, event.target.value)}
-              disabled={!node.id || updatingNodeId === node.id}
+          <div className="roadmap-status-control">
+            <label>
+              <span>Trạng thái</span>
+              <select
+                value={getRoadmapStatusValue(node.status)}
+                onChange={(event) => onStatusChange?.(node, event.target.value)}
+                disabled={!node.id || updatingNodeId === node.id}
+              >
+                {ROADMAP_STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
+
+        {isGroup && groupReviewStats?.total > 0 && (
+          <div className="roadmap-review-card ready">
+            <div>
+              <strong>Review theo nhóm module</strong>
+              <small>
+                {groupReviewStats.completed}/{groupReviewStats.total} module con trực tiếp đã hoàn thành.
+              </small>
+            </div>
+
+            <button
+              type="button"
+              className="roadmap-review-action primary"
+              onClick={() => onRequestReview?.(node)}
+              disabled={!groupReviewStats.canRequest || Boolean(pendingRequest)}
             >
-              {ROADMAP_STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+              {pendingRequest
+                ? 'Đang chờ review'
+                : groupReviewStats.canRequest
+                ? 'Xin review nhóm'
+                : 'Hoàn thành module con trước'}
+            </button>
+          </div>
+        )}
+
+        {pendingRequest && (
+          <div className="roadmap-review-card pending">
+            <div>
+              <strong>Đang chờ reviewer xác nhận</strong>
+              <small>
+                Reviewer: {getReviewerName(pendingRequest)}
+                {pendingDate ? ` · Gửi lúc ${pendingDate}` : ''}
+              </small>
+            </div>
+
+            <button
+              type="button"
+              className="roadmap-review-action danger"
+              onClick={() => onCancelReviewRequest?.(node, pendingRequest)}
+              disabled={cancelingReviewRequestId === pendingRequestId}
+            >
+              {cancelingReviewRequestId === pendingRequestId ? 'Đang hủy...' : 'Hủy yêu cầu'}
+            </button>
+          </div>
+        )}
+
+        {rejectedRequest && (
+          <div className="roadmap-review-card rejected">
+            <div>
+              <strong>Reviewer đã từ chối — cần cải thiện evidence</strong>
+
+              <p>
+                {getReviewerNote(rejectedRequest) ||
+                  'Reviewer chưa để lại ghi chú chi tiết.'}
+              </p>
+
+              <small>
+                Reviewer: {getReviewerName(rejectedRequest)}
+                {rejectedDate ? ` · Phản hồi lúc ${rejectedDate}` : ''}
+              </small>
+            </div>
+
+            {!pendingRequest && (
+              <button
+                type="button"
+                className="roadmap-review-action primary"
+                onClick={() => onRequestReview?.(node)}
+              >
+                Xin review lại
+              </button>
+            )}
+          </div>
+        )}
+
+        {canRequestReview && !rejectedRequest && (
+          <div className="roadmap-review-card ready">
+            <div>
+              <strong>Module đã hoàn thành — sẵn sàng xin review</strong>
+              <small>Gửi Git repository hoặc evidence để mentor/counselor xác nhận.</small>
+            </div>
+
+            <button
+              type="button"
+              className="roadmap-review-action primary"
+              onClick={() => onRequestReview?.(node)}
+            >
+              Xin review
+            </button>
+          </div>
         )}
 
         <div className="roadmap-node-main">
@@ -885,7 +1177,10 @@ function RoadmapNodeCard({ node, index, level = 0, roadmapStatus = '', updatingN
                 roadmapStatus={roadmapStatus}
                 updatingNodeId={updatingNodeId}
                 onStatusChange={onStatusChange}
-                onRequestGroupReview={onRequestGroupReview}
+                onRequestReview={onRequestReview}
+                onCancelReviewRequest={onCancelReviewRequest}
+                reviewRequestsByNodeId={reviewRequestsByNodeId}
+                cancelingReviewRequestId={cancelingReviewRequestId}
               />
             ))}
           </div>
