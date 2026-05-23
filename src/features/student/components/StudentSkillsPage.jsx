@@ -266,7 +266,7 @@ async function loadData() {
     setProfile(profileResult);
     setSkillGapReport(latestGapResult);
   } catch (requestError) {
-    toast.error(requestError.message || 'Khong tai duoc du lieu ky nang.');
+    toast.error(requestError.message || 'Không thể tải dữ liệu kỹ năng.');
   } finally {
     setLoading(false);
     setLoadingSkillGap(false);
@@ -356,9 +356,9 @@ async function loadData() {
         ...current,
         evidenceUrl: getStorageValue(uploaded, current.evidenceUrl),
       }));
-      toast.success('Da upload minh chung.');
+      toast.success('Đã tải lên minh chứng.');
     } catch (requestError) {
-      toast.error(requestError.message || 'Khong upload duoc minh chung.');
+      toast.error(requestError.message || 'Không thể tải lên minh chứng.');
     } finally {
       setUploadingEvidence(false);
     }
@@ -372,7 +372,7 @@ async function loadData() {
     }
 
     if (!isHttpUrl(url)) {
-      toast.warn('URL import phai bat dau bang http:// hoac https://.');
+      toast.warn('Đường dẫn import phải bắt đầu bằng http:// hoặc https://.');
       return;
     }
 
@@ -386,9 +386,9 @@ async function loadData() {
         ...current,
         evidenceUrl: getStorageValue(imported, url),
       }));
-      toast.success('Da import minh chung tu URL.');
+      toast.success('Đã nhập minh chứng từ URL.');
     } catch (requestError) {
-      toast.error(requestError.message || 'Khong import duoc minh chung.');
+      toast.error(requestError.message || 'Không thể nhập minh chứng.');
     } finally {
       setUploadingEvidence(false);
     }
@@ -425,7 +425,7 @@ async function loadData() {
           current.map((item) => (item.id === editingId ? updated : item))
         );
 
-        toast.success('Da cap nhat ky nang.');
+        toast.success('Đã cập nhật kỹ năng.');
       } else {
         const created = await createUserSkill(session, payload);
 
@@ -448,23 +448,23 @@ async function loadData() {
                 evidenceType: created.evidenceType || form.evidenceType,
               };
             }
-            toast.success('Da upload minh chung cho ky nang moi.');
+            toast.success('Đã tải lên minh chứng cho kỹ năng mới.');
           } catch (uploadError) {
-            toast.error(uploadError.message || 'Khong upload duoc minh chung sau khi luu.');
+            toast.error(uploadError.message || 'Không thể tải lên minh chứng sau khi lưu.');
           } finally {
             setUploadingEvidence(false);
           }
         }
 
         setUserSkills((current) => [finalSkill, ...current]);
-        toast.success('Da them ky nang vao ho so.');
+        toast.success('Đã thêm kỹ năng vào hồ sơ.');
       }
 
       setEditingId('');
       setForm(EMPTY_FORM);
       setPendingEvidenceFile(null);
     } catch (requestError) {
-      toast.error(requestError.message || 'Khong luu duoc ky nang.');
+      toast.error(requestError.message || 'Không thể lưu kỹ năng.');
     } finally {
       setSaving(false);
     }
@@ -477,9 +477,9 @@ async function loadData() {
     try {
       await deleteUserSkill(session, userSkill.id);
       setUserSkills((current) => current.filter((item) => item.id !== userSkill.id));
-      toast.success('Da xoa ky nang khoi ho so.');
+      toast.success('Đã xóa kỹ năng khỏi hồ sơ.');
     } catch (requestError) {
-      toast.error(requestError.message || 'Khong xoa duoc ky nang.');
+      toast.error(requestError.message || 'Không thể xóa kỹ năng.');
     }
   }
 
@@ -487,7 +487,7 @@ async function loadData() {
   const careerRoleId = profile?.targetRoleId;
 
   if (!careerRoleId) {
-    toast.warn('Ban chua cap nhat vai tro muc tieu trong ho so.');
+    toast.warn('Bạn chưa cập nhật định hướng mục tiêu trong hồ sơ.');
     return;
   }
 
@@ -495,9 +495,9 @@ async function loadData() {
   try {
     const result = await analyzeSkillGap(session, careerRoleId);
     setSkillGapReport(result);
-    toast.success('Da phan tich skill gap thanh cong.');
+    toast.success('Đã phân tích khoảng cách kỹ năng thành công.');
   } catch (requestError) {
-    toast.error(requestError.message || 'Khong phan tich duoc skill gap.');
+    toast.error(requestError.message || 'Không thể phân tích khoảng cách kỹ năng.');
   } finally {
     setAnalyzingSkillGap(false);
   }

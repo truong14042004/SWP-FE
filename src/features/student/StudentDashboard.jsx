@@ -767,7 +767,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
       setForm(normalizeProfile(profileResult.profile));
       setHasProfile(profileResult.hasProfile);
     } catch (requestError) {
-      toast.error(requestError.message || 'Khong tai duoc ho so sinh vien.');
+      toast.error(requestError.message || 'Không thể tải hồ sơ sinh viên.');
     } finally {
       setLoadingProfile(false);
     }
@@ -794,9 +794,9 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
       const updatedProfile = await uploadStudentAvatar(session, file);
       setForm(normalizeProfile(updatedProfile));
       setHasProfile(true);
-      toast.success('Da upload avatar.');
+      toast.success('Đã tải lên ảnh đại diện.');
     } catch (requestError) {
-      toast.error(requestError.message || 'Khong upload duoc avatar.');
+      toast.error(requestError.message || 'Không thể tải lên ảnh đại diện.');
     } finally {
       setUploadingAvatar(false);
     }
@@ -805,7 +805,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   async function handleAvatarImport() {
     const avatarUrl = avatarImportDraft.trim();
     if (!avatarUrl) {
-      toast.error('Vui long nhap URL avatar.');
+      toast.error('Vui lòng nhập URL ảnh đại diện.');
       return;
     }
 
@@ -816,9 +816,9 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
       const nextAvatarUrl = imported?.downloadPath || imported?.objectName || avatarUrl;
       setForm((current) => ({ ...current, avatarUrl: nextAvatarUrl }));
       setAvatarImportDraft('');
-      toast.success('Da import avatar tu URL.');
+      toast.success('Đã nhập ảnh đại diện từ URL.');
     } catch (requestError) {
-      toast.error(requestError.message || 'Khong import duoc avatar tu URL.');
+      toast.error(requestError.message || 'Không thể nhập ảnh đại diện từ URL.');
     } finally {
       setUploadingAvatar(false);
     }
@@ -873,9 +873,9 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
 
       setForm(normalizeProfile(saved));
       setHasProfile(true);
-      toast.success(hasProfile ? 'Da cap nhat ho so.' : 'Da tao ho so.');
+      toast.success(hasProfile ? 'Đã cập nhật hồ sơ.' : 'Đã tạo hồ sơ.');
     } catch (requestError) {
-      toast.error(requestError.message || 'Khong luu duoc ho so.');
+      toast.error(requestError.message || 'Không thể lưu hồ sơ.');
     } finally {
       setSavingProfile(false);
     }

@@ -78,7 +78,7 @@ export function RoadmapReviewQueue({ session, role }) {
       const result = await fetcher(session);
       setItems(Array.isArray(result) ? result : []);
     } catch (error) {
-      toast.error(error.message || 'Không tải được queue.');
+      toast.error(error.message || 'Không tải được danh sách yêu cầu review.');
     } finally {
       setLoading(false);
     }
@@ -92,10 +92,10 @@ export function RoadmapReviewQueue({ session, role }) {
         // Open in a new tab — browser handles download or preview
         window.open(result.downloadUrl, '_blank', 'noopener,noreferrer');
       } else {
-        toast.warn('Không lấy được link evidence.');
+        toast.warn('Không lấy được liên kết tải minh chứng.');
       }
     } catch (error) {
-      toast.error(error.message || 'Không tải được evidence.');
+      toast.error(error.message || 'Không tải được minh chứng.');
     } finally {
       setDownloadingId('');
     }
