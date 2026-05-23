@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
+import { Command, LoaderCircle } from 'lucide-react';
 import '../../../styles/github.css';
 import {
   analyzeGithubReadme,
@@ -547,13 +548,13 @@ export function StudentGithubPage({ session }) {
 
         {loading ? (
           <div className="github-empty">
-            <span>⏳</span>
+            <span><LoaderCircle size={28} aria-hidden="true" /></span>
             <h3>Đang tải repositories</h3>
             <p>Vui lòng chờ trong giây lát.</p>
           </div>
         ) : repositories.length === 0 ? (
           <div className="github-empty">
-            <span>⌘</span>
+            <span><Command size={28} aria-hidden="true" /></span>
             <h3>Chưa có repository</h3>
             <p>Hãy nhập GitHub username và bấm “Đồng bộ repositories”.</p>
           </div>

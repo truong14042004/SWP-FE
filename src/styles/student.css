@@ -695,9 +695,17 @@
 }
 
 .student-stars {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
   color: #f59e0b;
-  font-size: 14px;
-  letter-spacing: 1px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.student-stars svg {
+  flex: 0 0 auto;
 }
 
 .student-skill-card p {

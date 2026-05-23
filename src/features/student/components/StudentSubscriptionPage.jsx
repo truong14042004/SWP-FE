@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { Check, LoaderCircle, MailOpen } from 'lucide-react';
 import {
   cancelSubscription,
   createSubscriptionCheckout,
@@ -148,10 +149,10 @@ export function StudentSubscriptionPage({ session }) {
       )}
 
       {loading ? (
-        <div className="student-subscription-empty">⏳ Đang tải bảng giá...</div>
+        <div className="student-subscription-empty"><LoaderCircle size={18} aria-hidden="true" /> Đang tải bảng giá...</div>
       ) : plans.length === 0 ? (
         <div className="student-subscription-empty">
-          <span>📭</span>
+          <span><MailOpen size={28} aria-hidden="true" /></span>
           <p>Hiện chưa có gói khả dụng. Vui lòng thử lại sau.</p>
         </div>
       ) : (
@@ -179,10 +180,10 @@ export function StudentSubscriptionPage({ session }) {
 
                 <ul className="student-subscription-features">
                   {features.mentorReviewLimit > 0 && (
-                    <li>✓ {features.mentorReviewLimit} lượt mentor review / chu kỳ</li>
+                    <li><Check size={14} aria-hidden="true" /> {features.mentorReviewLimit} lượt mentor review / chu kỳ</li>
                   )}
                   {(features.features || []).map((feature, idx) => (
-                    <li key={idx}>✓ {feature}</li>
+                    <li key={idx}><Check size={14} aria-hidden="true" /> {feature}</li>
                   ))}
                 </ul>
 

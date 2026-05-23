@@ -5,6 +5,7 @@ import { apiUrl } from '../../../config';
 import {
   createPortfolio,
   getMyPortfolio,
+  getSignedUrl,
   importPortfolioProjectImageFromUrl,
   publishPortfolio,
   unpublishPortfolio,
@@ -176,6 +177,12 @@ function resolveStorageUrl(value) {
   }
 
   return `${apiUrl}/api/storage/public/${normalized.replace(/^\/+/, '')}/download`;
+}
+
+function isStorageObjectName(value) {
+  if (!value) return false;
+  const normalized = String(value).trim();
+  return Boolean(normalized) && !/^https?:\/\//i.test(normalized);
 }
 
 export function StudentPortfolioPage({ session }) {
@@ -350,7 +357,6 @@ export function StudentPortfolioPage({ session }) {
     try {
       const uploaded = await uploadPortfolioProjectImage(session, target.id, file);
       updateProject(target.localId, 'imageUrl', getStorageValue(uploaded, target.imageUrl));
-      setNotice('Đã upload ảnh dự án.');
       toast.success('Đã upload ảnh dự án.');
     } catch (requestError) {
       const message = requestError.message || 'Không upload được ảnh dự án.';
@@ -383,7 +389,6 @@ export function StudentPortfolioPage({ session }) {
         fileName: getFileNameFromUrl(url),
       });
       updateProject(target.localId, 'imageUrl', getStorageValue(imported, url));
-      setNotice('Đã import ảnh từ URL.');
       toast.success('Đã import ảnh từ URL.');
     } catch (requestError) {
       const message = requestError.message || 'Không import được ảnh dự án.';
@@ -625,6 +630,7 @@ export function StudentPortfolioPage({ session }) {
               <div className="portfolio-project-list">
                 {form.projects.map((project, index) => (
                   <ProjectEditor
+                    session={session}
                     key={project.localId}
                     project={project}
                     index={index}
@@ -723,13 +729,14 @@ export function StudentPortfolioPage({ session }) {
       )}
 
       {!loading && activeTab === 'preview' && (
-        <PortfolioPreview form={form} />
+          <PortfolioPreview form={form} session={session} />
       )}
     </section>
   );
 }
 
 function ProjectEditor({
+  session,
   project,
   index,
   isFirst,
@@ -742,6 +749,38 @@ function ProjectEditor({
   uploadingImage,
 }) {
   const tags = parseTechStack(project.techStack);
+  const [signedImageUrl, setSignedImageUrl] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSignedImageUrl() {
+      setSignedImageUrl('');
+
+      if (!isStorageObjectName(project.imageUrl)) {
+        return;
+      }
+
+      try {
+        const result = await getSignedUrl(session, project.imageUrl);
+        if (!cancelled) {
+          setSignedImageUrl(result?.url || result?.downloadUrl || '');
+        }
+      } catch {
+        if (!cancelled) {
+          setSignedImageUrl('');
+        }
+      }
+    }
+
+    loadSignedImageUrl();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session, project.imageUrl]);
+
+  const imageSrc = signedImageUrl || resolveStorageUrl(project.imageUrl);
 
   return (
     <article className="portfolio-project-editor">
@@ -809,7 +848,7 @@ function ProjectEditor({
 
           {project.imageUrl && (
             <div className="portfolio-image-preview">
-              <img src={resolveStorageUrl(project.imageUrl)} alt={project.title || 'Project'} />
+              <img src={imageSrc} alt={project.title || 'Project'} />
               <button
                 type="button"
                 className="portfolio-image-remove"
@@ -874,7 +913,7 @@ function ProjectEditor({
   );
 }
 
-function PortfolioPreview({ form }) {
+function PortfolioPreview({ form, session }) {
   const hasProjects = form.projects.length > 0;
 
   return (
@@ -899,10 +938,13 @@ function PortfolioPreview({ form }) {
       {hasProjects && (
         <div className="portfolio-preview-projects">
           {form.projects.map((project) => {
-            const imageSrc = resolveStorageUrl(project.imageUrl);
             return (
               <article key={project.localId} className="portfolio-preview-project">
-                {imageSrc && <img src={imageSrc} alt={project.title || 'Dự án'} />}
+                <PortfolioProjectImage
+                  session={session}
+                  imageUrl={project.imageUrl}
+                  alt={project.title || 'Dự án'}
+                />
 
                 <div>
                   <h3>{project.title || 'Dự án chưa đặt tên'}</h3>
@@ -935,4 +977,43 @@ function PortfolioPreview({ form }) {
       )}
     </section>
   );
+}
+
+function PortfolioProjectImage({ session, imageUrl, alt }) {
+  const [signedImageUrl, setSignedImageUrl] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSignedImageUrl() {
+      setSignedImageUrl('');
+
+      if (!isStorageObjectName(imageUrl)) {
+        return;
+      }
+
+      try {
+        const result = await getSignedUrl(session, imageUrl);
+        if (!cancelled) {
+          setSignedImageUrl(result?.url || result?.downloadUrl || '');
+        }
+      } catch {
+        if (!cancelled) {
+          setSignedImageUrl('');
+        }
+      }
+    }
+
+    loadSignedImageUrl();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session, imageUrl]);
+
+  const imageSrc = signedImageUrl || resolveStorageUrl(imageUrl);
+
+  if (!imageSrc) return null;
+
+  return <img src={imageSrc} alt={alt} />;
 }

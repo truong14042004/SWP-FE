@@ -1,5 +1,5 @@
 import { CareerRoleSelect } from './CareerRoleSelect';
-import { apiUrl } from '../../../config';
+import { FileText, Upload, UserRound } from 'lucide-react';
 
 export function StudentProfileForm({
   initials,
@@ -29,7 +29,9 @@ export function StudentProfileForm({
           )}
         </div>
         <div className="student-profile-hero-copy">
+          <span className="student-profile-kicker">Hồ sơ sinh viên</span>
           <h2>Ảnh đại diện</h2>
+          <p>Cập nhật ảnh, thông tin học vấn và mục tiêu để hệ thống đề xuất roadmap chính xác hơn.</p>
           <div className="student-avatar-controls">
             <label className="secondary-action student-avatar-upload">
               <input
@@ -38,6 +40,7 @@ export function StudentProfileForm({
                 onChange={onAvatarFileChange}
                 disabled={loadingProfile || savingProfile || uploadingAvatar}
               />
+              <UserRound size={18} aria-hidden="true" />
               {uploadingAvatar ? 'Đang tải ảnh...' : 'Chọn ảnh'}
             </label>
           </div>
@@ -108,45 +111,39 @@ export function StudentProfileForm({
 
       <div className="student-profile-section-label">Hồ sơ cá nhân (CV)</div>
       <div className="student-profile-grid single">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+        <div className="student-cv-panel">
+          <p>
             Tải lên CV của bạn dưới dạng file PDF (tối đa 10MB) để hệ thống và AI Mentor có thêm thông tin định hướng.
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <div className="student-cv-actions">
             <label
-              className="secondary-action student-avatar-upload"
-              style={{
-                margin: 0,
-                cursor: !hasProfile ? 'not-allowed' : 'pointer',
-                opacity: !hasProfile ? 0.6 : 1,
-              }}
+              className={`secondary-action student-avatar-upload student-cv-upload ${!hasProfile ? 'disabled' : ''}`}
             >
               <input
                 type="file"
                 accept="application/pdf"
                 onChange={onCvFileChange}
                 disabled={loadingProfile || savingProfile || uploadingCv || !hasProfile}
-                style={{ display: 'none' }}
               />
+              <Upload size={18} aria-hidden="true" />
               {uploadingCv ? 'Đang tải CV...' : 'Tải CV mới (PDF)'}
             </label>
             {form.cvUrl ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.05)', padding: '6px 12px', borderRadius: '6px' }}>
-                <span style={{ fontSize: '1.2rem' }}>📄</span>
+              <div className="student-cv-file">
+                <FileText size={19} aria-hidden="true" />
                 <a
                   href="#"
                   onClick={onViewCv}
-                  style={{ color: 'var(--accent)', textDecoration: 'underline', fontSize: '0.9rem' }}
                 >
                   {form.cvName || 'Xem CV hiện tại'}
                 </a>
               </div>
             ) : (
-              <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Chưa có file CV nào được tải lên.</span>
+              <span className="student-cv-empty">Chưa có file CV nào được tải lên.</span>
             )}
           </div>
           {!hasProfile && (
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#ff4d4f', fontWeight: '500', marginTop: '4px' }}>
+            <p className="student-cv-warning">
               * Bạn vui lòng bấm nút "Tạo hồ sơ" ở góc phải bên dưới để tạo hồ sơ trước khi tải lên CV.
             </p>
           )}
