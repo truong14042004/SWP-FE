@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import ReactMarkdown from 'react-markdown';
+import { BarChart3, BookOpen, Bot, FileText, GraduationCap, Lightbulb, Map, Send, Target, Video } from 'lucide-react';
 import '../../../styles/mentor.css';
 import '../../../styles/ai-mentor.css';
 import {
@@ -14,10 +15,10 @@ import { getLatestSkillGap, getUserSkills } from '../skillsApi';
 import { RoadmapPreviewCard } from './RoadmapPreviewCard';
 
 const QUICK_PROMPTS = [
-  { id: 'roadmap', label: '🗺️ Tạo lộ trình', question: 'Dựa trên hồ sơ của tôi, hãy tạo một lộ trình học tập 3 tháng để đạt mục tiêu nghề nghiệp.' },
-  { id: 'gap', label: '📊 Phân tích kỹ năng', question: 'Kỹ năng nào của tôi đang yếu nhất và tôi cần tập trung cải thiện như thế nào?' },
-  { id: 'project', label: '💡 Gợi ý dự án', question: 'Gợi ý 3 dỹ án thực hành phù hợp với level và mục tiêu của tôi.' },
-  { id: 'interview', label: '🎯 Chuẩn bị phỏng vấn', question: 'Tôi cần làm gì để chuẩn bị cho phỏng vấn vị trí mong muốn?' },
+  { id: 'roadmap', icon: Map, label: 'Tạo lộ trình', question: 'Dựa trên hồ sơ của tôi, hãy tạo một lộ trình học tập 3 tháng để đạt mục tiêu nghề nghiệp.' },
+  { id: 'gap', icon: BarChart3, label: 'Phân tích kỹ năng', question: 'Kỹ năng nào của tôi đang yếu nhất và tôi cần tập trung cải thiện như thế nào?' },
+  { id: 'project', icon: Lightbulb, label: 'Gợi ý dự án', question: 'Gợi ý 3 dỹ án thực hành phù hợp với level và mục tiêu của tôi.' },
+  { id: 'interview', icon: Target, label: 'Chuẩn bị phỏng vấn', question: 'Tôi cần làm gì để chuẩn bị cho phỏng vấn vị trí mong muốn?' },
 ];
 
 
@@ -400,7 +401,7 @@ function cleanGithubUsername(value) {
 
       <main className="mentor-chat-panel">
         <header className="mentor-chat-header">
-          <div className="mentor-bot-avatar">🤖</div>
+          <div className="mentor-bot-avatar"><Bot size={22} aria-hidden="true" /></div>
 
           <div>
             <h1>AI Mentor</h1>
@@ -438,7 +439,7 @@ function cleanGithubUsername(value) {
 
           {sending && (
             <div className="mentor-message-row assistant">
-              <div className="mentor-message-avatar">🤖</div>
+              <div className="mentor-message-avatar"><Bot size={18} aria-hidden="true" /></div>
               <div className="mentor-message-bubble typing">
                 AI Mentor đang suy nghĩ...
               </div>
@@ -456,6 +457,7 @@ function cleanGithubUsername(value) {
                 type="button"
                 onClick={() => applyQuickPrompt(prompt)}
               >
+                <prompt.icon size={16} aria-hidden="true" />
                 {prompt.label}
               </button>
             ))}
@@ -477,7 +479,7 @@ function cleanGithubUsername(value) {
           />
 
           <button type="submit" disabled={sending}>
-            {sending ? '...' : '➤'}
+            {sending ? '...' : <Send size={16} aria-hidden="true" />}
           </button>
         </form>
 
@@ -561,7 +563,7 @@ function ChatMessage({ message, userInitials, session }) {
 
   return (
     <div className={isUser ? 'mentor-message-row user' : 'mentor-message-row assistant'}>
-      {!isUser && <div className="mentor-message-avatar">🤖</div>}
+      {!isUser && <div className="mentor-message-avatar"><Bot size={18} aria-hidden="true" /></div>}
 
       <div>
         <div className="mentor-message-label">
@@ -601,7 +603,9 @@ function ChatMessage({ message, userInitials, session }) {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <span>{resource.type === 'Video' ? '▶' : resource.type === 'Course' ? '🎓' : resource.type === 'Book' ? '📖' : '📄'}</span>
+                  <span>
+                    {resource.type === 'Video' ? <Video size={14} aria-hidden="true" /> : resource.type === 'Course' ? <GraduationCap size={14} aria-hidden="true" /> : resource.type === 'Book' ? <BookOpen size={14} aria-hidden="true" /> : <FileText size={14} aria-hidden="true" />}
+                  </span>
                   <small>{resource.title}</small>
                 </a>
               ))}

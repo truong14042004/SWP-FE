@@ -46,3 +46,7 @@ export function importPortfolioProjectImageFromUrl(session, projectId, payload) 
         body: JSON.stringify(payload),
     });
 }
+
+export function getSignedUrl(session, objectName) {
+    return authorizedRequest(`/api/storage/signed-url?objectName=${encodeURIComponent(objectName)}`, session);
+}

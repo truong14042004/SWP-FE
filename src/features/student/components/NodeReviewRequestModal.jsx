@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { ArrowLeft, ArrowRight, Check, LoaderCircle, MailOpen, X } from 'lucide-react';
 import {
   createReviewRequest,
   getAvailableReviewers,
@@ -163,7 +164,7 @@ export function NodeReviewRequestModal({ session, node, onClose, onSubmitted }) 
             <h2>{node.title}</h2>
           </div>
           <button type="button" className="review-modal-close" onClick={onClose}>
-            ✕
+            <X size={18} aria-hidden="true" />
           </button>
         </header>
 
@@ -219,14 +220,14 @@ export function NodeReviewRequestModal({ session, node, onClose, onSubmitted }) 
 
 function ReviewerStep({ loading, counselor, mentors, onSelect }) {
   if (loading) {
-    return <div className="review-modal-empty">⏳ Đang tải danh sách...</div>;
+    return <div className="review-modal-empty"><LoaderCircle size={18} aria-hidden="true" /> Đang tải danh sách...</div>;
   }
 
   const hasReviewers = Boolean(counselor) || mentors.length > 0;
   if (!hasReviewers) {
     return (
       <div className="review-modal-empty">
-        <span>📭</span>
+        <span><MailOpen size={28} aria-hidden="true" /></span>
         <p>Chưa có reviewer khả dụng. Có thể tất cả mentor đã hết quota — hãy liên hệ admin.</p>
       </div>
     );
@@ -352,9 +353,9 @@ function EvidenceStep({
             <div>
               <strong>
                 {uploading
-                  ? '⏳ Đang upload...'
+                  ? <><LoaderCircle size={16} aria-hidden="true" /> Đang upload...</>
                   : uploadedEvidence
-                  ? `✓ Đã upload: ${uploadedEvidence.fileName}`
+                  ? <><Check size={16} aria-hidden="true" /> Đã upload: {uploadedEvidence.fileName}</>
                   : file
                   ? file.name
                   : 'Chọn file để upload'}
@@ -383,7 +384,7 @@ function EvidenceStep({
 
       <div className="review-modal-actions">
         <button type="button" className="review-btn outline" onClick={onBack}>
-          ← Quay lại
+          <ArrowLeft size={16} aria-hidden="true" /> Quay lại
         </button>
         <button
           type="button"
@@ -391,7 +392,7 @@ function EvidenceStep({
           onClick={onNext}
           disabled={!evidenceReady}
         >
-          Tiếp tục →
+          Tiếp tục <ArrowRight size={16} aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -455,7 +456,7 @@ function ConfirmStep({
 
       <div className="review-modal-actions">
         <button type="button" className="review-btn outline" onClick={onBack}>
-          ← Quay lại
+          <ArrowLeft size={16} aria-hidden="true" /> Quay lại
         </button>
         <button
           type="button"
