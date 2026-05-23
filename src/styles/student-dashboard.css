@@ -840,8 +840,8 @@
     gap: 8px !important;
 }
 
-.student-profile-grid label > span,
-.plan-form label > span {
+.student-profile-grid label>span,
+.plan-form label>span {
     color: var(--student-muted) !important;
     font-size: 13px !important;
     font-weight: 600 !important;
@@ -1195,7 +1195,7 @@
 }
 
 .student-topbar-copy,
-.roadmap-hero > div:first-child,
+.roadmap-hero>div:first-child,
 .portfolio-header-copy,
 .student-profile-heading-copy {
     display: grid !important;
@@ -1391,6 +1391,7 @@
 }
 
 @media (max-width: 920px) {
+
     .student-topbar,
     .roadmap-hero,
     .portfolio-header,
@@ -1417,4 +1418,27 @@
     .portfolio-hero-metrics {
         grid-template-columns: 1fr !important;
     }
+}
+
+.student-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    position: relative;
+    z-index: 50;
+}
+
+.student-search-bar {
+    flex: 1;
+    max-width: 620px;
+}
+
+.student-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 100;
 }

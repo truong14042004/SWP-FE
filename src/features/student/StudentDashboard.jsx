@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import {
-  Bell,
   Bot,
   BriefcaseBusiness,
   ChevronLeft,
@@ -699,6 +698,22 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     setActiveSection(sectionId);
     window.history.replaceState({}, '', `#${sectionId}`);
   }
+  function handleNotificationNavigate(target) {
+  const normalizedTarget = String(target || '').trim();
+
+  const rawSection = normalizedTarget
+    .replace(/^#/, '')
+    .replace(/^\//, '')
+    .split('#')
+    .pop()
+    .split(/[/?&]/)[0];
+
+  const sectionId = STUDENT_SECTIONS.some((section) => section.id === rawSection)
+    ? rawSection
+    : 'roadmap';
+
+  navigateStudentSection(sectionId);
+}
 
   async function loadProfile() {
     setLoadingProfile(true);
@@ -901,14 +916,23 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
       </aside>
 
       <section className="admin-main student-main">
-      {!['portfolio', 'roadmap','skills','github','mentors','subscription','feedbacks','settings'].includes(activeSection) && (
-  <header className="student-header-bar">
-    <button type="button" className="student-search-bar" onClick={() => navigateStudentSection('skills')}>
-      <Search size={16} aria-hidden="true" />
-      Tìm kiếm khóa học, mentor, kỹ năng...
-    </button>
-  </header>
-)}
+<header className="student-header-bar">
+  <button
+    type="button"
+    className="student-search-bar"
+    onClick={() => navigateStudentSection('skills')}
+  >
+    <Search size={16} aria-hidden="true" />
+    Tìm kiếm khóa học, mentor, kỹ năng...
+  </button>
+
+  <div className="student-header-actions">
+    <NotificationBell
+      session={session}
+      onNavigate={handleNotificationNavigate}
+    />
+  </div>
+</header>
 
      {activeSection === 'portfolio' ? (
   <StudentPortfolioPage session={session} />
@@ -954,9 +978,22 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                 <p>{sectionMeta.subtitle} <strong>{targetRoleName}</strong>.</p>
               </div>
               <div className="student-topbar-actions">
-                <button type="button" className="student-secondary-btn" onClick={() => navigateStudentSection('settings')}>Cập nhật hồ sơ</button>
-                <button type="button" className="student-cta-btn" onClick={() => navigateStudentSection('roadmap')}>Tạo lộ trình cá nhân hóa</button>
-              </div>
+  <button
+    type="button"
+    className="student-secondary-btn"
+    onClick={() => navigateStudentSection('settings')}
+  >
+    Cập nhật hồ sơ
+  </button>
+
+  <button
+    type="button"
+    className="student-cta-btn"
+    onClick={() => navigateStudentSection('roadmap')}
+  >
+    Tạo lộ trình cá nhân hóa
+  </button>
+</div>
             </header>
 
             {loadingOverview && (
