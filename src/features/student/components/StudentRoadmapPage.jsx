@@ -1262,14 +1262,63 @@ function RoadmapNodeCard({
   );
 }
 
+function formatResourceType(type) {
+  if (!type) return '';
+  const lower = type.toLowerCase();
+  if (lower === 'article') return 'Bài viết';
+  if (lower === 'video') return 'Video';
+  if (lower === 'course') return 'Khóa học';
+  if (lower === 'documentation') return 'Tài liệu';
+  if (lower === 'book') return 'Sách';
+  if (lower === 'exercise') return 'Bài tập';
+  return type;
+}
+
+function formatContentType(contentType) {
+  if (!contentType) return '';
+  const lower = contentType.toLowerCase();
+  
+  if (lower === 'application/pdf') return 'PDF';
+  if (lower === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+      lower === 'application/msword') return 'Word';
+  if (lower === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+      lower === 'application/vnd.ms-excel') return 'Excel';
+  if (lower === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || 
+      lower === 'application/vnd.ms-powerpoint') return 'PowerPoint';
+  if (lower.startsWith('image/')) return 'Ảnh';
+  if (lower.startsWith('video/')) return 'Video';
+  if (lower.startsWith('audio/')) return 'Audio';
+  if (lower === 'text/plain') return 'Text';
+  if (lower === 'text/markdown') return 'Markdown';
+  if (lower === 'application/zip' || lower === 'application/x-zip-compressed') return 'ZIP';
+  
+  const parts = contentType.split('/');
+  if (parts.length === 2) {
+    const sub = parts[1];
+    if (sub.length <= 4) return sub.toUpperCase();
+  }
+  
+  return 'File';
+}
+
+function formatDifficulty(diff) {
+  if (!diff) return '';
+  const lower = diff.toLowerCase();
+  if (lower === 'beginner') return 'Cơ bản';
+  if (lower === 'intermediate') return 'Trung cấp';
+  if (lower === 'advanced') return 'Nâng cao';
+  return diff;
+}
+
 function ResourceButton({ resource }) {
   const prefix = resource.lessonNumber ? `Bài ${resource.lessonNumber}: ` : '';
-  const label = `${prefix}${resource.title || resource.skillName || 'Tài liệu học tập'}`;
+  const cleanedTitle = (resource.title || '').trim();
+  const label = `${prefix}${cleanedTitle || resource.skillName || 'Tài liệu học tập'}`;
 
   const metaItems = [
-    resource.resourceType,
-    resource.contentType,
-    resource.difficulty,
+    formatResourceType(resource.resourceType),
+    formatContentType(resource.contentType),
+    formatDifficulty(resource.difficulty),
     resource.estimatedHours ? `${resource.estimatedHours} giờ` : '',
   ].filter(Boolean);
 
