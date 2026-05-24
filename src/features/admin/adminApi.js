@@ -121,17 +121,11 @@ export function getLearningResource(session, id) {
 }
 
 export function saveLearningResource(session, resource, id) {
-  return authorizedRequest(id ? `/api/admin/learning-resources/${id}` : '/api/admin/learning-resources', session, {
-    method: id ? 'PUT' : 'POST',
-    body: JSON.stringify(resource),
-  });
-}
-
-export function uploadLearningResource(session, resource) {
   const formData = new FormData();
   const formKeys = {
     skillId: 'SkillId',
     title: 'Title',
+    url: 'Url',
     resourceType: 'ResourceType',
     difficulty: 'Difficulty',
     estimatedHours: 'EstimatedHours',
@@ -145,8 +139,8 @@ export function uploadLearningResource(session, resource) {
     }
   });
 
-  return authorizedRequest('/api/admin/learning-resources/upload', session, {
-    method: 'POST',
+  return authorizedRequest(id ? `/api/admin/learning-resources/${id}` : '/api/admin/learning-resources', session, {
+    method: id ? 'PUT' : 'POST',
     body: formData,
   });
 }

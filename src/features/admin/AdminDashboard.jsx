@@ -27,7 +27,6 @@ import {
   updatePaymentStatus,
   updateUserStatus,
   uploadAdminUserAvatar,
-  uploadLearningResource,
 } from './adminApi';
 import { OverviewView } from './views/OverviewView';
 import { UsersView } from './views/UsersView';
@@ -178,9 +177,6 @@ export function AdminDashboard({ session, onSignOut }) {
     );
   }
   function handleLoadResource(id) { return getLearningResource(session, id); }
-  async function handleUploadResource(resource) {
-    await runAction(() => uploadLearningResource(session, resource), 'Resource uploaded.');
-  }
   async function handleDeleteResource(resource) {
     await runAction(() => deleteLearningResource(session, resource.id), 'Resource removed.');
   }
@@ -276,7 +272,6 @@ export function AdminDashboard({ session, onSignOut }) {
             skills={data.skills}
             onLoadResource={handleLoadResource}
             onSaveResource={handleSaveResource}
-            onUploadResource={handleUploadResource}
             onDeleteResource={handleDeleteResource}
           />
         );

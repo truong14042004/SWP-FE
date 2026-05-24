@@ -19,7 +19,6 @@ export function ResourcesView({
   skills,
   onLoadResource,
   onSaveResource,
-  onUploadResource,
   onDeleteResource,
 }) {
   const [form, setForm] = useState(emptyResource);
@@ -69,23 +68,7 @@ export function ResourcesView({
     };
 
     try {
-      if (payload.file && !editingId) {
-        await onUploadResource(payload);
-      } else {
-        await onSaveResource(
-          {
-            skillId: payload.skillId,
-            title: payload.title,
-            url: payload.url,
-            resourceType: payload.resourceType,
-            difficulty: payload.difficulty,
-            estimatedHours: payload.estimatedHours,
-            lessonNumber: payload.lessonNumber,
-            isActive: payload.isActive,
-          },
-          editingId,
-        );
-      }
+      await onSaveResource(payload, editingId);
       reset();
     } finally {
       setSaving(false);
@@ -147,10 +130,9 @@ export function ResourcesView({
                   name="file"
                   type="file"
                   onChange={updateField}
-                  disabled={Boolean(editingId)}
                 />
                 {form.file && <small style={{ color: 'var(--ink-muted-48)', display: 'block', marginTop: '4px' }}>{form.file.name}</small>}
-                {editingId && <small style={{ color: 'var(--ink-muted-48)', display: 'block', marginTop: '4px' }}>File edits not supported. Modify URL directly.</small>}
+                {editingId && <small style={{ color: 'var(--ink-muted-48)', display: 'block', marginTop: '4px' }}>Leave empty to keep existing file (or just update URL)</small>}
               </label>
             </div>
 
