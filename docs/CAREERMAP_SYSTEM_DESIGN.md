@@ -92,7 +92,7 @@ graph TD
 Quy trình khởi đầu của sinh viên bắt đầu từ việc đăng ký tài khoản mới, xác thực OTP email, nâng cấp gói dịch vụ qua PayOS, thiết lập hồ sơ cá nhân trích xuất từ CV, và tự đánh giá khoảng cách kỹ năng (Skill Gap).
 
 #### Chuỗi các bước thực hiện theo mũi tên (`->`):
-`Sinh viên đăng ký tài khoản mới` -> `Hệ thống gửi mã OTP xác thực qua Email` -> `Sinh viên nhập OTP để kích hoạt tài khoản` -> `Đăng nhập hệ thống` -> `Xem danh sách & Lựa chọn gói cước dịch vụ` -> `Gửi yêu cầu thanh toán (Checkout)` -> `Thực hiện giao dịch quét mã QR PayOS (đối với gói Premium)` -> `PayOS gửi Webhook báo thành công` -> `Hệ thống kích hoạt trạng thái gói Active & Cộng quota lượt review` -> `Sinh viên tải lên tệp CV (PDF)` -> `Backend trích xuất kỹ năng tự động từ CV (CV Parsing)` -> `Sinh viên tự khai báo & đánh giá cấp độ kỹ năng cá nhân (User Skills)` -> `Hệ thống thực hiện Phân tích khoảng cách kỹ năng (Skill Gap)` -> `Hiển thị Điểm phù hợp (Match Score %)` -> `Sẵn sàng tạo lộ trình học`.
+`Sinh viên đăng ký tài khoản mới` -> `Hệ thống gửi mã OTP xác thực qua Email` -> `Sinh viên nhập OTP để kích hoạt tài khoản` -> `Đăng nhập hệ thống` -> `Xem danh sách & Lựa chọn gói cước dịch vụ` -> `Gửi yêu cầu thanh toán (Checkout)` -> `Thực hiện giao dịch quét mã QR PayOS (đối với gói Premium)` -> `Nếu sau 10 phút chưa thanh toán, tự động cập nhật trạng thái thanh toán & gói dịch vụ thành Cancelled` -> `Ngược lại, chuyển khoản thành công trước 10 phút -> PayOS gửi Webhook báo thành công (Code 00)` -> `Hệ thống kích hoạt trạng thái gói Active & Cộng quota lượt review` -> `Sinh viên tải lên tệp CV (PDF)` -> `Backend trích xuất kỹ năng tự động từ CV (CV Parsing)` -> `Sinh viên tự khai báo & đánh giá cấp độ kỹ năng cá nhân (User Skills)` -> `Hệ thống thực hiện Phân tích khoảng cách kỹ năng (Skill Gap)` -> `Hiển thị Điểm phù hợp (Match Score %)` -> `Sẵn sàng tạo lộ trình học`.
 
 #### Sơ đồ tuần tự (Sequence Diagram):
 ```mermaid
@@ -126,11 +126,19 @@ sequenceDiagram
     PayOS-->>BE: Trả về CheckoutUrl & QR Code
     BE-->>FE: Trả về thông tin thanh toán & CheckoutUrl
     FE-->>Student: Hiển thị màn hình quét mã QR PayOS
-    Student->>PayOS: Chuyển khoản thanh toán quét QR
-    PayOS->>BE: Webhook cập nhật thanh toán thành công (Code: 00)
-    BE->>DB: Cập nhật Subscriptions (Status: Active) & PaymentTransaction (Status: Success)
-    BE->>BE: Cộng quota lượt review từ Mentor doanh nghiệp cho Sinh viên
-    BE-->>FE: Đồng bộ trạng thái Premium thành công
+    alt Sau 10 phút chưa thanh toán (Timeout 10p)
+        FE->>BE: GET /api/subscriptions/me hoặc POST /api/subscriptions/checkout
+        BE->>BE: Kiểm tra thời gian chờ quá hạn 10 phút
+        BE->>DB: Cập nhật Subscriptions (Status: Cancelled) & PaymentTransaction (Status: Cancelled)
+        BE-->>FE: Trả về trạng thái đã hủy (Cancelled)
+        FE-->>Student: Hiển thị thông báo giao dịch đã bị hủy do quá hạn
+    else Chuyển khoản thành công trước 10 phút
+        Student->>PayOS: Chuyển khoản thanh toán quét QR
+        PayOS->>BE: Webhook cập nhật thanh toán thành công (Code: 00)
+        BE->>DB: Cập nhật Subscriptions (Status: Active) & PaymentTransaction (Status: Success)
+        BE->>BE: Cộng quota lượt review từ Mentor doanh nghiệp cho Sinh viên
+        BE-->>FE: Đồng bộ trạng thái Premium thành công
+    end
 
     Note over Student, GCS: Bước 3: Thiết lập Hồ sơ & Phân tích CV PDF
     Student->>FE: Cập nhật thông tin cơ bản & Tải lên tệp CV (PDF)
