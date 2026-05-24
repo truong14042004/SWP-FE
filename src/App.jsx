@@ -6,6 +6,7 @@ import { HomePage } from './features/home/HomePage';
 import { MentorHome } from './features/mentor/MentorHome';
 import { PaymentResultPage } from './features/subscriptions/PaymentResultPage';
 import { PublicPortfolioPage } from './features/portfolio/PublicPortfolioPage';
+import { MarketPulsePage } from './features/market/MarketPulsePage';
 import { UnsupportedRoleHome } from './features/member/UnsupportedRoleHome';
 import { StudentDashboard } from './features/student/StudentDashboard';
 import { normalizeRole, userRoles } from './auth/roles';
@@ -49,6 +50,10 @@ export default function App() {
         onHome={() => navigateTo('/')}
       />
     );
+  }
+
+  if (currentPath === '/market-pulse') {
+    return <MarketPulsePage />;
   }
 
   if (currentPath === '/payment/success') {

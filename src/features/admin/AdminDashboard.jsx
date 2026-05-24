@@ -37,9 +37,20 @@ import { ResourcesView } from './views/ResourcesView';
 import { RequirementsView } from './views/RequirementsView';
 import { CareerRolesView } from './views/CareerRolesView';
 import { AssignmentsView } from './views/AssignmentsView';
+import { MarketPulseAdminView } from './views/MarketPulseAdminView';
+
+const VALID_SECTIONS = new Set([
+  'overview', 'users', 'assignments', 'payments', 'plans',
+  'skills', 'resources', 'requirements', 'careerRoles', 'marketPulse',
+]);
+
+function readHashSection() {
+  const hash = (window.location.hash || '').replace(/^#/, '');
+  return VALID_SECTIONS.has(hash) ? hash : 'overview';
+}
 
 export function AdminDashboard({ session, onSignOut }) {
-  const [activeSection, setActiveSection] = useState('overview');
+  const [activeSection, setActiveSection] = useState(readHashSection);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -51,6 +62,14 @@ export function AdminDashboard({ session, onSignOut }) {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (activeSection && activeSection !== 'overview') {
+      window.history.replaceState(null, '', `#${activeSection}`);
+    } else {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [activeSection]);
 
   async function refresh() {
     setLoading(true);
@@ -295,6 +314,8 @@ export function AdminDashboard({ session, onSignOut }) {
             onDeleteCareerRole={handleDeleteCareerRole}
           />
         );
+      case 'marketPulse':
+        return <MarketPulseAdminView session={session} />;
       default:
         return <OverviewView stats={data.stats} session={session} />;
     }

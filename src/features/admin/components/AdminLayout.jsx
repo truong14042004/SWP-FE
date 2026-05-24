@@ -64,6 +64,11 @@ const NAV_ICONS = {
       <path d="M9 6v3M9 9H3.5v3M9 9h5.5v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ),
+  marketPulse: (
+    <svg className="nav-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M2 11l3-5 3 7 3-9 3 7h2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  ),
 };
 
 /**
@@ -80,6 +85,7 @@ const MANAGEMENT_SECTIONS = [
   { id: 'resources',    label: 'Resources' },
   { id: 'requirements', label: 'Requirements' },
   { id: 'careerRoles',  label: 'Career roles' },
+  { id: 'marketPulse',  label: 'Market pulse' },
 ];
 
 const MANAGEMENT_IDS = new Set(MANAGEMENT_SECTIONS.map((s) => s.id));
@@ -103,6 +109,7 @@ const SECTION_LABELS = {
   resources:    { title: 'Learning resources', sub: 'Articles, videos, files' },
   requirements: { title: 'Role requirements',  sub: 'Skills mapped to career roles' },
   careerRoles:  { title: 'Career roles',       sub: 'Target roles students can pursue' },
+  marketPulse:  { title: 'Market pulse',        sub: 'Job market trends from scraped postings' },
 };
 
 const MGMT_OPEN_STORAGE_KEY = 'admin.sidebar.mgmtOpen';

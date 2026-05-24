@@ -1,0 +1,294 @@
+.market-pulse {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1d1d1f;
+}
+
+.market-pulse--embedded {
+  padding: 0;
+  max-width: none;
+}
+
+.market-pulse__header {
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 24px;
+}
+
+.market-pulse__title-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.market-pulse__eyebrow {
+  color: #7a7a7a;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0 0 6px;
+}
+
+.market-pulse__header h1 {
+  font-size: 28px;
+  line-height: 1.2;
+  margin: 0 0 6px;
+  font-weight: 700;
+}
+
+.market-pulse__subtitle {
+  margin: 0;
+  color: #555;
+  font-size: 14px;
+}
+
+.market-pulse__section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.market-pulse__section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.market-pulse__section-head h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.market-pulse__hint {
+  margin: 0;
+  color: #7a7a7a;
+  font-size: 13px;
+}
+
+.market-pulse__window-tabs {
+  display: flex;
+  gap: 4px;
+  background: #f5f5f7;
+  border-radius: 8px;
+  padding: 4px;
+  align-items: center;
+}
+
+.market-pulse__window-tab {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #555;
+  transition: all 0.15s ease;
+}
+
+.market-pulse__window-tab:hover {
+  background: rgba(0, 102, 204, 0.06);
+}
+
+.market-pulse__window-tab.is-active {
+  background: #fff;
+  color: #0066cc;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.market-pulse__refresh {
+  border: none;
+  background: transparent;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #555;
+  display: flex;
+  align-items: center;
+}
+
+.market-pulse__refresh:hover {
+  background: rgba(0, 102, 204, 0.06);
+  color: #0066cc;
+}
+
+.market-pulse__chart-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 24px 16px;
+}
+
+.market-pulse__loading,
+.market-pulse__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 0;
+  color: #7a7a7a;
+  font-size: 14px;
+}
+
+.market-pulse__spin {
+  animation: market-pulse-spin 1s linear infinite;
+}
+
+@keyframes market-pulse-spin {
+  to { transform: rotate(360deg); }
+}
+
+.market-pulse__keyword-chip {
+  background: #cfe3fb;
+  color: #0066cc;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-left: 4px;
+}
+
+.market-pulse__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f5f5f7;
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+
+.market-pulse__search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  min-width: 200px;
+}
+
+.market-pulse__search-submit,
+.market-pulse__search-clear {
+  border: none;
+  background: #0066cc;
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.market-pulse__search-clear {
+  background: #e0e0e0;
+  color: #555;
+}
+
+.market-pulse__jobs {
+  min-height: 80px;
+}
+
+.market-pulse__job-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.market-pulse__job {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  transition: border-color 0.15s ease;
+}
+
+.market-pulse__job:hover {
+  border-color: #0066cc;
+}
+
+.market-pulse__job-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.market-pulse__job-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #1d1d1f;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.market-pulse__job-title:hover {
+  color: #0066cc;
+}
+
+.market-pulse__job-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: #7a7a7a;
+}
+
+.market-pulse__job-source {
+  background: #f5f5f7;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  color: #555;
+}
+
+.market-pulse__job-salary {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0066cc;
+  white-space: nowrap;
+}
+
+.market-pulse__pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: #555;
+  margin-top: 8px;
+}
+
+.market-pulse__pagination button {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #1d1d1f;
+}
+
+.market-pulse__pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.market-pulse__pagination button:not(:disabled):hover {
+  background: #f5f5f7;
+}

@@ -41,6 +41,7 @@ import { StudentGithubPage } from './components/StudentGithubPage';
 import { StudentMentorPage } from './components/StudentMentorPage';
 import { StudentSubscriptionPage } from './components/StudentSubscriptionPage';
 import { StudentFeedbacksPage } from './components/StudentFeedbacksPage';
+import { MarketPulsePage } from '../market/MarketPulsePage';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { getGithubRepositories } from './githubApi';
 import { getMentorSessions } from './mentorApi';
@@ -53,6 +54,7 @@ const STUDENT_SECTIONS = [
   { id: 'github', label: 'Tích hợp GitHub', Icon: GitBranch },
   { id: 'portfolio', label: 'Xây dựng Portfolio', Icon: BriefcaseBusiness },
   { id: 'mentors', label:'AI tư vấn', Icon: Bot },
+  { id: 'market-pulse', label: 'Market Pulse', Icon: TrendingUp },
   { id: 'feedbacks', label: 'Feedback nhận được', Icon: MessageSquareText },
   { id: 'settings', label: 'Cài đặt', Icon: Settings },
 ];
@@ -77,6 +79,11 @@ const SECTION_META = {
     eyebrow: 'Mentor sessions',
     title: 'Lịch hẹn tư vấn sắp tới',
     subtitle: 'Chuẩn bị trước nội dung cần hỏi mentor để rút ngắn thời gian đạt mục tiêu',
+  },
+  'market-pulse': {
+    eyebrow: 'Market Pulse',
+    title: 'Xu hướng kỹ năng từ tin tuyển dụng',
+    subtitle: 'Cập nhật kỹ năng đang được nhà tuyển dụng IT săn lùng nhiều nhất',
   },
   community: {
     eyebrow: 'Mentor community',
@@ -998,6 +1005,8 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   <Fade inView={false}><StudentGithubPage session={session} /></Fade>
 ) : activeSection === 'mentors' ? (
   <Fade inView={false}><StudentMentorPage session={session} /></Fade>
+) : activeSection === 'market-pulse' ? (
+  <Fade inView={false}><MarketPulsePage embedded /></Fade>
 ) : activeSection === 'subscription' ? (
   <Fade inView={false}><StudentSubscriptionPage session={session} /></Fade>
 ) : activeSection === 'feedbacks' ? (
