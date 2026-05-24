@@ -135,6 +135,7 @@ export function uploadLearningResource(session, resource) {
     resourceType: 'ResourceType',
     difficulty: 'Difficulty',
     estimatedHours: 'EstimatedHours',
+    lessonNumber: 'LessonNumber',
     isActive: 'IsActive',
     file: 'File',
   };

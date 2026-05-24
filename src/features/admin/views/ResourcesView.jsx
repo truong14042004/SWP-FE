@@ -9,6 +9,7 @@ const emptyResource = {
   resourceType: 'Article',
   difficulty: 'Beginner',
   estimatedHours: 1,
+  lessonNumber: 1,
   isActive: true,
   file: null,
 };
@@ -21,7 +22,6 @@ export function ResourcesView({
   onUploadResource,
   onDeleteResource,
 }) {
-  const [mode, setMode] = useState('link');
   const [form, setForm] = useState(emptyResource);
   const [editingId, setEditingId] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -37,7 +37,6 @@ export function ResourcesView({
 
   async function edit(resource) {
     const latest = await onLoadResource(resource.id);
-    setMode('link');
     setEditingId(latest.id);
     setForm({
       skillId: latest.skillId || '',
@@ -46,6 +45,7 @@ export function ResourcesView({
       resourceType: latest.resourceType,
       difficulty: latest.difficulty || '',
       estimatedHours: latest.estimatedHours || 0,
+      lessonNumber: latest.lessonNumber ?? 1,
       isActive: latest.isActive,
       file: null,
     });
@@ -53,7 +53,6 @@ export function ResourcesView({
   }
 
   function reset() {
-    setMode('link');
     setEditingId('');
     setForm(emptyResource);
     setShowForm(false);
@@ -66,10 +65,11 @@ export function ResourcesView({
       ...form,
       skillId: form.skillId || null,
       estimatedHours: Number(form.estimatedHours),
+      lessonNumber: Number(form.lessonNumber),
     };
 
     try {
-      if (mode === 'file' && !editingId) {
+      if (payload.file && !editingId) {
         await onUploadResource(payload);
       } else {
         await onSaveResource(
@@ -80,6 +80,7 @@ export function ResourcesView({
             resourceType: payload.resourceType,
             difficulty: payload.difficulty,
             estimatedHours: payload.estimatedHours,
+            lessonNumber: payload.lessonNumber,
             isActive: payload.isActive,
           },
           editingId,
@@ -112,24 +113,6 @@ export function ResourcesView({
           </header>
 
           <form className="field-stack" onSubmit={submit}>
-            <div className="segmented" role="tablist" aria-label="Source type">
-              <button
-                type="button"
-                className={mode === 'link' ? 'active' : ''}
-                onClick={() => setMode('link')}
-              >
-                Link
-              </button>
-              <button
-                type="button"
-                className={mode === 'file' ? 'active' : ''}
-                onClick={() => setMode('file')}
-                disabled={Boolean(editingId)}
-              >
-                File upload
-              </button>
-            </div>
-
             <div className="field-row">
               <label>
                 <span>Skill</span>
@@ -146,7 +129,7 @@ export function ResourcesView({
               </label>
             </div>
 
-            {mode === 'link' ? (
+            <div className="field-row">
               <label>
                 <span>URL</span>
                 <input
@@ -155,18 +138,23 @@ export function ResourcesView({
                   value={form.url}
                   onChange={updateField}
                   placeholder="https://..."
-                  required
+                  required={!form.file}
                 />
               </label>
-            ) : (
               <label>
-                <span>File</span>
-                <input name="file" type="file" onChange={updateField} required />
-                {form.file && <small style={{ color: 'var(--ink-muted-48)' }}>{form.file.name}</small>}
+                <span>File upload</span>
+                <input
+                  name="file"
+                  type="file"
+                  onChange={updateField}
+                  disabled={Boolean(editingId)}
+                />
+                {form.file && <small style={{ color: 'var(--ink-muted-48)', display: 'block', marginTop: '4px' }}>{form.file.name}</small>}
+                {editingId && <small style={{ color: 'var(--ink-muted-48)', display: 'block', marginTop: '4px' }}>File edits not supported. Modify URL directly.</small>}
               </label>
-            )}
+            </div>
 
-            <div className="field-row three">
+            <div className="field-row">
               <label>
                 <span>Type</span>
                 <input name="resourceType" value={form.resourceType} onChange={updateField} required />
@@ -175,9 +163,16 @@ export function ResourcesView({
                 <span>Difficulty</span>
                 <input name="difficulty" value={form.difficulty} onChange={updateField} />
               </label>
+            </div>
+
+            <div className="field-row">
               <label>
                 <span>Estimated hours</span>
                 <input name="estimatedHours" type="number" min="0" value={form.estimatedHours} onChange={updateField} />
+              </label>
+              <label>
+                <span>Lesson number</span>
+                <input name="lessonNumber" type="number" min="1" value={form.lessonNumber} onChange={updateField} required />
               </label>
             </div>
 
@@ -213,7 +208,7 @@ export function ResourcesView({
                 <tr key={resource.id}>
                   <td>
                     <strong>{resource.title}</strong>
-                    <span>{resource.resourceType} · {formatDate(resource.updatedAt)}</span>
+                    <span>Lesson {resource.lessonNumber} · {resource.resourceType} · {formatDate(resource.updatedAt)}</span>
                   </td>
                   <td>{resource.skillName || '—'}</td>
                   <td>{resource.sourceType}</td>

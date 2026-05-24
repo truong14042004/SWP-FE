@@ -1263,7 +1263,8 @@ function RoadmapNodeCard({
 }
 
 function ResourceButton({ resource }) {
-  const label = resource.title || resource.skillName || 'Tài liệu học tập';
+  const prefix = resource.lessonNumber ? `Bài ${resource.lessonNumber}: ` : '';
+  const label = `${prefix}${resource.title || resource.skillName || 'Tài liệu học tập'}`;
 
   const metaItems = [
     resource.resourceType,
