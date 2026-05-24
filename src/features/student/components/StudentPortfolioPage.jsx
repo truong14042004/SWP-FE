@@ -474,8 +474,8 @@ export function StudentPortfolioPage({ session }) {
   }
 
   return (
-    <section className="portfolio-page">
-      <header className="portfolio-header">
+    <section className="portfolio-page anim-stagger">
+      <header className="portfolio-header anim-fade-up">
         <div className="portfolio-header-copy">
           <span className={form.isPublished ? 'portfolio-status-pill live' : 'portfolio-status-pill draft'}>
             {form.isPublished ? 'Đang public' : 'Bản nháp'}
@@ -551,14 +551,14 @@ export function StudentPortfolioPage({ session }) {
       {error && <div className="portfolio-alert error">{error}</div>}
 
       {loading && (
-        <div className="portfolio-card">
+        <div className="portfolio-card anim-hover-lift">
           Đang tải portfolio...
         </div>
       )}
 
       {!loading && activeTab === 'edit' && (
         <div className="portfolio-editor-grid">
-          <section className="portfolio-card">
+          <section className="portfolio-card anim-hover-lift">
             <h2>Thông tin cơ bản</h2>
 
             <label className="portfolio-field">
@@ -615,7 +615,7 @@ export function StudentPortfolioPage({ session }) {
             </button>
           </section>
 
-          <section className="portfolio-card">
+          <section className="portfolio-card anim-hover-lift">
             <div className="portfolio-card-head">
               <div>
                 <h2>Dự án nổi bật</h2>
@@ -657,7 +657,7 @@ export function StudentPortfolioPage({ session }) {
       )}
 
       {!loading && activeTab === 'theme' && (
-        <section className="portfolio-card">
+        <section className="portfolio-card anim-hover-lift">
           <h2>Chọn giao diện portfolio</h2>
 
           <div className="portfolio-theme-grid">
@@ -687,7 +687,7 @@ export function StudentPortfolioPage({ session }) {
       )}
 
       {!loading && activeTab === 'share' && (
-        <section className="portfolio-card">
+        <section className="portfolio-card anim-hover-lift">
           <h2>Chia sẻ portfolio</h2>
 
           <div className="portfolio-public-box">

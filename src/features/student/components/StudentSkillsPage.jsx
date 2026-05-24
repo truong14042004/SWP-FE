@@ -503,8 +503,8 @@ async function loadData() {
   }
 }
   return (
-    <section className="skills-page">
-      <header className="skills-hero">
+    <section className="skills-page anim-stagger">
+      <header className="skills-hero anim-fade-up">
         <div className="skills-hero-copy">
           <span className="skills-eyebrow"><Diamond size={16} aria-hidden="true" /> Kỹ năng & khóa học</span>
           <h1>Quản lý kỹ năng cá nhân</h1>
@@ -860,7 +860,7 @@ function UserSkillCard({ userSkill, onEdit, onDelete, session }) {
   };
 
   return (
-    <article className={`user-skill-card ${levelClass}`}>
+    <article className={`user-skill-card ${levelClass} anim-hover-lift`}>
       <div className="user-skill-top">
         <div>
           <span>{userSkill.skillCategory || 'Khác'}</span>

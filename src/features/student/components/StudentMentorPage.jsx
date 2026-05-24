@@ -357,8 +357,8 @@ function cleanGithubUsername(value) {
   return String(value || '').trim().replace(/^@+/, '');
 }
   return (
-    <section className="mentor-page">
-      <aside className="mentor-session-panel">
+    <section className="mentor-page anim-fade-in">
+      <aside className="mentor-session-panel anim-slide-left">
         <div className="mentor-session-head">
           <div>
             <h2>Lịch sử tư vấn</h2>
@@ -399,7 +399,7 @@ function cleanGithubUsername(value) {
         )}
       </aside>
 
-      <main className="mentor-chat-panel">
+      <main className="mentor-chat-panel anim-fade-up anim-delay-1">
         <header className="mentor-chat-header">
           <div className="mentor-bot-avatar"><Bot size={22} aria-hidden="true" /></div>
 
@@ -492,7 +492,7 @@ function cleanGithubUsername(value) {
         </p>
       </main>
 
-      <aside className="mentor-context-panel">
+      <aside className="mentor-context-panel anim-fade-up anim-delay-2">
         <h2>Ngữ cảnh Profile</h2>
 
         <section className="mentor-profile-card">
@@ -514,7 +514,7 @@ function cleanGithubUsername(value) {
           </div>
         </section>
 
-        <section className="mentor-context-card">
+        <section className="mentor-context-card anim-hover-lift">
           <span>Mục tiêu hiện tại</span>
           <h3>{targetRole}</h3>
           <p>{profile?.careerGoal || 'Chưa có mục tiêu nghề nghiệp trong hồ sơ.'}</p>
@@ -539,7 +539,7 @@ function cleanGithubUsername(value) {
           </div>
         </section>
 
-        <section className="mentor-context-card">
+        <section className="mentor-context-card anim-hover-lift">
           <span>Kỹ năng gần đây</span>
 
           {safeArray(userSkills).length === 0 ? (

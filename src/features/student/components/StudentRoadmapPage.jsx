@@ -752,8 +752,8 @@ async function handleCancelReviewRequest(node, request) {
 }
   return (
     <>
-    <section className="roadmap-page">
-      <header className="roadmap-hero">
+    <section className="roadmap-page anim-stagger">
+      <header className="roadmap-hero anim-fade-up">
         <div>
           <span className="roadmap-eyebrow"><Compass size={16} aria-hidden="true" /> Lộ trình học tập</span>
           <h1>
@@ -1051,8 +1051,8 @@ function RoadmapNodeCard({
 
   return (
     <article
-      className={`roadmap-node ${statusMeta.className}`}
-      style={{ '--node-level': level, '--node-index': index }}
+      className={`roadmap-node ${statusMeta.className} anim-hover-lift`}
+      style={{ '--node-level': level, '--node-index': index, animation: `anim-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) ${Math.min(index * 0.05, 0.4)}s backwards` }}
     >
       <div className="roadmap-node-marker">
         <span><StatusIcon size={14} aria-hidden="true" /></span>

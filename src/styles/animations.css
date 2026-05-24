@@ -1,0 +1,98 @@
+/* Reusable utility animation classes for the student dashboard. */
+
+@keyframes anim-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes anim-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes anim-pop {
+  0%   { opacity: 0; transform: scale(0.85); }
+  60%  { opacity: 1; transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+@keyframes anim-slide-left {
+  from { opacity: 0; transform: translateX(-18px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes anim-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 102, 204, 0); }
+  50%      { box-shadow: 0 0 0 8px rgba(0, 102, 204, 0.12); }
+}
+
+/* Apply to a container — its direct children stagger in. */
+.anim-stagger > * {
+  animation: anim-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.anim-stagger > *:nth-child(1)  { animation-delay: 0.02s; }
+.anim-stagger > *:nth-child(2)  { animation-delay: 0.08s; }
+.anim-stagger > *:nth-child(3)  { animation-delay: 0.14s; }
+.anim-stagger > *:nth-child(4)  { animation-delay: 0.20s; }
+.anim-stagger > *:nth-child(5)  { animation-delay: 0.26s; }
+.anim-stagger > *:nth-child(6)  { animation-delay: 0.32s; }
+.anim-stagger > *:nth-child(7)  { animation-delay: 0.38s; }
+.anim-stagger > *:nth-child(8)  { animation-delay: 0.44s; }
+.anim-stagger > *:nth-child(9)  { animation-delay: 0.50s; }
+.anim-stagger > *:nth-child(10) { animation-delay: 0.56s; }
+.anim-stagger > *:nth-child(n+11) { animation-delay: 0.62s; }
+
+.anim-fade-up   { animation: anim-fade-up   0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.anim-fade-in   { animation: anim-fade-in   0.5s ease-out backwards; }
+.anim-pop       { animation: anim-pop       0.5s cubic-bezier(0.18, 1.2, 0.42, 1) backwards; }
+.anim-slide-left{ animation: anim-slide-left 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+
+.anim-delay-1 { animation-delay: 0.06s; }
+.anim-delay-2 { animation-delay: 0.12s; }
+.anim-delay-3 { animation-delay: 0.18s; }
+.anim-delay-4 { animation-delay: 0.24s; }
+.anim-delay-5 { animation-delay: 0.30s; }
+.anim-delay-6 { animation-delay: 0.36s; }
+
+/* Hover lift — cards visually rise on hover. */
+.anim-hover-lift {
+  transition:
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.2s ease;
+  will-change: transform;
+}
+.anim-hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.18);
+}
+
+/* Subtle press effect for tap-able rows. */
+.anim-press {
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.anim-press:active {
+  transform: scale(0.985);
+}
+
+/* Glow pulse for "important" CTAs (e.g. live indicator, new badge). */
+.anim-glow {
+  animation: anim-glow-pulse 2.4s ease-in-out infinite;
+  border-radius: 12px;
+}
+
+/* Respect user motion preferences. */
+@media (prefers-reduced-motion: reduce) {
+  .anim-stagger > *,
+  .anim-fade-up,
+  .anim-fade-in,
+  .anim-pop,
+  .anim-slide-left,
+  .anim-glow {
+    animation: none !important;
+  }
+  .anim-hover-lift,
+  .anim-press {
+    transition: none !important;
+  }
+}

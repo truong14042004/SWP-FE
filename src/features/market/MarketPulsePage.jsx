@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   Bar,
   BarChart,
@@ -18,9 +19,12 @@ import {
   LoaderCircle,
   RefreshCw,
   Search,
+  Sparkles,
   TrendingUp,
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { CountingNumber } from '@/components/animate-ui/primitives/texts/counting-number';
+import { Fade, Fades } from '@/components/animate-ui/primitives/effects/fade';
 import {
   getKeywordTrend,
   getMarketJobs,
@@ -166,22 +170,75 @@ export function MarketPulsePage({ embedded = false } = {}) {
     setPage(1);
   }
 
+  const topKeyword = trending[0]?.keyword || '—';
+  const topKeywordCount = trending[0]?.jobCount || 0;
+  const totalTrackedKeywords = trending.length;
+
   return (
     <div className={embedded ? 'market-pulse market-pulse--embedded' : 'market-pulse'}>
       {!embedded && (
-        <header className="market-pulse__header">
-          <div className="market-pulse__title-row">
-            <Activity size={28} color={ACCENT} />
+        <Fade inView={false}>
+          <header className="market-pulse__header">
+            <div className="market-pulse__title-row">
+              <motion.div
+                initial={{ rotate: -180, scale: 0 }}
+                animate={{ rotate: 0, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 12 }}
+              >
+                <Activity size={28} color={ACCENT} />
+              </motion.div>
+              <div>
+                <p className="market-pulse__eyebrow">Market Pulse</p>
+                <h1>Xu hướng kỹ năng IT theo nhu cầu tuyển dụng thực tế</h1>
+                <p className="market-pulse__subtitle">
+                  Tổng hợp từ các tin tuyển dụng IT mới nhất trên thị trường Việt Nam.
+                </p>
+              </div>
+            </div>
+          </header>
+        </Fade>
+      )}
+
+      <Fades inView={false} delay={120} holdDelay={80}>
+        <div className="market-pulse__kpis">
+          <div className="market-pulse__kpi">
+            <div className="market-pulse__kpi-icon market-pulse__kpi-icon--primary">
+              <BriefcaseBusiness size={18} />
+            </div>
             <div>
-              <p className="market-pulse__eyebrow">Market Pulse</p>
-              <h1>Xu hướng kỹ năng IT theo nhu cầu tuyển dụng thực tế</h1>
-              <p className="market-pulse__subtitle">
-                Tổng hợp từ các tin tuyển dụng IT mới nhất trên thị trường Việt Nam.
-              </p>
+              <span className="market-pulse__kpi-label">Tin tuyển dụng</span>
+              <span className="market-pulse__kpi-value">
+                <CountingNumber number={jobs.total} />
+              </span>
             </div>
           </div>
-        </header>
-      )}
+          <div className="market-pulse__kpi">
+            <div className="market-pulse__kpi-icon market-pulse__kpi-icon--accent">
+              <Sparkles size={18} />
+            </div>
+            <div>
+              <span className="market-pulse__kpi-label">Kỹ năng hot nhất</span>
+              <span className="market-pulse__kpi-value market-pulse__kpi-value--small">
+                {topKeyword}
+                <span className="market-pulse__kpi-sub">
+                  <CountingNumber number={topKeywordCount} /> tin
+                </span>
+              </span>
+            </div>
+          </div>
+          <div className="market-pulse__kpi">
+            <div className="market-pulse__kpi-icon market-pulse__kpi-icon--soft">
+              <TrendingUp size={18} />
+            </div>
+            <div>
+              <span className="market-pulse__kpi-label">Keywords trending</span>
+              <span className="market-pulse__kpi-value">
+                <CountingNumber number={totalTrackedKeywords} />
+              </span>
+            </div>
+          </div>
+        </div>
+      </Fades>
 
       <section className="market-pulse__section">
         <div className="market-pulse__section-head">
@@ -254,7 +311,8 @@ export function MarketPulsePage({ embedded = false } = {}) {
                 <Bar
                   dataKey="jobCount"
                   radius={[0, 4, 4, 0]}
-                  isAnimationActive={false}
+                  animationDuration={800}
+                  animationEasing="ease-out"
                   onClick={(data) => data?.keyword && setSelectedKeyword(data.keyword)}
                   cursor="pointer"
                 >
@@ -276,7 +334,18 @@ export function MarketPulsePage({ embedded = false } = {}) {
           <div>
             <h2>
               <TrendingUp size={18} /> Diễn biến 30 ngày của{' '}
-              <span className="market-pulse__keyword-chip">{selectedKeyword || '—'}</span>
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={selectedKeyword || 'none'}
+                  className="market-pulse__keyword-chip"
+                  initial={{ opacity: 0, y: -6, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {selectedKeyword || '—'}
+                </motion.span>
+              </AnimatePresence>
             </h2>
             <p className="market-pulse__hint">
               Bấm vào thanh trong biểu đồ ở trên để chọn kỹ năng khác.
@@ -367,8 +436,14 @@ export function MarketPulsePage({ embedded = false } = {}) {
             <div className="market-pulse__empty">Không có tin nào phù hợp.</div>
           ) : (
             <ul className="market-pulse__job-list">
-              {jobs.items.map((job) => (
-                <li key={job.id} className="market-pulse__job">
+              {jobs.items.map((job, index) => (
+                <motion.li
+                  key={job.id}
+                  className="market-pulse__job"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: Math.min(index * 0.04, 0.32) }}
+                >
                   <div className="market-pulse__job-main">
                     <a
                       href={job.sourceUrl}
@@ -388,7 +463,7 @@ export function MarketPulsePage({ embedded = false } = {}) {
                     </div>
                   </div>
                   <div className="market-pulse__job-salary">{formatSalary(job)}</div>
-                </li>
+                </motion.li>
               ))}
             </ul>
           )}

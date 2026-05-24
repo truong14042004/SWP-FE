@@ -402,8 +402,8 @@ export function StudentGithubPage({ session }) {
   }
 
   return (
-    <section className="github-page">
-      <header className="github-hero">
+    <section className="github-page anim-stagger">
+      <header className="github-hero anim-fade-up">
         <div className="github-hero-copy">
           <span className={connected ? 'github-status-pill connected' : 'github-status-pill disconnected'}>
             {connected ? 'Connected workspace' : 'Not connected'}
@@ -479,7 +479,7 @@ export function StudentGithubPage({ session }) {
         </button>
       </section>
 
-      <section className="github-sync-card">
+      <section className="github-sync-card anim-hover-lift">
         <div className="github-sync-copy">
           <h2>Cấu hình đồng bộ</h2>
           <p>
@@ -679,7 +679,7 @@ function RepositoryCard({
       {analyzed && expanded ? (
         <>
           <div className="github-analysis-grid">
-            <div className="github-score-card">
+            <div className="github-score-card anim-hover-lift">
               <span>Portfolio readiness</span>
               <strong>{readinessScore}/100</strong>
               <div className="github-quality-line">
@@ -687,7 +687,7 @@ function RepositoryCard({
               </div>
             </div>
 
-            <div className="github-score-card">
+            <div className="github-score-card anim-hover-lift">
               <span>Total files</span>
               <strong>{techData.totalFiles ?? analyzedFiles.length ?? 0}</strong>
               <small>{techData.defaultBranch ? `Branch: ${techData.defaultBranch}` : 'Chưa có branch'}</small>
@@ -740,7 +740,7 @@ function RepositoryCard({
           )}
 
           {(analyzedFiles.length > 0 || recentCommits.length > 0) && (
-            <div className="github-evidence-panel">
+            <div className="github-evidence-panel anim-hover-lift">
               {analyzedFiles.length > 0 && (
                 <div>
                   <span>Files reviewed</span>
@@ -788,7 +788,7 @@ function RepositoryCard({
       </button>
 
       {selected && (
-        <div className="github-readme-panel">
+        <div className="github-readme-panel anim-hover-lift">
           <label>
             <span>Repository URL</span>
             <input

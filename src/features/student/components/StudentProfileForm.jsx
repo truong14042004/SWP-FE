@@ -20,7 +20,7 @@ export function StudentProfileForm({
   onSubmit,
 }) {
   return (
-    <form className="student-profile-card plan-form" onSubmit={onSubmit}>
+    <form className="student-profile-card plan-form anim-stagger anim-hover-lift" onSubmit={onSubmit}>
       <div className="student-profile-hero">
         <div className="student-profile-avatar">
           {avatarSrc ? (

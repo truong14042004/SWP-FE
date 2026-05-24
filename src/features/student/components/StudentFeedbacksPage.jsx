@@ -72,8 +72,8 @@ export function StudentFeedbacksPage({ session }) {
   const filtered = data.items.filter((item) => filter === 'All' || item.source === filter);
 
   return (
-    <section className="student-feedbacks">
-      <header className="student-feedbacks-hero">
+    <section className="student-feedbacks anim-stagger">
+      <header className="student-feedbacks-hero anim-fade-up">
         <span className="student-eyebrow">Feedback</span>
         <h1>Nhận xét từ cố vấn & mentor</h1>
         <p>
@@ -114,7 +114,7 @@ export function StudentFeedbacksPage({ session }) {
           <p>Chưa có feedback nào trong danh mục này.</p>
         </div>
       ) : (
-        <div className="student-feedbacks-list">
+        <div className="student-feedbacks-list anim-stagger">
           {filtered.map((item) => (
             <FeedbackCard key={item.id} item={item} />
           ))}
@@ -127,7 +127,7 @@ export function StudentFeedbacksPage({ session }) {
 function FeedbackCard({ item }) {
   const SourceIcon = SOURCE_ICON[item.source];
   return (
-    <article className={`student-feedback-card source-${item.source.toLowerCase()}`}>
+    <article className={`student-feedback-card source-${item.source.toLowerCase()} anim-hover-lift`}>
       <header className="student-feedback-head">
         <div className="student-feedback-author">
           {item.authorAvatarUrl ? (

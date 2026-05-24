@@ -118,8 +118,8 @@ export function StudentSubscriptionPage({ session }) {
   }
 
   return (
-    <section className="student-subscription">
-      <header className="student-subscription-hero">
+    <section className="student-subscription anim-stagger">
+      <header className="student-subscription-hero anim-fade-up">
         <span className="student-eyebrow">Subscription</span>
         <h1>Chọn gói phù hợp với bạn</h1>
         <p>
@@ -129,7 +129,7 @@ export function StudentSubscriptionPage({ session }) {
       </header>
 
       {activeSubscription && (
-        <article className="student-subscription-current">
+        <article className="student-subscription-current anim-hover-lift">
           <div>
             <small>Gói hiện tại</small>
             <h2>{activeSubscription.planName}</h2>
@@ -221,7 +221,7 @@ export function StudentSubscriptionPage({ session }) {
           <h2>Lịch sử đăng ký</h2>
           <div className="student-subscription-history-list">
             {mySubscriptions.map((item) => (
-              <div key={item.id} className="student-subscription-history-item">
+              <div key={item.id} className="student-subscription-history-item anim-hover-lift">
                 <div>
                   <strong>{item.planName}</strong>
                   <small>

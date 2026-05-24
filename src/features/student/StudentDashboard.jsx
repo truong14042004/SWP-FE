@@ -1038,10 +1038,16 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
         ) : (
           <Fade inView={false}>
             <header className="student-topbar">
-              <div className="student-topbar-copy">
+              <motion.div
+                key={activeSection}
+                className="student-topbar-copy"
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              >
                 <h1>{sectionMeta.title}</h1>
                 <p>{sectionMeta.subtitle} <strong>{targetRoleName}</strong>.</p>
-              </div>
+              </motion.div>
               <div className="student-topbar-actions">
   <button
     type="button"
