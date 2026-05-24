@@ -323,7 +323,16 @@ function getNodeResources(node) {
     if (!duplicated) resources.push(resource);
   });
 
-  return resources;
+  return resources.sort((a, b) => {
+    const lessonA = a.lessonNumber ?? 1;
+    const lessonB = b.lessonNumber ?? 1;
+    if (lessonA !== lessonB) {
+      return lessonA - lessonB;
+    }
+    const titleA = (a.title || '').toLowerCase();
+    const titleB = (b.title || '').toLowerCase();
+    return titleA.localeCompare(titleB);
+  });
 }
 
 function getChildren(node) {
