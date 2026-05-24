@@ -1052,7 +1052,7 @@ function RoadmapNodeCard({
   return (
     <article
       className={`roadmap-node ${statusMeta.className} anim-hover-lift`}
-      style={{ '--node-level': level, '--node-index': index, animation: `anim-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) ${Math.min(index * 0.05, 0.4)}s backwards` }}
+      style={{ '--node-level': level, '--node-index': index }}
     >
       <div className="roadmap-node-marker">
         <span><StatusIcon size={14} aria-hidden="true" /></span>
