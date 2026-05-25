@@ -434,6 +434,31 @@ function getNodeProgress(node) {
   return isCompletedStatus(node?.status) ? 100 : 0;
 }
 
+function getNodeLessonProgress(node, lessonProgressByNodeId) {
+  const resources = getNodeResources(node).filter((resource) => resource.id);
+  if (resources.length === 0) {
+    return isCompletedStatus(node?.status) ? 100 : 0;
+  }
+  const checkedSet =
+    lessonProgressByNodeId?.[node?.id] instanceof Set
+      ? lessonProgressByNodeId[node.id]
+      : null;
+  if (!checkedSet) {
+    return isCompletedStatus(node?.status) ? 100 : 0;
+  }
+  const ticked = resources.filter((resource) => checkedSet.has(resource.id)).length;
+  return Math.round((ticked / resources.length) * 100);
+}
+
+function calculateLessonBasedProgress(nodes, lessonProgressByNodeId) {
+  const flat = flattenNodes(nodes).filter(isProgressNode);
+  if (!flat.length) return 0;
+
+  const ratios = flat.map((node) => getNodeLessonProgress(node, lessonProgressByNodeId));
+  const sum = ratios.reduce((acc, value) => acc + value, 0);
+  return Math.round(sum / flat.length);
+}
+
 function isNodeUpdateResponse(value) {
   return Boolean(
     value &&
@@ -534,9 +559,10 @@ const [togglingLessonKey, setTogglingLessonKey] = useState('');
     return flatNodes.filter(isProgressNode).length;
   }, [flatNodes]);
 
-  const progress = flatNodes.length
-    ? calculateProgressFromNodes(roadmapNodes)
-    : normalizeProgress(roadmap?.progress);
+  const progress = useMemo(() => {
+    if (!flatNodes.length) return normalizeProgress(roadmap?.progress);
+    return calculateLessonBasedProgress(roadmapNodes, lessonProgressByNodeId);
+  }, [flatNodes, roadmapNodes, lessonProgressByNodeId, roadmap?.progress]);
 
   async function loadRoadmaps() {
     setLoadingList(true);
@@ -1119,7 +1145,9 @@ function RoadmapNodeCard({
   const children = getChildren(node);
   const priority = Number(node.priority || 0);
   const isGroup = !isProgressNode(node);
-  const progress = getNodeProgress(node);
+  const progress = isGroup
+    ? getNodeProgress(node)
+    : getNodeLessonProgress(node, lessonProgressByNodeId);
 
   const reviewRequests = node?.id ? reviewRequestsByNodeId[node.id] || [] : [];
   const pendingRequest = getPendingReviewRequest(reviewRequests);
