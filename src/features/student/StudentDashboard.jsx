@@ -614,15 +614,35 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingCv, setUploadingCv] = useState(false);
   const [avatarImportDraft, setAvatarImportDraft] = useState('');
+  // Pending avatar: the file user picked but hasn't saved yet. Preview is a local
+  // object-URL so it shows immediately without hitting the network.
+  const [pendingAvatarFile, setPendingAvatarFile] = useState(null);
+  const [pendingAvatarPreview, setPendingAvatarPreview] = useState('');
+  // Pending CV: stages a CV pick for first-time profile creation. The CV endpoint
+  // needs the profile to exist, so we hold the file and upload it after save.
+  const [pendingCvFile, setPendingCvFile] = useState(null);
+  const [pendingCvName, setPendingCvName] = useState('');
   const [dashboardOverview, setDashboardOverview] = useState(DEFAULT_DASHBOARD_OVERVIEW);
   const [loadingOverview, setLoadingOverview] = useState(false);
   const initials = getInitials(session?.user?.fullName);
   const firstName = session?.user?.fullName?.split(' ')?.slice(-1)?.[0] || 'bạn';
   const sectionMeta = SECTION_META[activeSection] || SECTION_META.overview;
-  const avatarSrc = useMemo(
-    () => resolveAvatarSrc(session?.user?.avatarUrl || form.avatarUrl, session?.user?.id),
-    [form.avatarUrl, session?.user?.avatarUrl, session?.user?.id],
-  );
+  const avatarSrc = useMemo(() => {
+    // Local preview takes top priority so the user sees their pick instantly.
+    if (pendingAvatarPreview) return pendingAvatarPreview;
+    // form.avatarUrl is the freshest server value (loaded by getStudentProfile);
+    // fall back to session.user.avatarUrl only if the form hasn't loaded yet.
+    return resolveAvatarSrc(form.avatarUrl || session?.user?.avatarUrl, session?.user?.id);
+  }, [pendingAvatarPreview, form.avatarUrl, session?.user?.avatarUrl, session?.user?.id]);
+
+  // Free the blob URL when it's replaced or the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (pendingAvatarPreview) {
+        URL.revokeObjectURL(pendingAvatarPreview);
+      }
+    };
+  }, [pendingAvatarPreview]);
 
   useEffect(() => {
     loadProfile();
@@ -788,25 +808,27 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     }));
   }
 
-  async function handleAvatarFileChange(event) {
+  function handleAvatarFileChange(event) {
     const file = event.target.files?.[0];
     event.target.value = '';
 
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
-    setUploadingAvatar(true);
-    try {
-      const updatedProfile = await uploadStudentAvatar(session, file);
-      setForm(normalizeProfile(updatedProfile));
-      setHasProfile(true);
-      toast.success('Đã tải lên ảnh đại diện.');
-    } catch (requestError) {
-      toast.error(requestError.message || 'Không thể tải lên ảnh đại diện.');
-    } finally {
-      setUploadingAvatar(false);
+    // Replace any previous pending preview before creating a new one.
+    if (pendingAvatarPreview) {
+      URL.revokeObjectURL(pendingAvatarPreview);
     }
+    const previewUrl = URL.createObjectURL(file);
+    setPendingAvatarFile(file);
+    setPendingAvatarPreview(previewUrl);
+  }
+
+  function clearPendingAvatar() {
+    if (pendingAvatarPreview) {
+      URL.revokeObjectURL(pendingAvatarPreview);
+    }
+    setPendingAvatarFile(null);
+    setPendingAvatarPreview('');
   }
 
   async function handleAvatarImport() {
@@ -835,7 +857,13 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     const file = event.target.files?.[0];
     event.target.value = '';
 
-    if (!file) {
+    if (!file) return;
+
+    // First-time profile creation: the CV endpoint requires a profile to exist,
+    // so stage the file and upload it inside the save flow.
+    if (!hasProfile) {
+      setPendingCvFile(file);
+      setPendingCvName(file.name);
       return;
     }
 
@@ -849,6 +877,11 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     } finally {
       setUploadingCv(false);
     }
+  }
+
+  function clearPendingCv() {
+    setPendingCvFile(null);
+    setPendingCvName('');
   }
 
   async function handleViewCv(event) {
@@ -872,15 +905,55 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   async function handleSaveProfile(event) {
     event.preventDefault();
     setSavingProfile(true);
+    const wasNewProfile = !hasProfile;
     try {
-      const payload = profilePayload(form);
-      const saved = hasProfile
+      let workingForm = form;
+
+      // 1) If a new avatar was picked, upload it first and merge its URL into the
+      //    payload we're about to save.
+      if (pendingAvatarFile) {
+        setUploadingAvatar(true);
+        try {
+          const uploaded = await uploadStudentAvatar(session, pendingAvatarFile);
+          const uploadedAvatarUrl = normalizeProfile(uploaded).avatarUrl;
+          workingForm = { ...form, avatarUrl: uploadedAvatarUrl };
+          setForm(workingForm);
+          // Uploading the avatar creates the profile server-side, so we can use
+          // the update endpoint for the rest of the fields.
+          setHasProfile(true);
+        } finally {
+          setUploadingAvatar(false);
+        }
+      }
+
+      // 2) Persist the rest of the profile.
+      const payload = profilePayload(workingForm);
+      const useUpdate = hasProfile || Boolean(pendingAvatarFile);
+      const saved = useUpdate
         ? await updateStudentProfile(session, payload)
         : await createStudentProfile(session, payload);
 
-      setForm(normalizeProfile(saved));
+      let savedForm = normalizeProfile(saved);
+      setForm(savedForm);
       setHasProfile(true);
-      toast.success(hasProfile ? 'Đã cập nhật hồ sơ.' : 'Đã tạo hồ sơ.');
+
+      // 3) If a CV was staged before the profile existed, upload it now.
+      if (pendingCvFile) {
+        setUploadingCv(true);
+        try {
+          const uploadedCv = await uploadStudentCv(session, pendingCvFile);
+          savedForm = normalizeProfile(uploadedCv);
+          setForm(savedForm);
+        } finally {
+          setUploadingCv(false);
+        }
+      }
+
+      // 4) Clear pending state — the saved profile now owns both files.
+      clearPendingAvatar();
+      clearPendingCv();
+
+      toast.success(wasNewProfile ? 'Đã tạo hồ sơ.' : 'Đã cập nhật hồ sơ.');
     } catch (requestError) {
       toast.error(requestError.message || 'Không thể lưu hồ sơ.');
     } finally {
@@ -1032,6 +1105,10 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                 onAvatarImport={handleAvatarImport}
                 onViewCv={handleViewCv}
                 onSubmit={handleSaveProfile}
+                hasPendingAvatar={Boolean(pendingAvatarFile)}
+                onCancelPendingAvatar={clearPendingAvatar}
+                pendingCvName={pendingCvName}
+                onCancelPendingCv={clearPendingCv}
               />
             </Fade>
           </section>
