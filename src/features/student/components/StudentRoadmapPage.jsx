@@ -8,8 +8,11 @@ import { Button } from '@/components/animate-ui/components/buttons/button';
 import { Fade, Fades } from '@/components/animate-ui/primitives/effects/fade';
 import {
   generateRoadmap,
+  getLessonProgress,
   getRoadmapById,
   getRoadmaps,
+  markLessonCompleted,
+  unmarkLessonCompleted,
   updateRoadmapNodeStatus,
 } from '../roadmapApi';
 import { getCareerRoles } from '../studentApi';
@@ -493,6 +496,8 @@ export function StudentRoadmapPage({ session }) {
 
 const [reviewRequestsByNodeId, setReviewRequestsByNodeId] = useState({});
 const [cancelingReviewRequestId, setCancelingReviewRequestId] = useState('');
+const [lessonProgressByNodeId, setLessonProgressByNodeId] = useState({});
+const [togglingLessonKey, setTogglingLessonKey] = useState('');
   useEffect(() => {
     loadRoadmaps();
     loadFormReferences();
@@ -584,6 +589,7 @@ const summarizedRoadmap = summarizeRoadmap(result);
 setRoadmap(summarizedRoadmap);
 setShowGenerateForm(false);
 loadReviewRequestsForRoadmap(summarizedRoadmap);
+loadLessonProgressForRoadmap(summarizedRoadmap);
     } catch (requestError) {
       if (detailRequestRef.current !== requestId) return;
       const message = requestError.message || 'Không tải được chi tiết lộ trình.';
@@ -595,6 +601,64 @@ loadReviewRequestsForRoadmap(summarizedRoadmap);
       }
     }
   }
+async function loadLessonProgressForRoadmap(roadmapData) {
+  const roadmapId = roadmapData?.id;
+  if (!roadmapId) {
+    setLessonProgressByNodeId({});
+    return;
+  }
+
+  try {
+    const result = await getLessonProgress(session, roadmapId);
+    const grouped = {};
+    safeArray(result).forEach((item) => {
+      if (!item?.roadmapNodeId || !item?.learningResourceId) return;
+      if (!grouped[item.roadmapNodeId]) {
+        grouped[item.roadmapNodeId] = new Set();
+      }
+      grouped[item.roadmapNodeId].add(item.learningResourceId);
+    });
+    setLessonProgressByNodeId(grouped);
+  } catch {
+    setLessonProgressByNodeId({});
+  }
+}
+
+async function handleToggleLesson(nodeId, lessonId, nextChecked) {
+  if (!nodeId || !lessonId) return;
+  const key = `${nodeId}:${lessonId}`;
+  if (togglingLessonKey === key) return;
+
+  const previous = lessonProgressByNodeId[nodeId];
+  const previousSet = previous instanceof Set ? new Set(previous) : new Set();
+
+  setLessonProgressByNodeId((current) => {
+    const next = { ...current };
+    const set = next[nodeId] instanceof Set ? new Set(next[nodeId]) : new Set();
+    if (nextChecked) {
+      set.add(lessonId);
+    } else {
+      set.delete(lessonId);
+    }
+    next[nodeId] = set;
+    return next;
+  });
+  setTogglingLessonKey(key);
+
+  try {
+    if (nextChecked) {
+      await markLessonCompleted(session, nodeId, lessonId);
+    } else {
+      await unmarkLessonCompleted(session, nodeId, lessonId);
+    }
+  } catch (error) {
+    setLessonProgressByNodeId((current) => ({ ...current, [nodeId]: previousSet }));
+    toast.error(error.message || 'Không lưu được trạng thái bài học.');
+  } finally {
+    setTogglingLessonKey('');
+  }
+}
+
 async function loadReviewRequestsForRoadmap(roadmapData) {
   const nodes = flattenNodes(getRoadmapNodes(roadmapData)).filter((node) => node?.id);
   const nodeIds = Array.from(new Set(nodes.map((node) => node.id)));
@@ -980,6 +1044,9 @@ async function handleCancelReviewRequest(node, request) {
                           onCancelReviewRequest={handleCancelReviewRequest}
                           reviewRequestsByNodeId={reviewRequestsByNodeId}
                           cancelingReviewRequestId={cancelingReviewRequestId}
+                          lessonProgressByNodeId={lessonProgressByNodeId}
+                          onToggleLesson={handleToggleLesson}
+                          togglingLessonKey={togglingLessonKey}
                         />
                       ))}
                     </Fades>
@@ -1010,6 +1077,23 @@ async function handleCancelReviewRequest(node, request) {
   );
 }
 
+function computeLessonStats(nodeId, resources, lessonProgressByNodeId) {
+  const checkedSet =
+    lessonProgressByNodeId?.[nodeId] instanceof Set
+      ? lessonProgressByNodeId[nodeId]
+      : new Set();
+  const total = resources.filter((resource) => resource.id).length;
+  const completedCount = resources.filter(
+    (resource) => resource.id && checkedSet.has(resource.id)
+  ).length;
+  return {
+    checkedSet,
+    total,
+    completedCount,
+    allCompleted: total > 0 && completedCount === total,
+  };
+}
+
 function RoadmapNodeCard({
   node,
   index,
@@ -1021,11 +1105,17 @@ function RoadmapNodeCard({
   onCancelReviewRequest,
   reviewRequestsByNodeId = {},
   cancelingReviewRequestId = '',
+  lessonProgressByNodeId = {},
+  onToggleLesson,
+  togglingLessonKey = '',
 }) {
   const displayStatus = getDisplayNodeStatus(node, roadmapStatus);
   const statusMeta = getStatusMeta(displayStatus);
   const StatusIcon = statusMeta.Icon;
   const resources = getNodeResources(node);
+  const lessonChecks = computeLessonStats(node?.id, resources, lessonProgressByNodeId);
+  const lessonsBlockingCompletion =
+    lessonChecks.total > 0 && !lessonChecks.allCompleted;
   const children = getChildren(node);
   const priority = Number(node.priority || 0);
   const isGroup = !isProgressNode(node);
@@ -1076,14 +1166,28 @@ function RoadmapNodeCard({
               <span>Trạng thái</span>
               <select
                 value={getRoadmapStatusValue(node.status)}
-                onChange={(event) => onStatusChange?.(node, event.target.value)}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  const isCompletedLike = ['completed', 'needreview', 'need_review'].includes(
+                    normalizeStatus(nextValue)
+                  );
+                  if (isCompletedLike && lessonsBlockingCompletion) {
+                    toast.warn(
+                      `Hoàn thành ${lessonChecks.total - lessonChecks.completedCount} bài học còn lại trước khi đánh dấu hoàn thành.`
+                    );
+                    return;
+                  }
+                  onStatusChange?.(node, nextValue);
+                }}
                 disabled={!node.id || updatingNodeId === node.id}
               >
                 {ROADMAP_STATUS_OPTIONS.map((option) => {
                   const currentStatusNormalized = normalizeStatus(node.status);
                   const isCurrentNotStarted = ['notstarted', 'not_started', 'pending'].includes(currentStatusNormalized);
                   const isOptionCompletedOrNeedReview = ['completed', 'needreview', 'need_review'].includes(normalizeStatus(option.value));
-                  const isOptionDisabled = isCurrentNotStarted && isOptionCompletedOrNeedReview;
+                  const isOptionDisabled =
+                    (isCurrentNotStarted && isOptionCompletedOrNeedReview) ||
+                    (lessonsBlockingCompletion && isOptionCompletedOrNeedReview);
 
                   return (
                     <option key={option.value} value={option.value} disabled={isOptionDisabled}>
@@ -1093,6 +1197,12 @@ function RoadmapNodeCard({
                 })}
               </select>
             </label>
+            {lessonsBlockingCompletion && (
+              <small className="roadmap-status-hint">
+                Cần hoàn thành {lessonChecks.total - lessonChecks.completedCount}/
+                {lessonChecks.total} bài học để mở trạng thái "Đã hoàn thành".
+              </small>
+            )}
           </div>
         )}
 
@@ -1237,12 +1347,35 @@ function RoadmapNodeCard({
 
         {resources.length > 0 && (
           <div className="roadmap-resources">
-            <span className="roadmap-resource-title">Tài liệu học tập</span>
+            <div className="roadmap-resource-header">
+              <span className="roadmap-resource-title">Tài liệu học tập</span>
+              <span className="roadmap-resource-progress">
+                {lessonChecks.completedCount}/{lessonChecks.total} bài đã xong
+              </span>
+            </div>
 
             <div className="roadmap-resource-list">
-              {resources.map((resource) => (
-                <ResourceButton key={resource.id || resource.title} resource={resource} />
-              ))}
+              {resources.map((resource) => {
+                const resourceId = resource.id;
+                const checked = resourceId
+                  ? lessonChecks.checkedSet.has(resourceId)
+                  : false;
+                const toggleKey = `${node?.id || ''}:${resourceId || ''}`;
+                const isToggling = togglingLessonKey === toggleKey;
+                return (
+                  <ResourceButton
+                    key={resourceId || resource.title}
+                    resource={resource}
+                    checked={checked}
+                    busy={isToggling}
+                    onToggleCheck={
+                      resourceId && node?.id && onToggleLesson
+                        ? () => onToggleLesson(node.id, resourceId, !checked)
+                        : undefined
+                    }
+                  />
+                );
+              })}
             </div>
           </div>
         )}
@@ -1262,6 +1395,9 @@ function RoadmapNodeCard({
                 onCancelReviewRequest={onCancelReviewRequest}
                 reviewRequestsByNodeId={reviewRequestsByNodeId}
                 cancelingReviewRequestId={cancelingReviewRequestId}
+                lessonProgressByNodeId={lessonProgressByNodeId}
+                onToggleLesson={onToggleLesson}
+                togglingLessonKey={togglingLessonKey}
               />
             ))}
           </div>
@@ -1319,7 +1455,7 @@ function formatDifficulty(diff) {
   return diff;
 }
 
-function ResourceButton({ resource }) {
+function ResourceButton({ resource, checked = false, busy = false, onToggleCheck }) {
   const prefix = resource.lessonNumber ? `Bài ${resource.lessonNumber}: ` : '';
   const cleanedTitle = (resource.title || '').trim();
   const label = `${prefix}${cleanedTitle || resource.skillName || 'Tài liệu học tập'}`;
@@ -1338,23 +1474,48 @@ function ResourceButton({ resource }) {
     </>
   );
 
+  const checkbox = onToggleCheck ? (
+    <label
+      className={`roadmap-resource-check ${checked ? 'is-checked' : ''} ${busy ? 'is-busy' : ''}`}
+      onClick={(event) => event.stopPropagation()}
+      title={checked ? 'Bỏ đánh dấu đã học' : 'Đánh dấu đã học'}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={busy}
+        onChange={onToggleCheck}
+        aria-label={`Đã hoàn thành ${label}`}
+      />
+      <span aria-hidden="true">{checked ? '✓' : ''}</span>
+    </label>
+  ) : null;
+
+  const wrapperClass = `roadmap-resource-row ${checked ? 'is-done' : ''}`;
+
   if (resource.url) {
     return (
-      <a
-        className="roadmap-resource"
-        href={resource.url}
-        target="_blank"
-        rel="noreferrer"
-      >
-        {content}
-        <span className="roadmap-resource-icon" aria-hidden="true">↗</span>
-      </a>
+      <div className={wrapperClass}>
+        {checkbox}
+        <a
+          className="roadmap-resource"
+          href={resource.url}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {content}
+          <span className="roadmap-resource-icon" aria-hidden="true">↗</span>
+        </a>
+      </div>
     );
   }
 
   return (
-    <button type="button" className="roadmap-resource">
-      {content}
-    </button>
+    <div className={wrapperClass}>
+      {checkbox}
+      <button type="button" className="roadmap-resource">
+        {content}
+      </button>
+    </div>
   );
 }

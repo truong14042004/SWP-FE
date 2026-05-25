@@ -67,3 +67,18 @@ export function getSignedUrl(session, objectName) {
     session
   );
 }
+
+export function generateAiReviewSummary(session, requestId) {
+  return authorizedRequest(
+    `/api/roadmap-node/review-requests/${requestId}/ai-summary`,
+    session,
+    { method: 'POST' }
+  );
+}
+
+export function getAiReviewSummary(session, requestId) {
+  return authorizedRequest(
+    `/api/roadmap-node/review-requests/${requestId}/ai-summary`,
+    session
+  );
+}

@@ -925,6 +925,98 @@
 }
 
 /* ==========================================
+   LESSON CHECKBOX (gate node completion)
+   ========================================== */
+
+.roadmap-resource-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 8px;
+}
+
+.roadmap-resource-header .roadmap-resource-title {
+    margin-bottom: 0;
+}
+
+.roadmap-resource-progress {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--apple-muted);
+    padding: 3px 10px;
+    background: rgba(0, 102, 204, 0.06);
+    border-radius: 999px;
+}
+
+.roadmap-resource-row {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+}
+
+.roadmap-resource-row.is-done .roadmap-resource strong {
+    text-decoration: line-through;
+    color: var(--apple-muted);
+}
+
+.roadmap-resource-row .roadmap-resource {
+    flex: 1;
+    min-width: 0;
+}
+
+.roadmap-resource-check {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    margin-top: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid rgba(0, 0, 0, 0.18);
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.roadmap-resource-check:hover {
+    border-color: var(--apple-primary);
+}
+
+.roadmap-resource-check.is-checked {
+    background: #34c759;
+    border-color: #34c759;
+}
+
+.roadmap-resource-check.is-busy {
+    opacity: 0.5;
+    cursor: progress;
+}
+
+.roadmap-resource-check input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.roadmap-status-hint {
+    display: block;
+    margin-top: 6px;
+    color: #fd7e14;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ==========================================
    CHILDREN ROADMAP LISTS - Indented hierarchy
    ========================================== */
 

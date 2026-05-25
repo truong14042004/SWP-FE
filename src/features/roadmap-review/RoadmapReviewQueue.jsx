@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import {
   approveReviewRequest,
+  generateAiReviewSummary,
+  getAiReviewSummary,
   getCounselorRoadmapQueue,
   getEvidenceDownloadUrl,
   getMentorRoadmapQueue,
@@ -63,6 +65,10 @@ export function RoadmapReviewQueue({ session, role }) {
   const [activeAction, setActiveAction] = useState(null); // { id: string, type: 'approve' | 'reject' }
   const [actionNote, setActionNote] = useState('');
   const [downloadingId, setDownloadingId] = useState('');
+  const [aiSummaryByItemId, setAiSummaryByItemId] = useState({}); // requestId -> summary | null
+  const [aiLoadingId, setAiLoadingId] = useState('');
+  const [aiErrorByItemId, setAiErrorByItemId] = useState({});
+  const isMentor = role === 'IndustryMentor';
 
   useEffect(() => {
     loadQueue();
@@ -99,6 +105,49 @@ export function RoadmapReviewQueue({ session, role }) {
     } finally {
       setDownloadingId('');
     }
+  }
+
+  function isAiSummaryAvailable(summary) {
+    return Boolean(summary && summary.id);
+  }
+
+  async function handleAiReview(item, { forceRegenerate = false } = {}) {
+    if (aiLoadingId === item.id) return;
+
+    setAiErrorByItemId((prev) => ({ ...prev, [item.id]: '' }));
+    setAiLoadingId(item.id);
+
+    try {
+      let summary = null;
+
+      if (!forceRegenerate) {
+        const cached = await getAiReviewSummary(session, item.id);
+        if (isAiSummaryAvailable(cached)) {
+          summary = cached;
+        }
+      }
+
+      if (!summary) {
+        summary = await generateAiReviewSummary(session, item.id);
+      }
+
+      setAiSummaryByItemId((prev) => ({ ...prev, [item.id]: summary }));
+    } catch (error) {
+      const message = error.message || 'Không gọi được AI review.';
+      setAiErrorByItemId((prev) => ({ ...prev, [item.id]: message }));
+      toast.error(message);
+    } finally {
+      setAiLoadingId('');
+    }
+  }
+
+  function insertIntoActionNote(text) {
+    setActionNote((current) => {
+      const trimmed = (text || '').trim();
+      if (!trimmed) return current;
+      if (!current) return trimmed;
+      return `${current}\n${trimmed}`;
+    });
   }
 
   function startAction(itemId, type) {
@@ -351,6 +400,20 @@ export function RoadmapReviewQueue({ session, role }) {
                         </button>
                       </div>
                     )}
+
+                    {isMentor && item.evidenceType === 'GitRepository' && (
+                      <AiReviewBlock
+                        summary={aiSummaryByItemId[item.id]}
+                        loading={aiLoadingId === item.id}
+                        error={aiErrorByItemId[item.id]}
+                        onTrigger={() => handleAiReview(item)}
+                        onRegenerate={() =>
+                          handleAiReview(item, { forceRegenerate: true })
+                        }
+                        canInsert={activeAction?.id === item.id}
+                        onInsert={insertIntoActionNote}
+                      />
+                    )}
                   </div>
                 )}
 
@@ -426,5 +489,199 @@ export function RoadmapReviewQueue({ session, role }) {
         </div>
       )}
     </section>
+  );
+}
+
+function AiReviewBlock({
+  summary,
+  loading,
+  error,
+  onTrigger,
+  onRegenerate,
+  canInsert,
+  onInsert,
+}) {
+  const hasSummary = Boolean(summary && summary.id);
+
+  if (!hasSummary) {
+    return (
+      <div className="review-queue-ai">
+        <div className="review-queue-ai-head">
+          <strong>🤖 AI hỗ trợ review</strong>
+          <small>
+            AI sẽ quét README và metadata của repo để gợi ý nhận xét. Bạn vẫn là
+            người duyệt cuối cùng.
+          </small>
+        </div>
+        <div className="review-queue-ai-actions">
+          <button
+            type="button"
+            className="review-queue-btn primary small"
+            onClick={onTrigger}
+            disabled={loading}
+          >
+            {loading ? 'Đang phân tích...' : '✨ Review bằng AI'}
+          </button>
+        </div>
+        {error && <p className="review-queue-ai-error">{error}</p>}
+      </div>
+    );
+  }
+
+  const techStack = summary.techStack || [];
+  const strengths = summary.strengths || [];
+  const weaknesses = summary.weaknesses || [];
+  const suggestedQuestions = summary.suggestedQuestions || [];
+  const skillMapping = summary.skillMapping;
+  const matchesNode = skillMapping?.matchesNode;
+  const generatedAt = summary.generatedAt
+    ? new Date(summary.generatedAt).toLocaleString('vi-VN')
+    : '';
+
+  return (
+    <div className="review-queue-ai expanded">
+      <div className="review-queue-ai-head">
+        <strong>🤖 AI Review Summary</strong>
+        <small>
+          {summary.model || 'gemini'}
+          {generatedAt ? ` · ${generatedAt}` : ''}
+        </small>
+      </div>
+
+      {summary.overallSummary && (
+        <p className="review-queue-ai-overall">{summary.overallSummary}</p>
+      )}
+
+      {skillMapping && (
+        <div
+          className={`review-queue-ai-mapping ${
+            matchesNode === true
+              ? 'match'
+              : matchesNode === false
+              ? 'mismatch'
+              : ''
+          }`}
+        >
+          <div>
+            <strong>
+              {matchesNode === true
+                ? '✓ Evidence khớp với skill của node'
+                : matchesNode === false
+                ? '⚠ Evidence chưa khớp với skill của node'
+                : 'Đánh giá phù hợp với node'}
+            </strong>
+            {skillMapping.reason && <p>{skillMapping.reason}</p>}
+          </div>
+
+          {Array.isArray(skillMapping.missingAspects) &&
+            skillMapping.missingAspects.length > 0 && (
+              <div className="review-queue-ai-missing">
+                <small>Khía cạnh chưa thể hiện</small>
+                <ul>
+                  {skillMapping.missingAspects.map((aspect, index) => (
+                    <li key={index}>{aspect}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+        </div>
+      )}
+
+      {techStack.length > 0 && (
+        <div className="review-queue-ai-section">
+          <small>Tech stack phát hiện</small>
+          <div className="review-queue-ai-chips">
+            {techStack.map((tech, index) => (
+              <span key={index} className="review-queue-ai-chip">
+                {tech}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {strengths.length > 0 && (
+        <div className="review-queue-ai-section">
+          <small>Điểm mạnh</small>
+          <ul className="review-queue-ai-list strengths">
+            {strengths.map((item, index) => (
+              <li key={index}>
+                <span>{item}</span>
+                {canInsert && (
+                  <button
+                    type="button"
+                    className="review-queue-ai-insert"
+                    onClick={() => onInsert(`(+) ${item}`)}
+                  >
+                    + Chèn
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {weaknesses.length > 0 && (
+        <div className="review-queue-ai-section">
+          <small>Cần cải thiện</small>
+          <ul className="review-queue-ai-list weaknesses">
+            {weaknesses.map((item, index) => (
+              <li key={index}>
+                <span>{item}</span>
+                {canInsert && (
+                  <button
+                    type="button"
+                    className="review-queue-ai-insert"
+                    onClick={() => onInsert(`(-) ${item}`)}
+                  >
+                    + Chèn
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {suggestedQuestions.length > 0 && (
+        <div className="review-queue-ai-section">
+          <small>Câu hỏi gợi ý cho sinh viên</small>
+          <ol className="review-queue-ai-list questions">
+            {suggestedQuestions.map((item, index) => (
+              <li key={index}>
+                <span>{item}</span>
+                {canInsert && (
+                  <button
+                    type="button"
+                    className="review-queue-ai-insert"
+                    onClick={() => onInsert(`? ${item}`)}
+                  >
+                    + Chèn
+                  </button>
+                )}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      <div className="review-queue-ai-footer">
+        <button
+          type="button"
+          className="review-queue-btn outline small"
+          onClick={onRegenerate}
+          disabled={loading}
+        >
+          {loading ? 'Đang quét lại...' : '↻ Quét lại'}
+        </button>
+        {!canInsert && (
+          <small>
+            Bấm "Duyệt" hoặc "Từ chối" để mở ô ghi chú rồi chèn gợi ý vào.
+          </small>
+        )}
+        {error && <small className="review-queue-ai-error">{error}</small>}
+      </div>
+    </div>
   );
 }

@@ -21,3 +21,23 @@ export function updateRoadmapNodeStatus(session, id, status) {
         body: JSON.stringify({ status }),
     });
 }
+
+export function getLessonProgress(session, roadmapId) {
+    return authorizedRequest(`/api/roadmap/${roadmapId}/lesson-progress`, session);
+}
+
+export function markLessonCompleted(session, nodeId, lessonId) {
+    return authorizedRequest(
+        `/api/roadmap-node/${nodeId}/lessons/${lessonId}/complete`,
+        session,
+        { method: 'POST' }
+    );
+}
+
+export function unmarkLessonCompleted(session, nodeId, lessonId) {
+    return authorizedRequest(
+        `/api/roadmap-node/${nodeId}/lessons/${lessonId}/complete`,
+        session,
+        { method: 'DELETE' }
+    );
+}
