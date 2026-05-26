@@ -13,6 +13,7 @@ import { formatMoney } from '../../shared/format';
 import { TypingText } from '../../components/animate-ui/primitives/texts/typing';
 import { CountingNumber } from '../../components/animate-ui/primitives/texts/counting-number';
 import '../../styles/home.css';
+import { GridScan } from '../../components/GridScan';
 
 // Register GSAP plugins
 gsap.registerPlugin(useGSAP, ScrollTrigger);
@@ -605,7 +606,33 @@ function HeroSection({ onStart }) {
       }
     });
 
-    // Mouse movement interactive drifting orbs
+    // Dynamic bouncy & organic squishing animation for skill bubbles (soap/jelly bubble effect!)
+    gsap.utils.toArray('.hp-skill-node').forEach((node, i) => {
+      // 1. Organic drifting & bouncing movement
+      gsap.to(node, {
+        x: 'random(-60, 60)',
+        y: 'random(-55, 55)',
+        rotation: 'random(-12, 12)',
+        duration: 'random(3, 4.5)',
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+        delay: i * 0.2
+      });
+
+      // 2. Liquid squash & stretch (squishy elastic bubble morphing!)
+      gsap.to(node, {
+        scaleX: 1.08,
+        scaleY: 0.92,
+        duration: 'random(1.2, 1.8)',
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+        delay: i * 0.25
+      });
+    });
+
+    // Mouse movement interactive drifting orbs & skill nodes parallax
     const onMouseMove = contextSafe((e) => {
       const { clientX, clientY } = e;
       const xPercent = (clientX / window.innerWidth - 0.5) * 45; // up to 45px
@@ -625,6 +652,21 @@ function HeroSection({ onStart }) {
         duration: 1.2,
         ease: 'power2.out',
         overwrite: 'auto'
+      });
+
+      // Interactive mouse push/pull on skill nodes for premium 3D Parallax feel!
+      gsap.utils.toArray('.hp-skill-node').forEach((node, idx) => {
+        const factor = (idx % 2 === 0 ? 1 : -1) * 35; // alternate directions for layered depth
+        const mx = (clientX / window.innerWidth - 0.5) * factor;
+        const my = (clientY / window.innerHeight - 0.5) * factor;
+
+        gsap.to(node, {
+          x: mx,
+          y: my,
+          duration: 1.4,
+          ease: 'power2.out',
+          overwrite: 'auto'
+        });
       });
     });
 
@@ -646,6 +688,65 @@ function HeroSection({ onStart }) {
         className="hp-orb hp-orb-purple"
         style={{ width: 320, height: 320, top: 80, right: '8%' }}
       />
+
+      <GridScan
+        sensitivity={0.3}
+        lineThickness={0.7}
+        linesColor="#eef4fc"
+        gridScale={0.22}
+        scanColor="#0066cc"
+        scanOpacity={0.15}
+        enablePost={false}
+        lineStyle="solid"
+        lineJitter={0.0}
+        scanDirection="pingpong"
+        scanDuration={4.5}
+        scanDelay={2.0}
+        scanGlow={0.25}
+        scanSoftness={1.5}
+        enableGyro={false}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 0,
+          pointerEvents: 'none',
+          opacity: 0.85
+        }}
+      />
+
+      {/* Premium floating skill nodes / constellation */}
+      <div className="hp-constellation-container" aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1 }}>
+        <div className="hp-skill-node" style={{ left: '12%', top: '22%', position: 'absolute' }}>
+          <span className="node-dot" />
+          React
+        </div>
+        <div className="hp-skill-node" style={{ left: '78%', top: '15%', position: 'absolute' }}>
+          <span className="node-dot" />
+          AWS
+        </div>
+        <div className="hp-skill-node" style={{ left: '16%', top: '75%', position: 'absolute' }}>
+          <span className="node-dot" />
+          Node.js
+        </div>
+        <div className="hp-skill-node" style={{ left: '76%', top: '78%', position: 'absolute' }}>
+          <span className="node-dot" />
+          Python
+        </div>
+        <div className="hp-skill-node" style={{ left: '85%', top: '48%', position: 'absolute' }}>
+          <span className="node-dot" />
+          AI Dev
+        </div>
+        <div className="hp-skill-node" style={{ left: '6%', top: '51%', position: 'absolute' }}>
+          <span className="node-dot" />
+          Docker
+        </div>
+        <div className="hp-skill-node" style={{ left: '46%', top: '15%', position: 'absolute' }}>
+          <span className="node-dot" />
+          System Design
+        </div>
+      </div>
 
       <div className="hp-tile-inner">
         <span className="hp-eyebrow">Định hướng nghề nghiệp</span>
