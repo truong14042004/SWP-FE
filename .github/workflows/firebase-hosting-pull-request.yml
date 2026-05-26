@@ -18,7 +18,7 @@ jobs:
         env:
           VITE_API_URL: https://carrerrmap-522918119520.asia-northeast1.run.app
           VITE_GOOGLE_CLIENT_ID: 522918119520-282u6g5hu32k2471m5asjr8oieg5d5b4.apps.googleusercontent.com
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      - uses: FirebaseExtended/action-hosting-deploy@main
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SWP_FE_CAREERMAP_2026_47CA0 }}
