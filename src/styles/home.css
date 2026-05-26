@@ -506,6 +506,7 @@
   gap: 16px;
   width: min(100%, 1100px);
   margin-top: 8px;
+  perspective: 1000px;
 }
 
 .hp-process-card {
@@ -517,13 +518,15 @@
   display: grid;
   gap: 12px;
   align-content: start;
-  transition: background 200ms ease, border-color 200ms ease, transform 240ms ease;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, box-shadow;
+  transition: background 200ms ease, border-color 200ms ease;
 }
 
 .hp-process-card:hover {
   background: rgba(255, 255, 255, 0.07);
   border-color: rgba(255, 255, 255, 0.18);
-  transform: translateY(-4px);
 }
 
 .hp-process-num {
@@ -565,6 +568,7 @@
   gap: 16px;
   width: min(100%, 1100px);
   margin-top: 8px;
+  perspective: 1000px;
 }
 
 .hp-feature {
@@ -576,13 +580,14 @@
   display: grid;
   gap: 14px;
   align-content: start;
-  transition: border-color 200ms ease, transform 240ms ease, box-shadow 240ms ease;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, box-shadow;
+  transition: border-color 200ms ease, background-color 200ms ease;
 }
 
 .hp-feature:hover {
   border-color: var(--hp-primary);
-  transform: translateY(-4px);
-  box-shadow: 0 16px 40px -24px rgba(15, 23, 42, 0.18);
 }
 
 .hp-feature-icon {
@@ -621,6 +626,7 @@
   gap: 16px;
   width: min(100%, 1080px);
   margin-top: 8px;
+  perspective: 1000px;
 }
 
 .hp-persona {
@@ -633,7 +639,10 @@
   gap: 16px;
   position: relative;
   overflow: hidden;
-  transition: transform 240ms ease, box-shadow 240ms ease;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, box-shadow;
+  transition: border-color 240ms ease;
 }
 
 .hp-persona::after {
@@ -647,8 +656,7 @@
 }
 
 .hp-persona:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 22px 50px -28px rgba(15, 23, 42, 0.22);
+  border-color: var(--hp-primary);
 }
 
 .hp-persona-tag {
@@ -716,6 +724,7 @@
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
   width: min(100%, 1080px);
+  perspective: 1000px;
 }
 
 .hp-pricing-card {
@@ -727,13 +736,14 @@
   display: grid;
   gap: 18px;
   align-content: space-between;
-  transition: transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, box-shadow;
+  transition: border-color 240ms ease, background 240ms ease;
 }
 
 .hp-pricing-card:hover {
-  transform: translateY(-4px);
   border-color: var(--hp-primary);
-  box-shadow: 0 22px 50px -28px rgba(15, 23, 42, 0.22);
 }
 
 .hp-pricing-card.featured {
