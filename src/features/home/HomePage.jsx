@@ -220,7 +220,8 @@ export function HomePage({ session, onLogin, onStart, onSignOut, onOpenDashboard
               const details    = parsePlanFeatures(plan.featuresJson);
               const isFree     = Number(plan.price) === 0;
               const isLoading  = checkoutPlanId === plan.id;
-              const isOwned    = activePlanIds.has(plan.id);
+              const hasActivePaidPlan = plans.some(p => Number(p.price) > 0 && activePlanIds.has(p.id));
+              const isOwned    = activePlanIds.has(plan.id) && !(isFree && hasActivePaidPlan);
               const isFeatured = plan.name?.toLowerCase().includes('pro');
 
               return (

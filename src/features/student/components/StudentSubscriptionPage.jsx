@@ -70,7 +70,15 @@ export function StudentSubscriptionPage({ session }) {
     };
   }, [session]);
 
-  const activeSubscription = mySubscriptions.find((item) => item.status === 'Active');
+  const activeSubscription = mySubscriptions
+    .filter((item) => item.status === 'Active')
+    .sort((a, b) => {
+      const planA = plans.find(p => p.id === a.planId);
+      const planB = plans.find(p => p.id === b.planId);
+      const priceA = planA ? Number(planA.price) : 0;
+      const priceB = planB ? Number(planB.price) : 0;
+      return priceB - priceA;
+    })[0] || null;
   const activePlanId = activeSubscription?.planId || null;
 
   async function handleCheckout(plan) {
