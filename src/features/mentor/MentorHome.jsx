@@ -7,33 +7,65 @@ import { MentorFeedbackHistory } from './components/MentorFeedbackHistory';
 import { MentorWriteFeedbackModal } from './components/MentorWriteFeedbackModal';
 import { RoadmapReviewQueue } from '../roadmap-review/RoadmapReviewQueue';
 import { NotificationBell } from '../notifications/NotificationBell';
+import { DashboardShell } from '@/components/dashboard-shell/DashboardShell';
 import {
   getReviewQueue,
   getMyMentorFeedbacks,
   createMentorFeedback,
 } from './api/industryMentorApi';
 import { getMentorRoadmapQueue } from '../roadmap-review/reviewApi';
-import { Highlight } from '@/components/animate-ui/primitives/effects/highlight';
 import { AnimatePresence, motion } from 'motion/react';
 
-const NAV_ITEMS = [
-  { id: 'overview', label: 'Tổng quan' },
-  { id: 'queue', label: 'Review queue' },
-  { id: 'roadmap-reviews', label: 'Roadmap reviews' },
-  { id: 'feedback', label: 'Lịch sử feedback' },
-];
+/* ────────────────────────────────────────────────────────────
+   Nav icons
+   ──────────────────────────────────────────────────────────── */
+const ICONS = {
+  overview: (
+    <svg viewBox="0 0 18 18" fill="none" aria-hidden>
+      <rect x="1" y="1" width="7" height="7" rx="1.5" fill="currentColor" />
+      <rect x="10" y="1" width="7" height="7" rx="1.5" fill="currentColor" />
+      <rect x="1" y="10" width="7" height="7" rx="1.5" fill="currentColor" />
+      <rect x="10" y="10" width="7" height="7" rx="1.5" fill="currentColor" />
+    </svg>
+  ),
+  queue: (
+    <svg viewBox="0 0 18 18" fill="none" aria-hidden>
+      <rect x="2" y="3" width="14" height="3" rx="1" fill="currentColor" />
+      <rect x="2" y="8" width="14" height="3" rx="1" fill="currentColor" opacity="0.7" />
+      <rect x="2" y="13" width="9" height="3" rx="1" fill="currentColor" opacity="0.45" />
+    </svg>
+  ),
+  roadmap: (
+    <svg viewBox="0 0 18 18" fill="none" aria-hidden>
+      <circle cx="4" cy="4" r="2" fill="currentColor" />
+      <circle cx="14" cy="14" r="2" fill="currentColor" />
+      <path d="M4 6v3a3 3 0 0 0 3 3h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  feedback: (
+    <svg viewBox="0 0 18 18" fill="none" aria-hidden>
+      <path d="M2 4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7l-4 3v-3a2 2 0 0 1-1-2V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
+      <path d="M5.5 6.5h7M5.5 9h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+};
+
+const VIEW_META = {
+  overview:          { title: 'Tổng quan',         sub: 'Hoạt động review và phản hồi gần đây' },
+  queue:             { title: 'Review queue',      sub: 'Hàng chờ review từ học viên' },
+  'roadmap-reviews': { title: 'Roadmap reviews',   sub: 'Hàng chờ duyệt lộ trình' },
+  feedback:          { title: 'Lịch sử feedback',  sub: 'Phản hồi bạn đã gửi' },
+};
+
+const VALID_VIEWS = ['overview', 'queue', 'roadmap-reviews', 'feedback'];
 
 export function MentorHome({ session, onSignOut }) {
   const getInitialViewInfo = () => {
     const parts = window.location.pathname.split('/').filter(Boolean);
     if (parts[0] === 'mentor' && parts[1]) {
       const view = parts[1];
-      const validViews = ['overview', 'queue', 'roadmap-reviews', 'feedback'];
-      if (validViews.includes(view)) {
-        return {
-          view,
-          studentId: parts[2] || null
-        };
+      if (VALID_VIEWS.includes(view)) {
+        return { view, studentId: parts[2] || null };
       }
     }
     return { view: 'overview', studentId: null };
@@ -122,20 +154,31 @@ export function MentorHome({ session, onSignOut }) {
 
   const mentorName = session?.user?.fullName || 'Mentor';
 
+  const navItems = [
+    { id: 'overview',          label: 'Tổng quan',        icon: ICONS.overview },
+    { id: 'queue',             label: 'Review queue',     icon: ICONS.queue,    badge: reviewQueue.length || null },
+    { id: 'roadmap-reviews',   label: 'Roadmap reviews',  icon: ICONS.roadmap,  badge: pendingReviewCount || null },
+    { id: 'feedback',          label: 'Lịch sử feedback', icon: ICONS.feedback, badge: feedbacks.length || null },
+  ];
+
+  const meta = VIEW_META[currentView] || VIEW_META.overview;
+  const isStudentDetail = currentView === 'queue' && selectedStudentId;
+  const topbarTitle = isStudentDetail ? 'Hồ sơ sinh viên' : meta.title;
+  const topbarSubtitle = isStudentDetail ? `Mã sinh viên: ${selectedStudentId}` : meta.sub;
+
   return (
-    <div className="imentor-shell">
-      <header className="imentor-globalnav">
-        <div className="imentor-globalnav-inner">
-          <span className="imentor-globalnav-brand">
-            <span className="imentor-globalnav-brand-dot" aria-hidden>
-              C
-            </span>
-            CareerMap
-          </span>
-          <span className="imentor-globalnav-spacer" />
-          <span className="imentor-globalnav-meta">
-            Đăng nhập:<strong>{mentorName}</strong>
-          </span>
+    <>
+      <DashboardShell
+        brand="CareerMap"
+        brandSubtitle="Industry Mentor"
+        navItems={navItems}
+        activeId={selectedStudentId ? null : currentView}
+        onNavigate={(id) => handleNavigate(id)}
+        session={session}
+        onSignOut={onSignOut}
+        topbarTitle={topbarTitle}
+        topbarSubtitle={topbarSubtitle}
+        topbarActions={
           <NotificationBell
             session={session}
             onNavigate={(target) => {
@@ -143,69 +186,16 @@ export function MentorHome({ session, onSignOut }) {
               handleNavigate(view);
             }}
           />
-          <button
-            type="button"
-            className="imentor-globalnav-action"
-            onClick={onSignOut}
-          >
-            Đăng xuất
-          </button>
-        </div>
-      </header>
-
-      <nav className="imentor-subnav" aria-label="Mentor sections">
-        <div className="imentor-subnav-inner">
-          <span className="imentor-subnav-title">Industry Mentor</span>
-          <div className="imentor-subnav-links">
-            <Highlight
-              value={selectedStudentId ? null : currentView}
-              onValueChange={(val) => {
-                if (val) handleNavigate(val);
-              }}
-              className="absolute inset-0 bg-[rgba(0,102,204,0.08)] rounded-md"
-              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-              hover={false}
-              click={true}
-            >
-              {NAV_ITEMS.map((item) => {
-                const isActive = currentView === item.id && !selectedStudentId;
-                const badge =
-                  item.id === 'queue' && reviewQueue.length > 0
-                    ? reviewQueue.length
-                    : item.id === 'roadmap-reviews' && pendingReviewCount > 0
-                    ? pendingReviewCount
-                    : item.id === 'feedback' && feedbacks.length > 0
-                    ? feedbacks.length
-                    : null;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    data-value={item.id}
-                    className={`imentor-subnav-link relative z-10 ${isActive ? 'active' : ''}`}
-                    style={{ background: 'transparent' }}
-                  >
-                    {item.label}
-                    {badge != null && (
-                      <span className="imentor-subnav-badge">{badge}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </Highlight>
-          </div>
-        </div>
-      </nav>
-
-      <main className="imentor-main">
+        }
+      >
         <AnimatePresence mode="wait">
           {currentView === 'overview' && !selectedStudentId && (
             <motion.div
               key="overview"
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.18, ease: 'easeInOut' }}
+              exit={{ opacity: 0, y: -14 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
             >
               <MentorOverview
                 reviewQueue={reviewQueue}
@@ -222,10 +212,10 @@ export function MentorHome({ session, onSignOut }) {
           {currentView === 'queue' && !selectedStudentId && (
             <motion.div
               key="queue"
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.18, ease: 'easeInOut' }}
+              exit={{ opacity: 0, y: -14 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
             >
               <MentorReviewQueue
                 reviewQueue={reviewQueue}
@@ -239,10 +229,10 @@ export function MentorHome({ session, onSignOut }) {
           {currentView === 'queue' && selectedStudentId && (
             <motion.div
               key={`student-detail-${selectedStudentId}`}
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: 18 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+              exit={{ opacity: 0, x: -18 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
             >
               <MentorStudentDetail
                 session={session}
@@ -257,10 +247,10 @@ export function MentorHome({ session, onSignOut }) {
           {currentView === 'roadmap-reviews' && (
             <motion.div
               key="roadmap-reviews"
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.18, ease: 'easeInOut' }}
+              exit={{ opacity: 0, y: -14 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
             >
               <RoadmapReviewQueue session={session} role="IndustryMentor" />
             </motion.div>
@@ -269,10 +259,10 @@ export function MentorHome({ session, onSignOut }) {
           {currentView === 'feedback' && !selectedStudentId && (
             <motion.div
               key="feedback"
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.18, ease: 'easeInOut' }}
+              exit={{ opacity: 0, y: -14 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
             >
               <MentorFeedbackHistory
                 feedbacks={feedbacks}
@@ -282,7 +272,7 @@ export function MentorHome({ session, onSignOut }) {
             </motion.div>
           )}
         </AnimatePresence>
-      </main>
+      </DashboardShell>
 
       {showFeedbackModal && feedbackModalStudent && (
         <MentorWriteFeedbackModal
@@ -295,6 +285,6 @@ export function MentorHome({ session, onSignOut }) {
           onSubmit={handleSubmitFeedback}
         />
       )}
-    </div>
+    </>
   );
 }

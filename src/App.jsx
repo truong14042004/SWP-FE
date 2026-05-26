@@ -14,7 +14,7 @@ import { clearSession, getSessionRole, getStoredSession } from './auth/session';
 
 export default function App() {
   const [session, setSession] = useState(getStoredSession);
-  const [showLogin, setShowLogin] = useState(false);
+  const [authIntent, setAuthIntent] = useState(null); // null | 'login' | 'register'
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
 
   useEffect(() => {
@@ -31,13 +31,13 @@ export default function App() {
   function signOut() {
     clearSession();
     setSession(null);
-    setShowLogin(false);
+    setAuthIntent(null);
     navigateTo('/');
   }
 
   function handleAuthenticated(nextSession) {
     setSession(nextSession);
-    setShowLogin(false);
+    setAuthIntent(null);
   }
 
   // Public portfolio route: /portfolio/{slug}
@@ -63,7 +63,7 @@ export default function App() {
         session={session}
         onLogin={() => {
           navigateTo('/');
-          setShowLogin(true);
+          setAuthIntent('login');
         }}
         onHome={() => navigateTo('/')}
       />
@@ -77,7 +77,7 @@ export default function App() {
         session={session}
         onLogin={() => {
           navigateTo('/');
-          setShowLogin(true);
+          setAuthIntent('login');
         }}
         onHome={() => navigateTo('/')}
       />
@@ -85,9 +85,20 @@ export default function App() {
   }
 
   if (!session) {
-    return showLogin
-      ? <AuthPage onAuthenticated={handleAuthenticated} onBackHome={() => setShowLogin(false)} />
-      : <HomePage onLogin={() => setShowLogin(true)} />;
+    return authIntent
+      ? (
+        <AuthPage
+          initialMode={authIntent}
+          onAuthenticated={handleAuthenticated}
+          onBackHome={() => setAuthIntent(null)}
+        />
+      )
+      : (
+        <HomePage
+          onLogin={() => setAuthIntent('login')}
+          onStart={() => setAuthIntent('register')}
+        />
+      );
   }
 
   const role = normalizeRole(getSessionRole(session));
@@ -104,7 +115,8 @@ export default function App() {
     return (
       <HomePage
         session={session}
-        onLogin={() => setShowLogin(true)}
+        onLogin={() => setAuthIntent('login')}
+        onStart={() => setAuthIntent('register')}
         onSignOut={signOut}
         onOpenDashboard={() => navigateTo('/dashboard')}
       />

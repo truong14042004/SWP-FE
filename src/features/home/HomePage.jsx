@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { motion, useScroll, useSpring, useTransform } from 'motion/react';
 import {
   createSubscriptionCheckout,
   getMySubscriptions,
@@ -6,21 +7,44 @@ import {
   parsePlanFeatures,
 } from '../subscriptions/subscriptionApi';
 import { formatMoney } from '../../shared/format';
+import { TypingText } from '../../components/animate-ui/primitives/texts/typing';
+import { CountingNumber } from '../../components/animate-ui/primitives/texts/counting-number';
 import '../../styles/home.css';
 
 /* ────────────────────────────────────────────────────────────
    CareerMap — landing page
    - 100% Tiếng Việt
    - Không hình ảnh raster (chỉ CSS + SVG)
-   - Animate khi scroll qua từng section (Intersection Observer)
+   - Hiệu ứng cuộn dùng motion (whileInView + useScroll + useTransform)
+   - TypingText (animate-ui) cho tiêu đề hero
    ──────────────────────────────────────────────────────────── */
 
-export function HomePage({ session, onLogin, onSignOut, onOpenDashboard }) {
+const cardVariants = {
+  hidden:  { opacity: 0, y: 22 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
+};
+
+const staggerParent = {
+  hidden:  {},
+  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+};
+
+export function HomePage({ session, onLogin, onStart, onSignOut, onOpenDashboard }) {
   const isLoggedIn = Boolean(session);
+  const onStartFn = onStart || onLogin; // fallback so component still works if onStart not provided
   const [plans, setPlans] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [checkoutPlanId, setCheckoutPlanId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Scroll-linked top progress bar
+  // https://motion.dev/docs/react-scroll-animations#scroll-linked-animations
+  const { scrollYProgress } = useScroll();
+  const progressScaleX = useSpring(scrollYProgress, {
+    stiffness: 220,
+    damping: 40,
+    mass: 0.4,
+  });
 
   useEffect(() => { loadPlans(); /* eslint-disable-next-line */ }, [session?.token]);
 
@@ -63,6 +87,13 @@ export function HomePage({ session, onLogin, onSignOut, onOpenDashboard }) {
 
   return (
     <div className="hp-shell">
+      {/* Scroll-linked progress bar fixed at the top of the viewport */}
+      <motion.div
+        className="hp-scroll-progress"
+        style={{ scaleX: progressScaleX }}
+        aria-hidden
+      />
+
       {/* ── GLOBAL NAV ─────────────────────────────────── */}
       <nav className="hp-nav" aria-label="Điều hướng chính">
         <a href="#hero" className="hp-nav-brand">
@@ -90,207 +121,113 @@ export function HomePage({ session, onLogin, onSignOut, onOpenDashboard }) {
           ) : (
             <>
               <button type="button" className="hp-nav-link-btn" onClick={onLogin}>Đăng nhập</button>
-              <button type="button" className="hp-nav-pill" onClick={onLogin}>Bắt đầu</button>
+              <button type="button" className="hp-nav-pill" onClick={onStartFn}>Bắt đầu</button>
             </>
           )}
         </div>
       </nav>
 
       {/* ── HERO ───────────────────────────────────────── */}
-      <Reveal as="section" className="hp-tile hp-tile-light" id="hero">
-        <span className="hp-orb hp-orb-blue"
-              style={{ width: 360, height: 360, top: -120, left: '12%' }} />
-        <span className="hp-orb hp-orb-purple"
-              style={{ width: 320, height: 320, top: 80, right: '8%' }} />
-
-        <div className="hp-tile-inner">
-          <span className="hp-eyebrow">Định hướng nghề nghiệp</span>
-          <h1>
-            Vẽ <em>lộ trình</em> sự nghiệp.<br />
-            Chinh phục từng cột mốc.
-          </h1>
-          <p className="hp-tile-lead">
-            CareerMap kết hợp AI và mạng lưới chuyên gia để biến mục tiêu nghề nghiệp của bạn thành hành trình rõ ràng, đo lường được.
-          </p>
-          <p className="hp-tile-body">
-            Phân tích kỹ năng, sinh lộ trình học, nhận đánh giá portfolio từ mentor đang làm việc tại các công ty công nghệ — tất cả ở một nền tảng duy nhất.
-          </p>
-
-          <div className="hp-actions">
-            <button type="button" className="hp-btn-primary" onClick={onLogin}>
-              Bắt đầu miễn phí <span className="hp-btn-arrow" aria-hidden>→</span>
-            </button>
-            <a href="#process" className="hp-btn-ghost">
-              Xem cách hoạt động <span className="hp-btn-arrow" aria-hidden>↓</span>
-            </a>
-          </div>
-
-          <RoadmapMock />
-        </div>
-      </Reveal>
-
-      {/* ── STATS RIBBON ───────────────────────────────── */}
-      <Reveal as="section" className="hp-tile hp-tile-parchment">
-        <div className="hp-tile-inner">
-          <div className="hp-stats hp-reveal-stagger" data-stagger>
-            <div className="hp-stat">
-              <strong>10K+</strong>
-              <span>Học viên đang theo lộ trình</span>
-            </div>
-            <div className="hp-stat">
-              <strong>120+</strong>
-              <span>Mentor từ Big Tech &amp; Startup</span>
-            </div>
-            <div className="hp-stat">
-              <strong>96%</strong>
-              <span>Học viên đạt mục tiêu kỹ năng</span>
-            </div>
-            <div className="hp-stat">
-              <strong>48h</strong>
-              <span>Thời gian phản hồi từ mentor</span>
-            </div>
-          </div>
-        </div>
-      </Reveal>
+      <HeroSection onStart={onStartFn} />
 
       {/* ── PROCESS (DARK) ─────────────────────────────── */}
-      <Reveal as="section" className="hp-tile hp-tile-dark" id="process">
-        <span className="hp-orb hp-orb-blue"
-              style={{ width: 480, height: 480, top: -180, right: '-10%' }} />
+      <Section className="hp-tile hp-tile-dark" id="process">
+        <ParallaxOrb className="hp-orb hp-orb-blue"
+          style={{ width: 480, height: 480, top: -180, right: '-10%' }} />
         <div className="hp-tile-inner">
-          <span className="hp-eyebrow">Quy trình</span>
-          <h2>Bốn bước từ <em>điểm xuất phát</em> đến vai trò mơ ước.</h2>
-          <p className="hp-tile-body">
-            Mỗi bước đều có dữ liệu rõ ràng để bạn không phải đoán. Bạn biết chính xác mình đang ở đâu và nên học gì tiếp theo.
-          </p>
+          <Eyebrow>Quy trình</Eyebrow>
+          <RevealHeading as="h2">
+            Bốn bước từ <em>điểm xuất phát</em> đến vai trò mơ ước.
+          </RevealHeading>
+          <RevealParagraph className="hp-tile-body">
+            Mỗi bước có dữ liệu rõ ràng để bạn không phải đoán. Bạn biết chính xác mình đang ở đâu và nên học gì tiếp theo.
+          </RevealParagraph>
 
-          <div className="hp-process hp-reveal-stagger" data-stagger>
-            <article className="hp-process-card">
-              <span className="hp-process-num">01</span>
-              <h3>Chọn mục tiêu</h3>
-              <p>Lựa chọn vai trò bạn nhắm đến — Backend, Data, Mobile, Cloud — và mức độ kinh nghiệm hiện tại.</p>
-            </article>
-            <article className="hp-process-card">
-              <span className="hp-process-num">02</span>
-              <h3>AI phân tích</h3>
-              <p>Hệ thống đối chiếu kỹ năng của bạn với yêu cầu thị trường, chỉ ra khoảng cách và mức độ ưu tiên.</p>
-            </article>
-            <article className="hp-process-card">
-              <span className="hp-process-num">03</span>
-              <h3>Học theo lộ trình</h3>
-              <p>Mỗi node là một kỹ năng đi kèm tài liệu, dự án mẫu và checklist hoàn thành.</p>
-            </article>
-            <article className="hp-process-card">
-              <span className="hp-process-num">04</span>
-              <h3>Nhận đánh giá</h3>
-              <p>Gửi portfolio cho mentor đang làm việc thực tế. Phản hồi sâu, có thể hành động được trong 48 giờ.</p>
-            </article>
-          </div>
+          <motion.div
+            className="hp-process"
+            variants={staggerParent}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
+          >
+            <ProcessCard num="01" title="Chọn mục tiêu"
+              desc="Lựa chọn vai trò bạn nhắm đến — Backend, Data, Mobile, Cloud — và mức độ kinh nghiệm hiện tại." />
+            <ProcessCard num="02" title="AI phân tích"
+              desc="Hệ thống đối chiếu kỹ năng của bạn với yêu cầu thị trường, chỉ ra khoảng cách và mức độ ưu tiên." />
+            <ProcessCard num="03" title="Học theo lộ trình"
+              desc="Mỗi node là một kỹ năng đi kèm tài liệu, dự án mẫu và checklist hoàn thành." />
+            <ProcessCard num="04" title="Nhận đánh giá"
+              desc="Gửi portfolio cho mentor đang làm việc thực tế. Phản hồi sâu, có thể hành động trong 48 giờ." />
+          </motion.div>
         </div>
-      </Reveal>
+      </Section>
 
       {/* ── FEATURES (LIGHT) ───────────────────────────── */}
-      <Reveal as="section" className="hp-tile hp-tile-light" id="features">
+      <Section className="hp-tile hp-tile-light" id="features">
         <div className="hp-tile-inner">
-          <span className="hp-eyebrow">Tính năng nổi bật</span>
-          <h2>Mọi công cụ bạn cần. <em>Không phân mảnh.</em></h2>
-          <p className="hp-tile-body">
+          <Eyebrow>Tính năng nổi bật</Eyebrow>
+          <RevealHeading as="h2">
+            Mọi công cụ bạn cần. <em>Không phân mảnh.</em>
+          </RevealHeading>
+          <RevealParagraph className="hp-tile-body">
             Thay vì chuyển đổi giữa năm sáu công cụ, CareerMap gộp toàn bộ hành trình vào một trải nghiệm liền mạch.
-          </p>
+          </RevealParagraph>
 
-          <div className="hp-feature-grid hp-reveal-stagger" data-stagger>
-            <article className="hp-feature">
-              <span className="hp-feature-icon"><IconChart /></span>
-              <h3>Skill Gap Analysis</h3>
-              <p>Đo khoảng cách giữa kỹ năng hiện tại và yêu cầu của vai trò mục tiêu, theo đúng dữ liệu thị trường gần nhất.</p>
-            </article>
-            <article className="hp-feature">
-              <span className="hp-feature-icon"><IconRoute /></span>
-              <h3>Lộ trình cá nhân hoá</h3>
-              <p>Sinh tự động bản đồ học tập theo từng tuần, ưu tiên kỹ năng quan trọng và tiết kiệm thời gian nhất.</p>
-            </article>
-            <article className="hp-feature">
-              <span className="hp-feature-icon"><IconChat /></span>
-              <h3>Mentor Review</h3>
-              <p>Gửi bài tập, dự án và CV để nhận phản hồi cụ thể từ mentor đang làm việc tại các công ty hàng đầu.</p>
-            </article>
-            <article className="hp-feature">
-              <span className="hp-feature-icon"><IconDocs /></span>
-              <h3>Thư viện tài nguyên</h3>
-              <p>Bài viết, video và tài liệu được tuyển chọn cho từng kỹ năng — luôn cập nhật, luôn đúng trọng tâm.</p>
-            </article>
-            <article className="hp-feature">
-              <span className="hp-feature-icon"><IconCheck /></span>
-              <h3>Theo dõi tiến độ</h3>
-              <p>Dashboard hiển thị tiến độ từng node, thời gian học và những kỹ năng bạn đã thông thạo.</p>
-            </article>
-            <article className="hp-feature">
-              <span className="hp-feature-icon"><IconShield /></span>
-              <h3>Career Counselor</h3>
-              <p>Khi bạn cần một góc nhìn sâu hơn, đội ngũ tư vấn học thuật sẵn sàng đồng hành theo từng giai đoạn.</p>
-            </article>
-          </div>
+          <motion.div
+            className="hp-feature-grid"
+            variants={staggerParent}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
+          >
+            <FeatureCard icon={<IconChart />} title="Skill Gap Analysis"
+              desc="Đo khoảng cách giữa kỹ năng hiện tại và yêu cầu của vai trò mục tiêu, theo dữ liệu thị trường gần nhất." />
+            <FeatureCard icon={<IconRoute />} title="Lộ trình cá nhân hoá"
+              desc="Sinh tự động bản đồ học tập theo từng tuần, ưu tiên kỹ năng quan trọng và tiết kiệm thời gian." />
+            <FeatureCard icon={<IconChat />}  title="Mentor Review"
+              desc="Gửi bài tập, dự án và CV để nhận phản hồi cụ thể từ mentor đang làm việc tại các công ty hàng đầu." />
+            <FeatureCard icon={<IconDocs />}  title="Thư viện tài nguyên"
+              desc="Bài viết, video và tài liệu được tuyển chọn cho từng kỹ năng — luôn cập nhật, luôn đúng trọng tâm." />
+            <FeatureCard icon={<IconCheck />} title="Theo dõi tiến độ"
+              desc="Dashboard hiển thị tiến độ từng node, thời gian học và những kỹ năng bạn đã thông thạo." />
+            <FeatureCard icon={<IconShield />} title="Career Counselor"
+              desc="Khi cần một góc nhìn sâu hơn, đội ngũ tư vấn học thuật sẵn sàng đồng hành theo từng giai đoạn." />
+          </motion.div>
         </div>
-      </Reveal>
+      </Section>
 
-      {/* ── PERSONA (PARCHMENT) ────────────────────────── */}
-      <Reveal as="section" className="hp-tile hp-tile-parchment" id="network">
+      {/* ── PRICING (PARCHMENT) — moved up so the offer is visible early ── */}
+      <Section className="hp-tile hp-tile-parchment" id="pricing">
         <div className="hp-tile-inner">
-          <span className="hp-eyebrow">Dành cho ai</span>
-          <h2>Một nền tảng. <em>Hai chiều giá trị.</em></h2>
-          <p className="hp-tile-body">
-            CareerMap phục vụ cả người học và mạng lưới chuyên gia, tạo nên một vòng tròn khép kín giữa đào tạo và thực hành.
-          </p>
-
-          <div className="hp-persona-grid hp-reveal-stagger" data-stagger>
-            <article className="hp-persona">
-              <span className="hp-persona-tag">Học viên</span>
-              <h3>Tăng tốc sự nghiệp với dữ liệu, không phỏng đoán.</h3>
-              <p>Phù hợp với sinh viên năm cuối, người đang chuyển ngành và developer muốn lên cấp độ tiếp theo.</p>
-              <ul>
-                <li>Lộ trình rõ ràng theo vai trò mục tiêu</li>
-                <li>Phản hồi từ người đã đi trước, không phải lý thuyết</li>
-                <li>Theo dõi tiến độ và năng suất hằng tuần</li>
-              </ul>
-            </article>
-
-            <article className="hp-persona">
-              <span className="hp-persona-tag">Mentor &amp; Counselor</span>
-              <h3>Truyền lại kinh nghiệm. Tạo ảnh hưởng có thể đo lường.</h3>
-              <p>Cộng đồng mentor đến từ Big Tech, startup và các công ty sản phẩm đang phát triển nhanh.</p>
-              <ul>
-                <li>Lịch review linh hoạt, kiểm soát khối lượng</li>
-                <li>Hồ sơ học viên rõ ràng, có dữ liệu kỹ năng</li>
-                <li>Hệ thống ghi nhận đóng góp minh bạch</li>
-              </ul>
-            </article>
-          </div>
-        </div>
-      </Reveal>
-
-      {/* ── PRICING (LIGHT) ────────────────────────────── */}
-      <Reveal as="section" className="hp-tile hp-tile-light" id="pricing">
-        <div className="hp-tile-inner">
-          <span className="hp-eyebrow">Gói dịch vụ</span>
-          <h2>Đầu tư <em>vào chính bạn.</em></h2>
-          <p className="hp-tile-body">
+          <Eyebrow>Gói dịch vụ</Eyebrow>
+          <RevealHeading as="h2">
+            Đầu tư <em>vào chính bạn.</em>
+          </RevealHeading>
+          <RevealParagraph className="hp-tile-body">
             Bắt đầu miễn phí, nâng cấp khi bạn cần thêm lượt review hoặc tính năng nâng cao.
-          </p>
+          </RevealParagraph>
 
           {errorMessage && <span className="hp-notice error">{errorMessage}</span>}
 
-          <div className="hp-pricing-grid hp-reveal-stagger" data-stagger>
+          <motion.div
+            className="hp-pricing-grid"
+            variants={staggerParent}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
+          >
             {plans.map((plan) => {
-              const details = parsePlanFeatures(plan.featuresJson);
+              const details    = parsePlanFeatures(plan.featuresJson);
               const isFree     = Number(plan.price) === 0;
               const isLoading  = checkoutPlanId === plan.id;
               const isOwned    = activePlanIds.has(plan.id);
               const isFeatured = plan.name?.toLowerCase().includes('pro');
 
               return (
-                <article
+                <motion.article
                   key={plan.id}
                   className={`hp-pricing-card${isFeatured ? ' featured' : ''}`}
+                  variants={cardVariants}
                 >
                   {isFeatured && <span className="hp-pricing-tag">Phổ biến nhất</span>}
 
@@ -328,67 +265,144 @@ export function HomePage({ session, onLogin, onSignOut, onOpenDashboard }) {
                       <span className="hp-btn-arrow" aria-hidden>→</span>
                     </button>
                   )}
-                </article>
+                </motion.article>
               );
             })}
 
             {plans.length === 0 && (
-              <article className="hp-pricing-card">
+              <motion.article className="hp-pricing-card" variants={cardVariants}>
                 <h3>Đang cập nhật</h3>
                 <p>Gói dịch vụ sẽ sớm được công bố. Hãy quay lại sau hoặc liên hệ với đội ngũ CareerMap.</p>
-              </article>
+              </motion.article>
             )}
-          </div>
+          </motion.div>
         </div>
-      </Reveal>
+      </Section>
+
+      {/* ── PERSONA (LIGHT) — moved below pricing ─────── */}
+      <Section className="hp-tile hp-tile-light" id="network">
+        <div className="hp-tile-inner">
+          <Eyebrow>Dành cho ai</Eyebrow>
+          <RevealHeading as="h2">
+            Một nền tảng. <em>Hai chiều giá trị.</em>
+          </RevealHeading>
+          <RevealParagraph className="hp-tile-body">
+            CareerMap phục vụ cả người học và mạng lưới chuyên gia, tạo nên một vòng tròn khép kín giữa đào tạo và thực hành.
+          </RevealParagraph>
+
+          <motion.div
+            className="hp-persona-grid"
+            variants={staggerParent}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
+          >
+            <motion.article className="hp-persona" variants={cardVariants}>
+              <span className="hp-persona-tag">Học viên</span>
+              <h3>Tăng tốc sự nghiệp với dữ liệu, không phỏng đoán.</h3>
+              <p>Phù hợp với sinh viên năm cuối, người đang chuyển ngành và developer muốn lên cấp độ tiếp theo.</p>
+              <ul>
+                <li>Lộ trình rõ ràng theo vai trò mục tiêu</li>
+                <li>Phản hồi từ người đã đi trước, không phải lý thuyết</li>
+                <li>Theo dõi tiến độ và năng suất hằng tuần</li>
+              </ul>
+            </motion.article>
+
+            <motion.article className="hp-persona" variants={cardVariants}>
+              <span className="hp-persona-tag">Mentor &amp; Counselor</span>
+              <h3>Truyền lại kinh nghiệm. Tạo ảnh hưởng có thể đo lường.</h3>
+              <p>Cộng đồng mentor đến từ Big Tech, startup và các công ty sản phẩm đang phát triển nhanh.</p>
+              <ul>
+                <li>Lịch review linh hoạt, kiểm soát khối lượng</li>
+                <li>Hồ sơ học viên rõ ràng, có dữ liệu kỹ năng</li>
+                <li>Hệ thống ghi nhận đóng góp minh bạch</li>
+              </ul>
+            </motion.article>
+          </motion.div>
+        </div>
+      </Section>
+
+      {/* ── STATS RIBBON — moved here so social proof lands right before FAQ/CTA ── */}
+      <Section className="hp-tile hp-tile-parchment">
+        <div className="hp-tile-inner">
+          <motion.div
+            className="hp-stats"
+            variants={staggerParent}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
+          >
+            <StatCard value={10}  suffix="K+" label="Học viên đang theo lộ trình" />
+            <StatCard value={120} suffix="+"  label="Mentor từ Big Tech & Startup" />
+            <StatCard value={96}  suffix="%"  label="Học viên đạt mục tiêu kỹ năng" />
+            <StatCard value={48}  suffix="h"  label="Thời gian phản hồi từ mentor" />
+          </motion.div>
+        </div>
+      </Section>
 
       {/* ── FAQ (DEEP) ─────────────────────────────────── */}
-      <Reveal as="section" className="hp-tile hp-tile-deep" id="faq">
-        <span className="hp-orb hp-orb-purple"
-              style={{ width: 380, height: 380, top: -100, left: '60%' }} />
+      <Section className="hp-tile hp-tile-deep" id="faq">
+        <ParallaxOrb className="hp-orb hp-orb-purple"
+          style={{ width: 380, height: 380, top: -100, left: '60%' }} />
         <div className="hp-tile-inner">
-          <span className="hp-eyebrow">Hỏi &amp; Đáp</span>
-          <h2>Vài điều bạn có thể đang băn khoăn.</h2>
+          <Eyebrow>Hỏi &amp; Đáp</Eyebrow>
+          <RevealHeading as="h2">Vài điều bạn có thể đang băn khoăn.</RevealHeading>
 
-          <div className="hp-faq">
-            <details className="hp-faq-item">
+          <motion.div
+            className="hp-faq"
+            variants={staggerParent}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
+          >
+            <motion.details className="hp-faq-item" variants={cardVariants}>
               <summary>Tôi mất bao lâu để hoàn thành một lộ trình?</summary>
               <p>Phụ thuộc vào nền tảng hiện tại và cường độ học. Trung bình mỗi học viên hoàn thành lộ trình junior trong 4–6 tháng nếu duy trì 8–10 giờ/tuần.</p>
-            </details>
-            <details className="hp-faq-item">
+            </motion.details>
+            <motion.details className="hp-faq-item" variants={cardVariants}>
               <summary>AI dựa vào dữ liệu nào để đề xuất kỹ năng?</summary>
               <p>Hệ thống tổng hợp mô tả công việc thực tế và yêu cầu được mentor xác nhận. Mọi đề xuất đều có thể tuỳ chỉnh thủ công.</p>
-            </details>
-            <details className="hp-faq-item">
+            </motion.details>
+            <motion.details className="hp-faq-item" variants={cardVariants}>
               <summary>Tôi có thể đổi mục tiêu giữa chừng không?</summary>
               <p>Có. Bạn đổi vai trò mục tiêu bất cứ lúc nào — hệ thống sẽ giữ lại các kỹ năng đã hoàn thành phù hợp và cập nhật phần còn lại.</p>
-            </details>
-            <details className="hp-faq-item">
+            </motion.details>
+            <motion.details className="hp-faq-item" variants={cardVariants}>
               <summary>Mentor có phải nhân viên CareerMap không?</summary>
               <p>Không. Mentor là chuyên gia đang làm việc tại các công ty công nghệ. Họ phải qua quy trình xét duyệt và được đánh giá liên tục bởi học viên.</p>
-            </details>
-            <details className="hp-faq-item">
+            </motion.details>
+            <motion.details className="hp-faq-item" variants={cardVariants}>
               <summary>Nếu tôi huỷ gói thì sao?</summary>
               <p>Bạn vẫn giữ quyền truy cập đến hết chu kỳ thanh toán. Lộ trình và tiến độ được lưu để bạn có thể tiếp tục bất cứ khi nào.</p>
-            </details>
-          </div>
+            </motion.details>
+          </motion.div>
         </div>
-      </Reveal>
+      </Section>
 
       {/* ── FINAL CTA ──────────────────────────────────── */}
-      <Reveal as="section" className="hp-tile hp-tile-light">
+      <Section className="hp-tile hp-tile-light">
         <div className="hp-tile-inner">
-          <span className="hp-eyebrow">Sẵn sàng?</span>
-          <h2>Bước đi đầu tiên là <em>bước đi quan trọng nhất.</em></h2>
-          <p className="hp-tile-lead">Tạo lộ trình của bạn ngay hôm nay. Hoàn toàn miễn phí, không cần thẻ thanh toán.</p>
-          <div className="hp-actions">
-            <button type="button" className="hp-btn-primary" onClick={onLogin}>
+          <Eyebrow>Sẵn sàng?</Eyebrow>
+          <RevealHeading as="h2">
+            Bước đi đầu tiên là <em>bước đi quan trọng nhất.</em>
+          </RevealHeading>
+          <RevealParagraph className="hp-tile-lead">
+            Tạo lộ trình của bạn ngay hôm nay. Hoàn toàn miễn phí, không cần thẻ thanh toán.
+          </RevealParagraph>
+          <motion.div
+            className="hp-actions"
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+          >
+            <button type="button" className="hp-btn-primary" onClick={onStartFn}>
               Bắt đầu ngay <span className="hp-btn-arrow" aria-hidden>→</span>
             </button>
             <a href="#pricing" className="hp-btn-ghost">Xem các gói dịch vụ</a>
-          </div>
+          </motion.div>
         </div>
-      </Reveal>
+      </Section>
 
       {/* ── FOOTER ─────────────────────────────────────── */}
       <footer className="hp-footer">
@@ -441,50 +455,234 @@ export function HomePage({ session, onLogin, onSignOut, onOpenDashboard }) {
 }
 
 /* ────────────────────────────────────────────────────────────
-   Reveal — wraps a section, toggles `data-revealed` on scroll
+   HERO — typing title + scroll-linked parallax on roadmap mock
    ──────────────────────────────────────────────────────────── */
-function Reveal({ as: Tag = 'section', className = '', children, ...rest }) {
+const HERO_LINE_1 = 'Vẽ lộ trình sự nghiệp.';
+const HERO_LINE_2 = 'Chinh phục từng cột mốc.';
+
+function HeroSection({ onStart }) {
   const ref = useRef(null);
-  const [revealed, setRevealed] = useState(false);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node || revealed) return undefined;
-
-    if (typeof IntersectionObserver === 'undefined') {
-      setRevealed(true);
-      return undefined;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          setRevealed(true);
-
-          // Stagger child grids individually so siblings reveal in order.
-          node.querySelectorAll('[data-stagger]').forEach((child) => {
-            child.setAttribute('data-revealed', 'true');
-          });
-          observer.disconnect();
-        });
-      },
-      { threshold: 0.18 },
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [revealed]);
+  // Scroll-linked animations
+  // https://motion.dev/docs/react-scroll-animations#scroll-linked-animations
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start start', 'end start'],
+  });
+  const mockY       = useTransform(scrollYProgress, [0, 1], [0, 160]);
+  const mockOpacity = useTransform(scrollYProgress, [0, 0.85], [1, 0]);
+  const mockScale   = useTransform(scrollYProgress, [0, 1], [1, 0.92]);
+  const orbBlueY    = useTransform(scrollYProgress, [0, 1], [0, -120]);
+  const orbPurpleY  = useTransform(scrollYProgress, [0, 1], [0, 220]);
 
   return (
-    <Tag
-      ref={ref}
-      className={`hp-reveal ${className}`}
-      data-revealed={revealed ? 'true' : 'false'}
-      {...rest}
+    <section ref={ref} className="hp-tile hp-tile-light hp-hero" id="hero">
+      <motion.span
+        className="hp-orb hp-orb-blue"
+        style={{ width: 360, height: 360, top: -120, left: '12%', y: orbBlueY }}
+      />
+      <motion.span
+        className="hp-orb hp-orb-purple"
+        style={{ width: 320, height: 320, top: 80, right: '8%', y: orbPurpleY }}
+      />
+
+      <div className="hp-tile-inner">
+        <motion.span
+          className="hp-eyebrow"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
+          Định hướng nghề nghiệp
+        </motion.span>
+
+        <motion.h1
+          className="hp-hero-title"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.05 }}
+        >
+          <TypingText
+            as="span"
+            className="hp-hero-typing"
+            text={HERO_LINE_1}
+            duration={38}
+            delay={150}
+          />
+          <br />
+          <em className="hp-hero-em">
+            <TypingText
+              as="span"
+              text={HERO_LINE_2}
+              duration={38}
+              delay={150 + HERO_LINE_1.length * 38 + 150}
+              cursor
+            />
+          </em>
+        </motion.h1>
+
+        <motion.p
+          className="hp-tile-lead"
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: 'easeOut', delay: 0.25 }}
+        >
+          CareerMap kết hợp AI và mạng lưới chuyên gia để biến mục tiêu nghề nghiệp của bạn thành hành trình rõ ràng, đo lường được.
+        </motion.p>
+
+        <motion.p
+          className="hp-tile-body"
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: 'easeOut', delay: 0.4 }}
+        >
+          Phân tích kỹ năng, sinh lộ trình học, nhận đánh giá portfolio từ mentor đang làm việc tại các công ty công nghệ — tất cả ở một nền tảng duy nhất.
+        </motion.p>
+
+        <motion.div
+          className="hp-actions"
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: 'easeOut', delay: 0.55 }}
+        >
+          <button type="button" className="hp-btn-primary" onClick={onStart}>
+            Bắt đầu miễn phí <span className="hp-btn-arrow" aria-hidden>→</span>
+          </button>
+          <a href="#process" className="hp-btn-ghost">
+            Xem cách hoạt động <span className="hp-btn-arrow" aria-hidden>↓</span>
+          </a>
+        </motion.div>
+
+        <motion.div
+          className="hp-hero-mock-wrap"
+          style={{ y: mockY, opacity: mockOpacity, scale: mockScale }}
+        >
+          <RoadmapMock />
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+   Section wrapper — fades + lifts when entering the viewport
+   (https://motion.dev/docs/react-scroll-animations)
+   ──────────────────────────────────────────────────────────── */
+function Section({ className = '', children, id }) {
+  return (
+    <motion.section
+      id={id}
+      className={className}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-120px' }}
+      transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
-    </Tag>
+    </motion.section>
+  );
+}
+
+function RevealHeading({ children }) {
+  return (
+    <motion.h2
+      initial={{ opacity: 0, y: 22 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-100px' }}
+      transition={{ duration: 0.7, ease: 'easeOut' }}
+    >
+      {children}
+    </motion.h2>
+  );
+}
+
+function RevealParagraph({ className = '', children }) {
+  return (
+    <motion.p
+      className={className}
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-100px' }}
+      transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
+    >
+      {children}
+    </motion.p>
+  );
+}
+
+function Eyebrow({ children }) {
+  return (
+    <motion.span
+      className="hp-eyebrow"
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-100px' }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+    >
+      {children}
+    </motion.span>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+   Scroll-linked floating orb (parallax)
+   ──────────────────────────────────────────────────────────── */
+function ParallaxOrb({ className, style }) {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  });
+  const y = useTransform(scrollYProgress, [0, 1], [80, -120]);
+
+  return (
+    <motion.span
+      ref={ref}
+      className={className}
+      style={{ ...style, y }}
+      aria-hidden
+    />
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+   Cards — each is a motion component so it picks up the parent
+   grid's `visible` variant + staggerChildren timing.
+   ──────────────────────────────────────────────────────────── */
+function ProcessCard({ num, title, desc }) {
+  return (
+    <motion.article className="hp-process-card" variants={cardVariants}>
+      <span className="hp-process-num">{num}</span>
+      <h3>{title}</h3>
+      <p>{desc}</p>
+    </motion.article>
+  );
+}
+
+function FeatureCard({ icon, title, desc }) {
+  return (
+    <motion.article className="hp-feature" variants={cardVariants}>
+      <span className="hp-feature-icon">{icon}</span>
+      <h3>{title}</h3>
+      <p>{desc}</p>
+    </motion.article>
+  );
+}
+
+function StatCard({ value, suffix, label }) {
+  return (
+    <motion.div className="hp-stat" variants={cardVariants}>
+      <strong>
+        <CountingNumber
+          as="b"
+          number={value}
+          inView
+          delay={150}
+          style={{ fontWeight: 'inherit', display: 'inline' }}
+        />
+        {suffix}
+      </strong>
+      <span>{label}</span>
+    </motion.div>
   );
 }
 
@@ -535,7 +733,7 @@ function RoadmapMock() {
 }
 
 /* ────────────────────────────────────────────────────────────
-   Inline icons (kept as small SVGs to avoid raster images)
+   Inline icons
    ──────────────────────────────────────────────────────────── */
 function IconChart() {
   return (

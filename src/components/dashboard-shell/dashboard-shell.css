@@ -1,0 +1,441 @@
+/* ============================================================
+   DASHBOARD SHELL — shared sidebar layout
+   Used by Counselor & Mentor (and other role workspaces).
+   Apple-inspired: dark rail, light canvas, single accent blue.
+   ============================================================ */
+
+:root {
+  --ds-primary:        #0066cc;
+  --ds-primary-focus:  #0071e3;
+  --ds-primary-on-dark:#2997ff;
+
+  --ds-ink:            #1d1d1f;
+  --ds-ink-muted-80:   #333333;
+  --ds-ink-muted-48:   #6e6e73;
+
+  --ds-canvas:         #ffffff;
+  --ds-canvas-parchment: #f5f5f7;
+  --ds-surface-pearl:  #fafafc;
+  --ds-surface-black:  #000000;
+
+  --ds-hairline:       #e0e0e0;
+  --ds-divider-soft:   #f0f0f0;
+
+  --ds-r-sm:    8px;
+  --ds-r-md:    11px;
+  --ds-r-pill:  9999px;
+
+  --ds-frost:   saturate(180%) blur(20px);
+  --ds-font-display: "SF Pro Display", Inter, system-ui, -apple-system,
+                     BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ds-font-text:    "SF Pro Text", Inter, system-ui, -apple-system,
+                     BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --ds-rail-width:        240px;
+  --ds-rail-width-collapsed: 64px;
+}
+
+/* ============================================================
+   SHELL
+   ============================================================ */
+.ds-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: var(--ds-rail-width) minmax(0, 1fr);
+  background: var(--ds-canvas-parchment);
+  color: var(--ds-ink);
+  font-family: var(--ds-font-text);
+  font-size: 15px;
+  line-height: 1.47;
+  letter-spacing: -0.224px;
+  transition: grid-template-columns 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ds-shell.is-collapsed {
+  grid-template-columns: var(--ds-rail-width-collapsed) minmax(0, 1fr);
+}
+
+.ds-shell, .ds-shell * { box-sizing: border-box; }
+
+/* ============================================================
+   SIDEBAR RAIL
+   ============================================================ */
+.ds-rail {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: var(--ds-surface-black);
+  color: #fff;
+  overflow: hidden;
+}
+
+.ds-rail-brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ds-rail-mark {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--ds-r-sm);
+  background: var(--ds-canvas);
+  color: var(--ds-surface-black);
+  font-family: var(--ds-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.ds-rail-brand-text {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.ds-rail-brand-text strong {
+  display: block;
+  font-family: var(--ds-font-display);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ds-rail-brand-text small {
+  display: block;
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+  letter-spacing: -0.08px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ds-rail-collapse {
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  width: 24px;
+  height: 24px;
+  border-radius: var(--ds-r-sm);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: color 140ms ease, background 140ms ease;
+}
+
+.ds-rail-collapse:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ds-rail-collapse svg { width: 14px; height: 14px; }
+
+/* ============================================================
+   NAV
+   ============================================================ */
+.ds-rail-nav {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: 12px 10px;
+  overflow-y: auto;
+}
+
+.ds-rail-nav-item {
+  position: relative;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  border-radius: var(--ds-r-sm);
+  padding: 0 12px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: var(--ds-font-text);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.ds-rail-nav-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  display: grid;
+  place-items: center;
+  opacity: 0.75;
+}
+
+.ds-rail-nav-icon svg { width: 18px; height: 18px; }
+
+.ds-rail-nav-label {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ds-rail-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.ds-rail-nav-item:hover .ds-rail-nav-icon { opacity: 1; }
+
+.ds-rail-nav-item.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-weight: 600;
+}
+
+.ds-rail-nav-item.active .ds-rail-nav-icon { opacity: 1; }
+
+.ds-rail-nav-item.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--ds-primary-on-dark);
+}
+
+.ds-rail-nav-item:active { transform: scale(0.97); }
+
+.ds-rail-nav-badge {
+  flex: 0 0 auto;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--ds-primary-on-dark);
+  color: #fff;
+  border-radius: var(--ds-r-pill);
+  font-family: var(--ds-font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* ============================================================
+   ACCOUNT FOOTER
+   ============================================================ */
+.ds-rail-account {
+  padding: 12px 14px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ds-rail-id {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  min-width: 0;
+}
+
+.ds-rail-avatar {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: var(--ds-r-pill);
+  background: rgba(255, 255, 255, 0.16);
+  display: grid;
+  place-items: center;
+  font-family: var(--ds-font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.ds-rail-id-text {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.ds-rail-id-text strong {
+  display: block;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ds-rail-id-text small {
+  display: block;
+  margin-top: 1px;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 11px;
+  letter-spacing: -0.08px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ds-rail-signout {
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--ds-r-sm);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: var(--ds-font-text);
+  font-size: 12px;
+  letter-spacing: -0.12px;
+  cursor: pointer;
+  padding: 0 12px;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.ds-rail-signout:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.ds-rail-signout:active { transform: scale(0.96); }
+
+/* ============================================================
+   COLLAPSED STATE — hide labels, keep icons
+   ============================================================ */
+.ds-shell.is-collapsed .ds-rail-brand-text,
+.ds-shell.is-collapsed .ds-rail-nav-label,
+.ds-shell.is-collapsed .ds-rail-id-text,
+.ds-shell.is-collapsed .ds-rail-signout {
+  display: none;
+}
+
+.ds-shell.is-collapsed .ds-rail-brand {
+  justify-content: center;
+  padding: 18px 8px;
+}
+
+.ds-shell.is-collapsed .ds-rail-collapse {
+  position: absolute;
+  bottom: -14px;
+  right: 8px;
+}
+
+.ds-shell.is-collapsed .ds-rail-nav-item {
+  justify-content: center;
+  padding: 0 8px;
+}
+
+.ds-shell.is-collapsed .ds-rail-nav-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 14px;
+  height: 14px;
+  font-size: 9px;
+  padding: 0 4px;
+}
+
+.ds-shell.is-collapsed .ds-rail-id {
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+/* ============================================================
+   MAIN PANE
+   ============================================================ */
+.ds-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ds-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 12px 32px;
+  background: rgba(245, 245, 247, 0.82);
+  -webkit-backdrop-filter: var(--ds-frost);
+  backdrop-filter: var(--ds-frost);
+  border-bottom: 1px solid var(--ds-hairline);
+}
+
+.ds-topbar-text { min-width: 0; }
+
+.ds-topbar h1 {
+  margin: 0;
+  font-family: var(--ds-font-display);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--ds-ink);
+}
+
+.ds-topbar small {
+  display: block;
+  margin-top: 2px;
+  color: var(--ds-ink-muted-48);
+  font-size: 12px;
+  letter-spacing: -0.12px;
+}
+
+.ds-topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ds-content {
+  padding: 28px 32px 56px;
+  display: grid;
+  gap: 24px;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+  .ds-shell {
+    grid-template-columns: var(--ds-rail-width-collapsed) minmax(0, 1fr);
+  }
+  .ds-rail-brand-text,
+  .ds-rail-nav-label,
+  .ds-rail-id-text,
+  .ds-rail-signout {
+    display: none;
+  }
+  .ds-rail-brand,
+  .ds-rail-nav-item,
+  .ds-rail-id {
+    justify-content: center;
+  }
+  .ds-rail-collapse { display: none; }
+  .ds-topbar { padding: 12px 20px; }
+  .ds-content { padding: 20px 20px 40px; }
+}

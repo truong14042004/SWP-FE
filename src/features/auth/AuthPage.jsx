@@ -82,8 +82,8 @@ const STRENGTH_LABEL = ['Trống', 'Yếu', 'Trung bình', 'Khá', 'Mạnh'];
 /* ────────────────────────────────────────────────────────────
    AuthPage — login / register / OTP confirmation.
    ──────────────────────────────────────────────────────────── */
-export function AuthPage({ onAuthenticated, onBackHome }) {
-  const [mode, setMode]           = useState('login');         // 'login' | 'register' | 'otp'
+export function AuthPage({ onAuthenticated, onBackHome, initialMode = 'login' }) {
+  const [mode, setMode]           = useState(initialMode === 'register' ? 'register' : 'login'); // 'login' | 'register' | 'otp'
   const [loginForm, setLoginForm] = useState(INIT_LOGIN);
   const [regForm, setRegForm]     = useState(INIT_REGISTER);
   const [otpEmail, setOtpEmail]   = useState('');
