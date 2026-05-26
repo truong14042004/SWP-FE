@@ -10,7 +10,9 @@ export function PaymentResultPage({ type, session, onLogin, onHome }) {
 
   const query = useMemo(() => new URLSearchParams(window.location.search), []);
   const latestSubscription = subscriptions[0];
-  const activeSubscription = subscriptions.find((item) => item.status === 'Active');
+  const activeSubscription = subscriptions
+    .filter((item) => item.status === 'Active')
+    .sort((a, b) => (b.amount || 0) - (a.amount || 0))[0] || null;
 
   useEffect(() => {
     if (type !== 'success' || !session) {

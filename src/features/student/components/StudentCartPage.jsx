@@ -53,7 +53,9 @@ export function StudentCartPage({ session }) {
     };
   }, [session]);
 
-  const activeSubscription = history.find((item) => item.status === 'Active');
+  const activeSubscription = history
+    .filter((item) => item.status === 'Active')
+    .sort((a, b) => (b.amount || 0) - (a.amount || 0))[0] || null;
 
   return (
     <section className="student-subscription anim-stagger">
