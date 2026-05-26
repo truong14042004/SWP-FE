@@ -17,6 +17,7 @@ import {
   MessageSquareText,
   Search,
   Settings,
+  ShoppingCart,
   Sparkles,
   Star,
   TrendingUp,
@@ -41,6 +42,7 @@ import { StudentGithubPage } from './components/StudentGithubPage';
 import { StudentMentorPage } from './components/StudentMentorPage';
 import { StudentSubscriptionPage } from './components/StudentSubscriptionPage';
 import { StudentFeedbacksPage } from './components/StudentFeedbacksPage';
+import { StudentCartPage } from './components/StudentCartPage';
 import { MarketPulsePage } from '../market/MarketPulsePage';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { getGithubRepositories } from './githubApi';
@@ -56,6 +58,7 @@ const STUDENT_SECTIONS = [
   { id: 'mentors', label:'AI tư vấn', Icon: Bot },
   { id: 'market-pulse', label: 'Market Pulse', Icon: TrendingUp },
   { id: 'feedbacks', label: 'Feedback nhận được', Icon: MessageSquareText },
+  { id: 'cart', label: 'Giỏ hàng & Lịch sử', Icon: ShoppingCart },
   { id: 'settings', label: 'Cài đặt', Icon: Settings },
 ];
 
@@ -1084,6 +1087,8 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   <Fade inView={false}><StudentSubscriptionPage session={session} /></Fade>
 ) : activeSection === 'feedbacks' ? (
   <Fade inView={false}><StudentFeedbacksPage session={session} /></Fade>
+) : activeSection === 'cart' ? (
+  <Fade inView={false}><StudentCartPage session={session} /></Fade>
 ) : activeSection === 'settings' ? (
           <section className="student-profile-page">
             <Fade inView={false}>
