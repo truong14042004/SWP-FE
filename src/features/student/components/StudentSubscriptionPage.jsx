@@ -173,6 +173,9 @@ export function StudentSubscriptionPage({ session }) {
               const features = parsePlanFeatures(plan.featuresJson);
               const isCurrent = plan.id === activePlanId;
               const isFeatured = !isCurrent && index === Math.min(1, plans.length - 1);
+              const isFree = plan.price === 0;
+              const hasActivePaidPlan = plans.some(p => p.price > 0 && p.id === activePlanId);
+              const isCtaDisabled = isCurrent || checkoutLoadingId === plan.id || (isFree && hasActivePaidPlan);
 
               return (
                 <motion.article
@@ -205,7 +208,7 @@ export function StudentSubscriptionPage({ session }) {
                     type="button"
                     className="student-subscription-cta"
                     onClick={() => handleCheckout(plan)}
-                    disabled={isCurrent || checkoutLoadingId === plan.id}
+                    disabled={isCtaDisabled}
                     tapScale={0.96}
                     hoverScale={1.04}
                   >
@@ -213,7 +216,9 @@ export function StudentSubscriptionPage({ session }) {
                       ? 'Đang sử dụng'
                       : checkoutLoadingId === plan.id
                       ? 'Đang xử lý...'
-                      : plan.price === 0
+                      : isFree && hasActivePaidPlan
+                      ? 'Đã nâng cấp'
+                      : isFree
                       ? 'Kích hoạt miễn phí'
                       : 'Mua gói này'}
                   </Button>
