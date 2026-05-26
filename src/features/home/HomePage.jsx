@@ -690,7 +690,7 @@ function HeroSection({ onStart }) {
       />
 
       <GridScan
-        sensitivity={0.3}
+        sensitivity={0.06}
         lineThickness={0.7}
         linesColor="#eef4fc"
         gridScale={0.22}
