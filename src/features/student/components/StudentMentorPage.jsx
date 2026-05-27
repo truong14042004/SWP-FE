@@ -331,7 +331,7 @@ export function StudentMentorPage({ session }) {
       };
 
       setMessages((current) => [...current, assistantMessage]);
-      setSelectedSession(result);
+      setSelectedSession((current) => current || result);
 
       setMentorSessions((current) => {
         const exists = current.some((item) => item.id === result.id);
@@ -339,7 +339,7 @@ export function StudentMentorPage({ session }) {
           return current.map((item) => (item.id === result.id ? result : item));
         }
 
-        return [result, ...current];
+        return current.length === 0 ? [result] : [result, ...current];
       });
       if (result.quota) {
         setQuota(result.quota);
