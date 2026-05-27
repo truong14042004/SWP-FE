@@ -220,6 +220,20 @@ export function StudentMentorPage({ session }) {
   function sessionToMessages(item) {
     if (!item) return [];
 
+    if (Array.isArray(item.messages) && item.messages.length > 0) {
+      return item.messages.map((message, index) => ({
+        id: message.id || `${item.id}-message-${index}`,
+        role: message.role,
+        content: message.content || '',
+        createdAt: message.createdAt || item.createdAt,
+        tokensUsed: message.tokensUsed,
+        model: message.model,
+        intent: message.intent,
+        suggestions: message.suggestions,
+        context: parseContextJson(item.contextJson),
+      }));
+    }
+
     return [
       {
         id: `${item.id}-question`,
@@ -317,6 +331,7 @@ export function StudentMentorPage({ session }) {
       const result = await sendMentorMessage(session, {
         question: finalQuestion,
         contextJson,
+        sessionId: selectedSession?.id || null,
       });
 
       const assistantMessage = {
