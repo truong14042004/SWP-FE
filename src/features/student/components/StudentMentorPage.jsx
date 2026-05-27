@@ -21,6 +21,8 @@ const QUICK_PROMPTS = [
   { id: 'interview', icon: Target, label: 'Chuẩn bị phỏng vấn', question: 'Tôi cần làm gì để chuẩn bị cho phỏng vấn vị trí mong muốn?' },
 ];
 
+const MENTOR_TRANSCRIPT_STORAGE_KEY = 'swp.aiMentor.transcripts.v1';
+
 
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
@@ -111,6 +113,28 @@ function buildContextJson({ profile, userSkills, skillGapReport }) {
         }
       : null,
   });
+}
+
+function readStoredMentorTranscripts() {
+  try {
+    const raw = window.localStorage.getItem(MENTOR_TRANSCRIPT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function getStoredMentorTranscript(sessionId) {
+  if (!sessionId) return [];
+  const transcripts = readStoredMentorTranscripts();
+  return Array.isArray(transcripts[sessionId]) ? transcripts[sessionId] : [];
+}
+
+function storeMentorTranscript(sessionId, messages) {
+  if (!sessionId) return;
+  const transcripts = readStoredMentorTranscripts();
+  transcripts[sessionId] = messages;
+  window.localStorage.setItem(MENTOR_TRANSCRIPT_STORAGE_KEY, JSON.stringify(transcripts));
 }
 
 export function StudentMentorPage({ session }) {
@@ -219,6 +243,11 @@ export function StudentMentorPage({ session }) {
 
   function sessionToMessages(item) {
     if (!item) return [];
+
+    const storedMessages = getStoredMentorTranscript(item.id);
+    if (storedMessages.length > 0) {
+      return storedMessages;
+    }
 
     if (Array.isArray(item.messages) && item.messages.length > 0) {
       return item.messages.map((message, index) => ({
@@ -347,8 +376,12 @@ export function StudentMentorPage({ session }) {
       };
 
       setMessages((current) => [...current, assistantMessage]);
+      if (isFollowUp && selectedSession?.id) {
+        storeMentorTranscript(selectedSession.id, [...messages, optimisticUserMessage, assistantMessage]);
+      }
       if (!isFollowUp) {
         setSelectedSession(result);
+        storeMentorTranscript(result.id, [optimisticUserMessage, assistantMessage]);
       }
 
       setMentorSessions((current) => {
