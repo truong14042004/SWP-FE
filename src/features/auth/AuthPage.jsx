@@ -7,6 +7,8 @@ import '../../styles/auth.css';
 const INIT_LOGIN    = { username: '', password: '' };
 const INIT_REGISTER = { username: '', email: '', fullName: '', password: '', confirmPassword: '' };
 const OTP_LENGTH    = 6;
+const USERNAME_RE   = /^[a-zA-Z0-9._-]{3,32}$/;
+const EMAIL_RE      = /^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]{0,62}[a-zA-Z0-9])?@gmail\.com$/i;
 
 /* ────────────────────────────────────────────────────────────
    Inline icons — small SVGs to avoid raster assets.
@@ -75,6 +77,33 @@ function scorePassword(value = '') {
   if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score += 1;
   if (/\d/.test(value) && /[^A-Za-z0-9]/.test(value)) score += 1;
   return Math.min(score, 4);
+}
+
+function validateRegisterForm(form) {
+  const fullName = form.fullName.trim();
+  const username = form.username.trim();
+  const email = form.email.trim();
+  const password = form.password;
+
+  if (fullName.length < 2) {
+    return 'Họ và tên phải có ít nhất 2 ký tự.';
+  }
+  if (!USERNAME_RE.test(username)) {
+    return 'Tên đăng nhập phải dài 3-32 ký tự và chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang.';
+  }
+  if (!EMAIL_RE.test(email)) {
+    return 'Email phải là địa chỉ Gmail hợp lệ, ví dụ name@gmail.com.';
+  }
+  if (password.length < 8) {
+    return 'Mật khẩu phải có ít nhất 8 ký tự.';
+  }
+  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+    return 'Mật khẩu phải có ít nhất 1 chữ cái và 1 chữ số.';
+  }
+  if (password !== form.confirmPassword) {
+    return 'Mật khẩu xác nhận không khớp.';
+  }
+  return '';
 }
 
 const STRENGTH_LABEL = ['Trống', 'Yếu', 'Trung bình', 'Khá', 'Mạnh'];
@@ -195,11 +224,21 @@ export function AuthPage({ onAuthenticated, onBackHome, initialMode = 'login' })
     setStatus('loading');
     setMessage('');
     try {
-      if (mode === 'register' && regForm.password !== regForm.confirmPassword) {
-        throw new Error('Mật khẩu xác nhận không khớp.');
+      if (mode === 'register') {
+        const validationError = validateRegisterForm(regForm);
+        if (validationError) {
+          throw new Error(validationError);
+        }
       }
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
-      const body     = mode === 'login' ? loginForm : regForm;
+      const body     = mode === 'login'
+        ? loginForm
+        : {
+            ...regForm,
+            fullName: regForm.fullName.trim(),
+            username: regForm.username.trim().toLowerCase(),
+            email: regForm.email.trim().toLowerCase(),
+          };
       const payload  = await apiRequest(endpoint, { method: 'POST', body: JSON.stringify(body) });
 
       if (mode === 'register') {
@@ -490,7 +529,9 @@ export function AuthPage({ onAuthenticated, onBackHome, initialMode = 'login' })
                       onChange={mode === 'login' ? field(setLoginForm) : field(setRegForm)}
                       placeholder="your_username"
                       minLength={3}
-                      maxLength={100}
+                      maxLength={32}
+                      pattern="[A-Za-z0-9._-]{3,32}"
+                      title="Tên đăng nhập chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang."
                       autoComplete="username"
                       required
                     />
@@ -508,8 +549,10 @@ export function AuthPage({ onAuthenticated, onBackHome, initialMode = 'login' })
                         type="email"
                         value={regForm.email}
                         onChange={field(setRegForm)}
-                        placeholder="you@example.com"
+                        placeholder="you@gmail.com"
                         maxLength={256}
+                        pattern="[a-zA-Z0-9]([a-zA-Z0-9._%+-]{0,62}[a-zA-Z0-9])?@gmail\.com"
+                        title="Chỉ chấp nhận địa chỉ Gmail, ví dụ name@gmail.com."
                         autoComplete="email"
                         required
                       />
@@ -528,8 +571,10 @@ export function AuthPage({ onAuthenticated, onBackHome, initialMode = 'login' })
                       value={mode === 'login' ? loginForm.password : regForm.password}
                       onChange={mode === 'login' ? field(setLoginForm) : field(setRegForm)}
                       placeholder="••••••••"
-                      minLength={6}
+                      minLength={mode === 'login' ? 6 : 8}
                       maxLength={100}
+                      pattern={mode === 'register' ? '^(?=.*[A-Za-z])(?=.*\\d).{8,100}$' : undefined}
+                      title={mode === 'register' ? 'Mật khẩu phải có ít nhất 8 ký tự, gồm chữ cái và chữ số.' : undefined}
                       autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                       required
                     />
@@ -574,7 +619,7 @@ export function AuthPage({ onAuthenticated, onBackHome, initialMode = 'login' })
                         value={regForm.confirmPassword}
                         onChange={field(setRegForm)}
                         placeholder="••••••••"
-                        minLength={6}
+                        minLength={8}
                         maxLength={100}
                         autoComplete="new-password"
                         required
