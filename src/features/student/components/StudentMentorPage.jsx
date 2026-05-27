@@ -292,6 +292,7 @@ export function StudentMentorPage({ session }) {
     event.preventDefault();
 
     const finalQuestion = question.trim();
+    const isFollowUp = Boolean(selectedSession?.id);
 
     if (!finalQuestion) {
       const message = 'Vui lòng nhập câu hỏi cho AI Mentor.';
@@ -334,6 +335,10 @@ export function StudentMentorPage({ session }) {
       setSelectedSession((current) => current || result);
 
       setMentorSessions((current) => {
+        if (isFollowUp) {
+          return current;
+        }
+
         const exists = current.some((item) => item.id === result.id);
         if (exists) {
           return current.map((item) => (item.id === result.id ? result : item));
