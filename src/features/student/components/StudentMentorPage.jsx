@@ -332,7 +332,9 @@ export function StudentMentorPage({ session }) {
       };
 
       setMessages((current) => [...current, assistantMessage]);
-      setSelectedSession((current) => current || result);
+      if (!isFollowUp) {
+        setSelectedSession(result);
+      }
 
       setMentorSessions((current) => {
         if (isFollowUp) {
