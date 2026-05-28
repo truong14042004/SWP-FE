@@ -3,11 +3,30 @@ import { SectionTitle, StatusPill } from '../components/DashboardPrimitives';
 
 const emptySkill = { name: '', category: '', description: '', isActive: true };
 
+const defaultSkillCategories = [
+  'AI',
+  'Backend',
+  'Career',
+  'Cloud',
+  'Data',
+  'DevOps',
+  'Engineering',
+  'Frontend',
+  'Mobile',
+  'QA',
+];
+
 export function SkillsView({ skills, onLoadSkill, onSaveSkill, onDeleteSkill }) {
   const [form, setForm] = useState(emptySkill);
   const [editingId, setEditingId] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const categoryOptions = Array.from(
+    new Set([
+      ...defaultSkillCategories,
+      ...skills.map((skill) => skill.category).filter(Boolean),
+    ]),
+  ).sort((first, second) => first.localeCompare(second));
 
   function updateField(event) {
     const { name, value, type, checked } = event.target;
@@ -71,7 +90,12 @@ export function SkillsView({ skills, onLoadSkill, onSaveSkill, onDeleteSkill }) 
               </label>
               <label>
                 <span>Category</span>
-                <input name="category" value={form.category} onChange={updateField} required />
+                <select name="category" value={form.category} onChange={updateField} required>
+                  <option value="">Select category</option>
+                  {categoryOptions.map((category) => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
               </label>
             </div>
             <label>
