@@ -163,7 +163,7 @@
   overflow: hidden;
 }
 
-.student-sidebar .admin-account-info > div strong {
+.student-sidebar .admin-account-info>div strong {
   display: block;
   color: #fff;
   overflow: hidden;
@@ -171,7 +171,7 @@
   white-space: nowrap;
 }
 
-.student-sidebar .admin-account-info > div small {
+.student-sidebar .admin-account-info>div small {
   display: block;
   color: rgba(255, 255, 255, 0.5);
   overflow: hidden;
@@ -199,7 +199,7 @@
   min-height: 64px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -383,9 +383,17 @@
   background: #2563eb;
 }
 
-.student-metric-card.success::after { background: #16a34a; }
-.student-metric-card.warning::after { background: #f59e0b; }
-.student-metric-card.info::after { background: #06b6d4; }
+.student-metric-card.success::after {
+  background: #16a34a;
+}
+
+.student-metric-card.warning::after {
+  background: #f59e0b;
+}
+
+.student-metric-card.info::after {
+  background: #06b6d4;
+}
 
 .student-metric-card span {
   display: block;
@@ -419,7 +427,9 @@
   align-items: start;
 }
 
-.student-dashboard-layout { margin-bottom: 22px; }
+.student-dashboard-layout {
+  margin-bottom: 22px;
+}
 
 .student-content-grid {
   grid-template-columns: minmax(0, 1fr) 360px;
@@ -552,7 +562,9 @@
   font-weight: 700;
 }
 
-.student-roadmap-card { padding: 24px; }
+.student-roadmap-card {
+  padding: 24px;
+}
 
 .student-roadmap-list {
   display: grid;
@@ -608,7 +620,9 @@
   line-height: 1.5;
 }
 
-.student-gap-panel { padding: 24px; }
+.student-gap-panel {
+  padding: 24px;
+}
 
 .student-skill-tabs {
   display: flex;
@@ -650,9 +664,17 @@
   font-weight: 900;
 }
 
-.student-group-title.danger { color: #dc2626; }
-.student-group-title.warning { color: #d97706; }
-.student-group-title.success { color: #059669; }
+.student-group-title.danger {
+  color: #dc2626;
+}
+
+.student-group-title.warning {
+  color: #d97706;
+}
+
+.student-group-title.success {
+  color: #059669;
+}
 
 .student-skill-card {
   display: flex;
@@ -714,7 +736,9 @@
   font-size: 14px;
 }
 
-.student-skill-card p b { color: #0f172a; }
+.student-skill-card p b {
+  color: #0f172a;
+}
 
 .student-skill-card button {
   min-width: 104px;
@@ -760,7 +784,9 @@
   gap: 18px;
 }
 
-.student-side-card { padding: 20px; }
+.student-side-card {
+  padding: 20px;
+}
 
 .student-compact-list {
   display: grid;
@@ -782,7 +808,9 @@
   text-align: left;
 }
 
-.student-compact-item.static { cursor: default; }
+.student-compact-item.static {
+  cursor: default;
+}
 
 .student-compact-item strong {
   display: block;
@@ -798,7 +826,7 @@
   font-size: 12px;
 }
 
-.student-compact-item > span {
+.student-compact-item>span {
   flex: 0 0 auto;
   border-radius: 999px;
   padding: 6px 9px;
@@ -822,7 +850,9 @@
   box-shadow: 0 16px 42px rgba(15, 23, 42, 0.06);
 }
 
-.student-profile-heading .student-back-link { color: #2563eb; }
+.student-profile-heading .student-back-link {
+  color: #2563eb;
+}
 
 .student-profile-heading h1 {
   margin: 0;
@@ -1001,7 +1031,9 @@ img.admin-account-avatar {
   gap: 18px 22px;
 }
 
-.student-profile-grid.single { grid-template-columns: 1fr; }
+.student-profile-grid.single {
+  grid-template-columns: 1fr;
+}
 
 .student-profile-grid textarea,
 .student-profile-grid select,
@@ -1034,13 +1066,24 @@ img.admin-account-avatar {
 }
 
 @media (max-width: 1200px) {
-  .student-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .student-content-grid { grid-template-columns: 1fr; }
-  .student-right-rail { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .student-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .student-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .student-right-rail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 1120px) {
-  .student-shell { grid-template-columns: 1fr; }
+  .student-shell {
+    grid-template-columns: 1fr;
+  }
+
   .student-sidebar {
     min-height: auto;
     position: static;
@@ -1048,33 +1091,50 @@ img.admin-account-avatar {
     grid-template-columns: 1fr;
     gap: 12px;
   }
-  .student-brand { padding-bottom: 8px; }
+
+  .student-brand {
+    padding-bottom: 8px;
+  }
+
   .student-nav {
     display: grid;
     overflow: visible;
     padding: 4px 0 8px;
   }
+
   .student-nav button {
     width: 100%;
     white-space: nowrap;
   }
+
   .student-sidebar-footer {
     grid-template-columns: minmax(180px, 240px) minmax(260px, 1fr);
     align-items: stretch;
   }
+
   .student-sidebar .admin-account {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
   }
-  .student-sidebar .admin-account-info { margin-bottom: 0; }
+
+  .student-sidebar .admin-account-info {
+    margin-bottom: 0;
+  }
+
   .student-sidebar .admin-account button {
     width: auto;
     min-width: 100px;
     text-align: center;
   }
-  .student-dashboard-layout { grid-template-columns: 1fr; }
-  .student-profile-grid { grid-template-columns: 1fr; }
+
+  .student-dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .student-profile-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1082,26 +1142,55 @@ img.admin-account-avatar {
     align-items: flex-start;
     flex-direction: column;
   }
+
   .student-topbar-actions {
     width: 100%;
     justify-content: flex-start;
   }
-  .student-dashboard-layout { grid-template-columns: 1fr; }
-  .student-right-rail { grid-template-columns: 1fr; }
+
+  .student-dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .student-right-rail {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
-  .student-main { padding: 16px; }
-  .student-sidebar { padding: 14px; }
-  .student-brand strong { font-size: 16px; }
-  .student-sidebar-footer { grid-template-columns: 1fr; }
-  .student-sidebar .admin-account { grid-template-columns: 1fr; }
+  .student-main {
+    padding: 16px;
+  }
+
+  .student-sidebar {
+    padding: 14px;
+  }
+
+  .student-brand strong {
+    font-size: 16px;
+  }
+
+  .student-sidebar-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .student-sidebar .admin-account {
+    grid-template-columns: 1fr;
+  }
+
   .student-header-bar {
     align-items: stretch;
     flex-direction: column;
   }
-  .student-search-bar { width: 100%; }
-  .student-header-actions { justify-content: flex-end; }
+
+  .student-search-bar {
+    width: 100%;
+  }
+
+  .student-header-actions {
+    justify-content: flex-end;
+  }
+
   .student-topbar,
   .student-score-card,
   .student-roadmap-card,
@@ -1112,30 +1201,47 @@ img.admin-account-avatar {
     border-radius: 22px;
     padding: 18px;
   }
-  .student-overview-grid { grid-template-columns: 1fr; }
-  .student-score-stats { grid-template-columns: repeat(3, 1fr); }
+
+  .student-overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .student-score-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   .student-roadmap-step-head,
   .student-skill-card,
   .student-compact-item {
     align-items: flex-start;
     flex-direction: column;
   }
+
   .student-skill-card button,
-  .student-compact-item > span,
+  .student-compact-item>span,
   .student-cta-btn,
   .student-secondary-btn {
     width: 100%;
   }
+
   .student-profile-hero,
   .student-profile-grid {
     grid-template-columns: 1fr;
   }
-  .student-profile-actions { flex-direction: column; }
+
+  .student-profile-actions {
+    flex-direction: column;
+  }
+
   .student-skill-card {
     flex-direction: column;
     align-items: flex-start;
   }
-  .student-score-stats { grid-template-columns: 1fr; }
+
+  .student-score-stats {
+    grid-template-columns: 1fr;
+  }
+
   .student-header-bar {
     margin: -20px -20px 24px;
     padding: 12px 20px;
