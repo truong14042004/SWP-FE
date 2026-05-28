@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getStudentQuota } from '../api/industryMentorApi';
 import { Dialog, DialogContent } from '@/components/animate-ui/components/radix/dialog';
 import { Button } from '@/components/animate-ui/components/buttons/button';
+import { validateMentorFeedbackForm } from '../../feedbackValidation';
 
 const READINESS_OPTIONS = [
   { value: 'NotReady', label: 'Not Ready', hint: 'Cần học thêm nền tảng' },
@@ -20,6 +21,7 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
   const [jobReadinessLevel, setJobReadinessLevel] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
   const [quota, setQuota] = useState(null);
 
   useEffect(() => {
@@ -37,7 +39,15 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
   async function handleSubmit(event) {
     event.preventDefault();
     setError(null);
+    const nextErrors = validateMentorFeedbackForm(
+      { comment, rating, jobReadinessLevel },
+      { isQuotaEmpty },
+    );
+    setErrors(nextErrors);
 
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
     if (!comment.trim()) {
       setError('Comment là bắt buộc');
       return;
@@ -62,6 +72,11 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
   }
 
   const isQuotaEmpty = quota?.remaining === 0;
+  const currentErrors = validateMentorFeedbackForm(
+    { comment, rating, jobReadinessLevel },
+    { isQuotaEmpty },
+  );
+  const canSubmit = !submitting && Object.keys(currentErrors).length === 0;
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
@@ -117,6 +132,8 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
                   disabled={submitting}
                   required
                 />
+                {errors.comment && <p className="imentor-form-error">{errors.comment}</p>}
+                <p className="imentor-hint">{comment.trim().length}/50 ky tu toi thieu</p>
               </div>
 
               <div className="imentor-form-row">
@@ -140,6 +157,7 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
                     </Button>
                   ))}
                 </div>
+                {errors.rating && <p className="imentor-form-error">{errors.rating}</p>}
               </div>
 
               <div className="imentor-form-row">
@@ -218,6 +236,9 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
                     </Button>
                   ))}
                 </div>
+                {errors.jobReadinessLevel && (
+                  <p className="imentor-form-error">{errors.jobReadinessLevel}</p>
+                )}
               </div>
             </div>
 
@@ -245,7 +266,7 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
                 <Button
                   type="submit"
                   className="imentor-btn-primary"
-                  disabled={submitting || isQuotaEmpty || !comment.trim()}
+                  disabled={!canSubmit}
                   hoverScale={1.05}
                   tapScale={0.95}
                 >

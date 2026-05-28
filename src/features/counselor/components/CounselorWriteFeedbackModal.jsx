@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { Dialog, DialogContent } from '@/components/animate-ui/components/radix/dialog';
 import { Button } from '@/components/animate-ui/components/buttons/button';
+import { validateCounselorFeedbackForm } from '../../feedbackValidation';
 import {
   getStudentRoadmap,
   getStudentSkillGapHistory,
@@ -159,6 +160,11 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
 
   const roadmapAvailable = !!roadmap;
   const skillGapAvailable = skillGapReports.length > 0;
+  const currentErrors = validateCounselorFeedbackForm(form, {
+    roadmapAvailable,
+    skillGapAvailable,
+  });
+  const canSubmit = !saving && Object.keys(currentErrors).length === 0;
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
@@ -387,7 +393,7 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
             <Button
               type="submit"
               className="counselor-btn counselor-btn-primary"
-              disabled={saving}
+              disabled={!canSubmit}
               hoverScale={1.05}
               tapScale={0.95}
             >
