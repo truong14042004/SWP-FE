@@ -149,7 +149,7 @@ export function AdminDashboard({ session, onSignOut }) {
     await runAction(async () => {
       await deleteAdminUser(session, user.id);
       setSelectedUser(null);
-    }, 'User soft-deleted. Payment history is preserved.');
+    }, 'User has been permanently deleted.');
   }
 
   async function handleSelectPayment(id) {

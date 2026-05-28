@@ -326,7 +326,15 @@ export function UsersView({
                     <button type="button" className="btn-secondary" onClick={() => onToggleStatus(user)}>
                       {user.isActive ? 'Disable' : 'Enable'}
                     </button>
-                    <button type="button" className="btn-secondary danger-action" onClick={() => onDeleteUser(user)}>
+                    <button
+                      type="button"
+                      className="btn-secondary danger-action"
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to delete this account?')) {
+                          onDeleteUser(user);
+                        }
+                      }}
+                    >
                       Delete
                     </button>
                   </td>
