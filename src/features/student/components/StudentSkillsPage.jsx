@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { BarChart3, Diamond, LoaderCircle, Pin, Search } from 'lucide-react';
 import { apiUrl } from '../../../config';
@@ -155,6 +155,8 @@ export function StudentSkillsPage({ session }) {
   // File picked while creating a new skill (no userSkillId yet). Uploaded
   // after the skill is persisted; cleared on cancel/reset.
   const [pendingEvidenceFile, setPendingEvidenceFile] = useState(null);
+  const formCardRef = useRef(null);
+const skillSelectRef = useRef(null);
 
 const [profile, setProfile] = useState(null);
 const [skillGapReport, setSkillGapReport] = useState(null);
@@ -277,34 +279,37 @@ async function loadData() {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
   }
-
-  function startCreate(skillId = '') {
-    setEditingId('');
-    setForm({
-      ...EMPTY_FORM,
-      skillId,
-    });
-    setPendingEvidenceFile(null);
-    window.scrollTo({
-      top: 0,
+function focusSkillForm() {
+  window.requestAnimationFrame(() => {
+    formCardRef.current?.scrollIntoView({
       behavior: 'smooth',
+      block: 'start',
     });
-  }
+
+    skillSelectRef.current?.focus({ preventScroll: true });
+  });
+}
+ function startCreate(skillId = '') {
+  setEditingId('');
+  setForm({
+    ...EMPTY_FORM,
+    skillId,
+  });
+  setPendingEvidenceFile(null);
+  focusSkillForm();
+}
 
   function startEdit(userSkill) {
-    setEditingId(userSkill.id);
-    setForm({
-      skillId: userSkill.skillId || '',
-      level: userSkill.level || 'Beginner',
-      evidenceUrl: userSkill.evidenceUrl || '',
-      evidenceType: userSkill.evidenceType || 'Project',
-    });
-    setPendingEvidenceFile(null);
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
-  }
+  setEditingId(userSkill.id);
+  setForm({
+    skillId: userSkill.skillId || '',
+    level: userSkill.level || 'Beginner',
+    evidenceUrl: userSkill.evidenceUrl || '',
+    evidenceType: userSkill.evidenceType || 'Project',
+  });
+  setPendingEvidenceFile(null);
+  focusSkillForm();
+}
 
   function cancelEdit() {
     setEditingId('');
@@ -576,7 +581,7 @@ async function loadData() {
 />
 
       <section className="skills-layout">
-        <aside className="skills-form-card">
+        <aside className="skills-form-card" ref={formCardRef}>
           <div className="skills-card-head">
             <h2>{editingId ? 'Cập nhật kỹ năng' : 'Thêm kỹ năng mới'}</h2>
             <p>
@@ -587,9 +592,10 @@ async function loadData() {
           <form onSubmit={handleSubmit}>
             <label className="skills-field">
               <span>Kỹ năng</span>
-              <select
-                name="skillId"
-                value={form.skillId}
+            <select
+  name="skillId"
+  ref={skillSelectRef}
+  value={form.skillId}
                 onChange={updateField}
                 disabled={Boolean(editingId)}
                 required

@@ -15,7 +15,6 @@ import {
   LogOut,
   Map as MapIcon,
   MessageSquareText,
-  Search,
   Settings,
   ShoppingCart,
   Sparkles,
@@ -548,10 +547,11 @@ function buildDashboardOverview({
     time: formatDashboardDate(item.startTime || item.scheduledAt || item.createdAt),
   }));
 
-  const communityItems = repos.slice(0, 3).map((repo) => ({
-    title: repo.repoName || repo.name || repo.fullName || 'Repository GitHub',
-    meta: repo.mainLanguage || repo.language || repo.defaultBranch || 'GitHub',
-  }));
+ const communityItems = repos.slice(0, 3).map((repo) => ({
+  title: repo.repoName || repo.name || repo.fullName || 'Repository GitHub',
+  meta: repo.mainLanguage || repo.language || repo.defaultBranch || 'GitHub',
+  url: repo.repoUrl || repo.htmlUrl || repo.url || '',
+}));
 
   return {
     metrics: [
@@ -1054,15 +1054,6 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
 
       <section className="admin-main student-main">
 <header className="student-header-bar">
-  <button
-    type="button"
-    className="student-search-bar"
-    onClick={() => navigateStudentSection('skills')}
-  >
-    <Search size={16} aria-hidden="true" />
-    Tìm kiếm khóa học, mentor, kỹ năng...
-  </button>
-
   <div className="student-header-actions">
     <NotificationBell
       session={session}
@@ -1441,6 +1432,23 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                         ))}
                       </Fades>
                     )}
+
+                  {dashboardOverview.learningQueue.map((item) => (
+  <button
+    key={item.title}
+    type="button"
+    className="student-compact-item"
+    onClick={() => navigateStudentSection('skills')}
+    aria-label={`Xem gợi ý kỹ năng cho ${item.title}`}
+  >
+    <div>
+      <strong>{item.title}</strong>
+      <small>{item.duration}</small>
+    </div>
+    <span>{item.level}</span>
+  </button>
+))}
+ b9f2a76 (feat: update dashboard and add skill)
                   </div>
                 </article>
 
@@ -1472,6 +1480,31 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                         ))}
                       </Fades>
                     )}
+
+
+                    {dashboardOverview.communityItems.map((item) => (
+  <button
+    key={item.title}
+    type="button"
+    className="student-compact-item"
+    onClick={() => {
+      if (item.url && /^https?:\/\//i.test(item.url)) {
+        window.open(item.url, '_blank', 'noopener,noreferrer');
+        return;
+      }
+
+      navigateStudentSection('github');
+    }}
+    aria-label={`Mở repository ${item.title}`}
+  >
+    <div>
+      <strong>{item.title}</strong>
+      <small>{item.meta}</small>
+    </div>
+    <span>→</span>
+  </button>
+))}
+ b9f2a76 (feat: update dashboard and add skill)
                   </div>
                 </article>
               </aside>
