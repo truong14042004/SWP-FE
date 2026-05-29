@@ -4,6 +4,7 @@ import { Command, LoaderCircle } from 'lucide-react';
 import '../../../styles/github.css';
 import {
   analyzeGithubReadme,
+  disconnectGithub,
   getGithubConnection,
   getGithubRepositories,
   handleGithubCallback,
@@ -175,6 +176,7 @@ export function StudentGithubPage({ session }) {
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [analyzingRepoId, setAnalyzingRepoId] = useState('');
+  const [disconnecting, setDisconnecting] = useState(false);
 
   const [error, setError] = useState('');
 
@@ -370,6 +372,31 @@ export function StudentGithubPage({ session }) {
     });
   }
 
+  async function handleDisconnectGithub() {
+    const confirmed = window.confirm(
+      'Ngắt kết nối GitHub sẽ xoá toàn bộ repositories đã đồng bộ và thông tin tài khoản GitHub đã liên kết. Bạn có chắc chắn muốn tiếp tục?'
+    );
+    if (!confirmed) return;
+
+    setDisconnecting(true);
+    setError('');
+
+    try {
+      await disconnectGithub(session);
+      setRepositories([]);
+      setUsername('');
+      setProfile((current) => (current ? { ...current, githubUsername: null } : current));
+      setSelectedRepoId('');
+      setExpandedRepoIds(new Set());
+      setAnalyzeForm(EMPTY_ANALYZE_FORM);
+      toast.success('Đã ngắt kết nối GitHub.');
+    } catch (requestError) {
+      showError(requestError.message || 'Không ngắt kết nối GitHub được.');
+    } finally {
+      setDisconnecting(false);
+    }
+  }
+
   async function handleAnalyzeReadme(repo) {
     const repositoryId = repo.id;
 
@@ -474,9 +501,21 @@ export function StudentGithubPage({ session }) {
           </p>
         </div>
 
-        <button type="button" onClick={handleReloadRepositories} disabled={loading}>
-          Tải lại
-        </button>
+        <div className="github-connection-actions">
+          <button type="button" onClick={handleReloadRepositories} disabled={loading || disconnecting}>
+            Tải lại
+          </button>
+          {connected && (
+            <button
+              type="button"
+              className="github-btn danger"
+              onClick={handleDisconnectGithub}
+              disabled={disconnecting || syncing || connecting}
+            >
+              {disconnecting ? 'Đang ngắt kết nối...' : 'Ngắt kết nối'}
+            </button>
+          )}
+        </div>
       </section>
 
       <section className="github-sync-card anim-hover-lift">

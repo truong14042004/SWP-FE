@@ -141,6 +141,25 @@
     cursor: not-allowed;
 }
 
+.github-btn.danger {
+    border: 1px solid #d92d20;
+    background: #ffffff;
+    color: #d92d20;
+}
+
+.github-btn.danger:hover {
+    background: #d92d20;
+    color: #ffffff;
+}
+
+.github-connection-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-left: auto;
+}
+
 /* =========================
    ALERTS
    ========================= */

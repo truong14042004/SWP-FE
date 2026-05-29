@@ -33,6 +33,12 @@ export function getGithubConnection(session) {
     return authorizedRequest('/api/github/connection', session);
 }
 
+export function disconnectGithub(session) {
+    return authorizedRequest('/api/github/connection', session, {
+        method: 'DELETE',
+    });
+}
+
 export function analyzeGithubReadme(session, payload) {
     return authorizedRequest('/api/github/analyze-readme', session, {
         method: 'POST',
