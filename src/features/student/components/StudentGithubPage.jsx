@@ -637,6 +637,10 @@ function RepositoryCard({
         <span className={`github-language-dot ${languageClass}`} />
         <span>{language}</span>
 
+        {repo.githubAccountLogin && (
+          <span className="github-repo-owner">@{repo.githubAccountLogin}</span>
+        )}
+
         {repoUrl && (
           <a href={repoUrl} target="_blank" rel="noreferrer">
             Mở GitHub

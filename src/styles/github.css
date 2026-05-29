@@ -528,6 +528,17 @@
     text-decoration: none;
 }
 
+.github-repo-owner {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 8px;
+    border-radius: 9999px;
+    background: var(--student-surface-muted, #eef2f7);
+    color: var(--student-muted, #7a7a7a);
+    font-size: 12px;
+    font-weight: 500;
+}
+
 .github-language-dot {
     width: 12px;
     height: 12px;
