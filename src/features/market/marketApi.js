@@ -12,6 +12,13 @@ export function getKeywordTrend(keyword, { days = 30 } = {}) {
   );
 }
 
+export function getKeywordDaily(keyword, { days = 30 } = {}) {
+  const params = new URLSearchParams({ days: String(days) });
+  return apiRequest(
+    `/api/market/keywords/${encodeURIComponent(keyword)}/daily?${params}`,
+  );
+}
+
 export function getMarketJobs({ keyword, source, page = 1, pageSize = 20 } = {}) {
   const params = new URLSearchParams({
     page: String(page),
@@ -24,4 +31,8 @@ export function getMarketJobs({ keyword, source, page = 1, pageSize = 20 } = {})
 
 export function getMarketJobDetail(id) {
   return apiRequest(`/api/market/jobs/${encodeURIComponent(id)}`);
+}
+
+export function getMarketStats() {
+  return apiRequest('/api/market/stats');
 }

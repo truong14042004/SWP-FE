@@ -26,8 +26,10 @@ import { toast } from 'react-toastify';
 import { CountingNumber } from '@/components/animate-ui/primitives/texts/counting-number';
 import { Fade, Fades } from '@/components/animate-ui/primitives/effects/fade';
 import {
+  getKeywordDaily,
   getKeywordTrend,
   getMarketJobs,
+  getMarketStats,
   getTrendingKeywords,
 } from './marketApi';
 import './marketPulse.css';
@@ -50,6 +52,32 @@ function formatDate(iso) {
   const date = new Date(iso);
   return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
 }
+function formatFullDate(iso) {
+  if (!iso) return '';
+  const date = new Date(iso);
+  return date.toLocaleString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function formatRelative(iso) {
+  if (!iso) return '—';
+  const target = new Date(iso).getTime();
+  if (Number.isNaN(target)) return '—';
+  const diffMs = Date.now() - target;
+  const diffMin = Math.round(diffMs / 60000);
+  if (diffMin < 1) return 'vừa xong';
+  if (diffMin < 60) return `${diffMin} phút trước`;
+  const diffHour = Math.round(diffMin / 60);
+  if (diffHour < 24) return `${diffHour} giờ trước`;
+  const diffDay = Math.round(diffHour / 24);
+  if (diffDay < 30) return `${diffDay} ngày trước`;
+  return formatFullDate(iso);
+}
 
 function formatSalary(item) {
   if (item.salaryMinMillionVnd && item.salaryMaxMillionVnd) {
@@ -66,6 +94,8 @@ export function MarketPulsePage({ embedded = false } = {}) {
   const [trending, setTrending] = useState([]);
   const [trendingLoading, setTrendingLoading] = useState(true);
 
+  const [stats, setStats] = useState(null);
+
   const [selectedKeyword, setSelectedKeyword] = useState('');
   const [keywordTrend, setKeywordTrend] = useState([]);
   const [trendLoading, setTrendLoading] = useState(false);
@@ -81,9 +111,15 @@ export function MarketPulsePage({ embedded = false } = {}) {
     setTrendingLoading(true);
     try {
       const data = await getTrendingKeywords({ days: windowDays, top: 15 });
-      setTrending(data.items || []);
-      if (!selectedKeyword && data.items?.length > 0) {
-        setSelectedKeyword(data.items[0].keyword);
+      const items = data.items || [];
+      setTrending(items);
+      if (items.length === 0) {
+        setSelectedKeyword('');
+      } else if (
+        !selectedKeyword
+        || !items.some((entry) => entry.keyword === selectedKeyword)
+      ) {
+        setSelectedKeyword(items[0].keyword);
       }
     } catch (error) {
       toast.error(error.message || 'Không tải được trending keywords.');
@@ -92,11 +128,23 @@ export function MarketPulsePage({ embedded = false } = {}) {
     }
   }
 
+  async function loadStats() {
+    try {
+      const data = await getMarketStats();
+      setStats(data);
+    } catch (error) {
+      toast.error(error.message || 'Không tải được thống kê thị trường.');
+    }
+  }
+
   async function loadKeywordTrend(keyword) {
-    if (!keyword) return;
+    if (!keyword) {
+      setKeywordTrend([]);
+      return;
+    }
     setTrendLoading(true);
     try {
-      const data = await getKeywordTrend(keyword, { days: 30 });
+      const data = await getKeywordDaily(keyword, { days: windowDays });
       setKeywordTrend(data.points || []);
     } catch (error) {
       toast.error(error.message || 'Không tải được dữ liệu xu hướng.');
@@ -172,7 +220,10 @@ export function MarketPulsePage({ embedded = false } = {}) {
 
   const topKeyword = trending[0]?.keyword || '—';
   const topKeywordCount = trending[0]?.jobCount || 0;
-  const totalTrackedKeywords = trending.length;
+  const totalTrackedKeywords = stats?.totalKeywords ?? trending.length;
+  const totalJobsInDb = stats?.totalJobs ?? jobs.total;
+  const lastScrapedRelative = formatRelative(stats?.lastScrapedAt);
+  const lastScrapedTitle = stats?.lastScrapedAt ? formatFullDate(stats.lastScrapedAt) : '';
 
   return (
     <div className={embedded ? 'market-pulse market-pulse--embedded' : 'market-pulse'}>
@@ -206,9 +257,12 @@ export function MarketPulsePage({ embedded = false } = {}) {
               <BriefcaseBusiness size={18} />
             </div>
             <div>
-              <span className="market-pulse__kpi-label">Tin tuyển dụng</span>
+              <span className="market-pulse__kpi-label">Tổng tin tuyển dụng</span>
               <span className="market-pulse__kpi-value">
-                <CountingNumber number={jobs.total} />
+                <CountingNumber number={totalJobsInDb} />
+              </span>
+              <span className="market-pulse__kpi-sub" title={lastScrapedTitle}>
+                Cập nhật {lastScrapedRelative}
               </span>
             </div>
           </div>
@@ -460,6 +514,18 @@ export function MarketPulsePage({ embedded = false } = {}) {
                       <span>{job.location || '—'}</span>
                       <span>•</span>
                       <span className="market-pulse__job-source">{job.source}</span>
+                      <span>•</span>
+                      <span title={formatFullDate(job.scrapedAt)}>
+                        Đã thu thập {formatRelative(job.scrapedAt)}
+                      </span>
+                      {job.postedAt && (
+                        <>
+                          <span>•</span>
+                          <span title={formatFullDate(job.postedAt)}>
+                            Đăng {formatRelative(job.postedAt)}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="market-pulse__job-salary">{formatSalary(job)}</div>
