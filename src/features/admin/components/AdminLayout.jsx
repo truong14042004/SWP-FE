@@ -56,6 +56,14 @@ const NAV_ICONS = {
       <circle cx="14" cy="13" r="2.5" fill="currentColor" />
     </svg>
   ),
+  prerequisites: (
+    <svg className="nav-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="4" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="14" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6.5 9h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M9.5 7l2 2-2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
   careerRoles: (
     <svg className="nav-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="6" y="1" width="6" height="5" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
@@ -84,6 +92,7 @@ const MANAGEMENT_SECTIONS = [
   { id: 'skills',       label: 'Skills' },
   { id: 'resources',    label: 'Resources' },
   { id: 'requirements', label: 'Requirements' },
+  { id: 'prerequisites', label: 'Prerequisites' },
   { id: 'careerRoles',  label: 'Career roles' },
   { id: 'marketPulse',  label: 'Market pulse' },
 ];
@@ -108,6 +117,7 @@ const SECTION_LABELS = {
   skills:       { title: 'Skills',             sub: 'Skill catalog' },
   resources:    { title: 'Learning resources', sub: 'Articles, videos, files' },
   requirements: { title: 'Role requirements',  sub: 'Skills mapped to career roles' },
+  prerequisites: { title: 'Skill prerequisites', sub: 'Which skills must be learned first' },
   careerRoles:  { title: 'Career roles',       sub: 'Target roles students can pursue' },
   marketPulse:  { title: 'Market pulse',        sub: 'Job market trends from scraped postings' },
 };

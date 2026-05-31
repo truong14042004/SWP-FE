@@ -13,6 +13,7 @@ export async function loadAdminDashboard(session) {
     roleSkillRequirements,
     careerRoles,
     assignments,
+    skillPrerequisites,
   ] = await Promise.all([
     authorizedRequest('/api/admin/stats/overview', session),
     authorizedRequest('/api/admin/users', session),
@@ -25,6 +26,7 @@ export async function loadAdminDashboard(session) {
     authorizedRequest('/api/admin/role-skill-requirements', session),
     authorizedRequest('/api/career-roles', session),
     authorizedRequest('/api/admin/counselor-assignments', session).catch(() => []),
+    authorizedRequest('/api/admin/skill-prerequisites', session).catch(() => []),
   ]);
 
   return {
@@ -39,6 +41,7 @@ export async function loadAdminDashboard(session) {
     roleSkillRequirements,
     careerRoles,
     assignments,
+    skillPrerequisites,
   };
 }
 
@@ -166,6 +169,21 @@ export function saveRoleSkillRequirement(session, requirement, id) {
 
 export function deleteRoleSkillRequirement(session, id) {
   return authorizedRequest(`/api/admin/role-skill-requirements/${id}`, session, { method: 'DELETE' });
+}
+
+export function getSkillPrerequisite(session, id) {
+  return authorizedRequest(`/api/admin/skill-prerequisites/${id}`, session);
+}
+
+export function saveSkillPrerequisite(session, prerequisite) {
+  return authorizedRequest('/api/admin/skill-prerequisites', session, {
+    method: 'POST',
+    body: JSON.stringify(prerequisite),
+  });
+}
+
+export function deleteSkillPrerequisite(session, id) {
+  return authorizedRequest(`/api/admin/skill-prerequisites/${id}`, session, { method: 'DELETE' });
 }
 
 export function getCareerRole(session, id) {

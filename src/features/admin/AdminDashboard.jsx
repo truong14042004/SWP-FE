@@ -9,6 +9,7 @@ import {
   enableCounselorAssignment,
   deleteLearningResource,
   deleteRoleSkillRequirement,
+  deleteSkillPrerequisite,
   deleteSkill,
   deleteSubscriptionPlan,
   getAdminUser,
@@ -23,6 +24,7 @@ import {
   saveCareerRole,
   saveLearningResource,
   saveRoleSkillRequirement,
+  saveSkillPrerequisite,
   saveSkill,
   saveSubscriptionPlan,
   updatePaymentStatus,
@@ -39,10 +41,11 @@ import { RequirementsView } from './views/RequirementsView';
 import { CareerRolesView } from './views/CareerRolesView';
 import { AssignmentsView } from './views/AssignmentsView';
 import { MarketPulseAdminView } from './views/MarketPulseAdminView';
+import { PrerequisitesView } from './views/PrerequisitesView';
 
 const VALID_SECTIONS = new Set([
   'overview', 'users', 'assignments', 'payments', 'plans',
-  'skills', 'resources', 'requirements', 'careerRoles', 'marketPulse',
+  'skills', 'resources', 'requirements', 'prerequisites', 'careerRoles', 'marketPulse',
 ]);
 
 function readHashSection() {
@@ -212,6 +215,13 @@ export function AdminDashboard({ session, onSignOut }) {
     await runAction(() => deleteRoleSkillRequirement(session, requirement.id), 'Requirement removed.');
   }
 
+  async function handleSavePrerequisite(prerequisite) {
+    await runAction(() => saveSkillPrerequisite(session, prerequisite), 'Prerequisite created.');
+  }
+  async function handleDeletePrerequisite(prerequisite) {
+    await runAction(() => deleteSkillPrerequisite(session, prerequisite.id), 'Prerequisite removed.');
+  }
+
   async function handleSaveCareerRole(careerRole, id) {
     await runAction(
       () => saveCareerRole(session, careerRole, id),
@@ -308,6 +318,15 @@ export function AdminDashboard({ session, onSignOut }) {
             onLoadRequirement={handleLoadRequirement}
             onSaveRequirement={handleSaveRequirement}
             onDeleteRequirement={handleDeleteRequirement}
+          />
+        );
+      case 'prerequisites':
+        return (
+          <PrerequisitesView
+            prerequisites={data.skillPrerequisites}
+            skills={data.skills}
+            onSavePrerequisite={handleSavePrerequisite}
+            onDeletePrerequisite={handleDeletePrerequisite}
           />
         );
       case 'careerRoles':
