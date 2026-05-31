@@ -185,6 +185,7 @@ function iconForType(type) {
     case 'RoadmapReviewApproved': return '✅';
     case 'RoadmapReviewRejected': return '❌';
     case 'RoadmapReviewRequested': return '📥';
+    case 'RoadmapCompleted': return '🎉';
     default: return '🔔';
   }
 }

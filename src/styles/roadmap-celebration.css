@@ -1,0 +1,155 @@
+/* ============================================================
+   ROADMAP COMPLETION CELEBRATION — modal, confetti & banner
+   ============================================================ */
+
+.roadmap-celebration-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    background: rgba(10, 12, 24, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    padding: 20px;
+    animation: roadmap-celebration-fade 0.25s ease;
+}
+
+@keyframes roadmap-celebration-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.roadmap-celebration-confetti {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.roadmap-celebration-confetti span {
+    position: absolute;
+    top: 44%;
+    left: 50%;
+    width: 10px;
+    height: 14px;
+    border-radius: 2px;
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.roadmap-celebration-card {
+    position: relative;
+    width: min(420px, 100%);
+    background: linear-gradient(160deg, #ffffff 0%, #f4f7ff 100%);
+    border-radius: 24px;
+    padding: 40px 32px 32px;
+    text-align: center;
+    box-shadow: 0 24px 70px rgba(20, 30, 80, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.roadmap-celebration-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    border: 0;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 9999px;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    color: #6b7280;
+    transition: 0.15s ease;
+}
+
+.roadmap-celebration-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.roadmap-celebration-emoji {
+    font-size: 64px;
+    line-height: 1;
+    margin-bottom: 12px;
+}
+
+.roadmap-celebration-card h2 {
+    margin: 0 0 6px;
+    font-size: 26px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #6d5efc, #4d96ff 60%, #00c2a8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.roadmap-celebration-card p {
+    margin: 0;
+    color: #4b5563;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.roadmap-celebration-roadmap {
+    display: block;
+    margin: 10px 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.roadmap-celebration-sub {
+    margin-top: 8px !important;
+    color: #6b7280 !important;
+}
+
+.roadmap-celebration-cta {
+    margin-top: 24px;
+    border: 0;
+    cursor: pointer;
+    padding: 12px 28px;
+    border-radius: 9999px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #6d5efc, #4d96ff);
+    box-shadow: 0 10px 24px rgba(77, 150, 255, 0.4);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.roadmap-celebration-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(77, 150, 255, 0.5);
+}
+
+/* Fixed banner shown inside roadmap summary when 100% complete */
+.roadmap-completion-banner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(109, 94, 252, 0.12), rgba(0, 194, 168, 0.12));
+    border: 1px solid rgba(109, 94, 252, 0.25);
+}
+
+.roadmap-completion-banner span {
+    font-size: 30px;
+    line-height: 1;
+}
+
+.roadmap-completion-banner strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.roadmap-completion-banner p {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: #4b5563;
+}

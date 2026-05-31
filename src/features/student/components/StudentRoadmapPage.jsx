@@ -18,6 +18,7 @@ import {
 import { getCareerRoles } from '../studentApi';
 import { getLatestSkillGap } from '../skillsApi';
 import { NodeReviewRequestModal } from './NodeReviewRequestModal';
+import { RoadmapCompletionCelebration } from './RoadmapCompletionCelebration';
 import {
   cancelReviewRequest,
   getReviewRequestsForNode,
@@ -523,6 +524,8 @@ const [reviewRequestsByNodeId, setReviewRequestsByNodeId] = useState({});
 const [cancelingReviewRequestId, setCancelingReviewRequestId] = useState('');
 const [lessonProgressByNodeId, setLessonProgressByNodeId] = useState({});
 const [togglingLessonKey, setTogglingLessonKey] = useState('');
+const [celebrationOpen, setCelebrationOpen] = useState(false);
+const completionSeenRef = useRef({});
   useEffect(() => {
     loadRoadmaps();
     loadFormReferences();
@@ -558,6 +561,22 @@ const [togglingLessonKey, setTogglingLessonKey] = useState('');
   const progressNodeCount = useMemo(() => {
     return flatNodes.filter(isProgressNode).length;
   }, [flatNodes]);
+
+  // Roadmap is complete when every progress (non-Group) module is done.
+  // Mirrors the backend rule (all nodes Completed/Verified).
+  const isRoadmapComplete = progressNodeCount > 0 && completedNodes === progressNodeCount;
+
+  // Fire the celebration modal once per session, only when the student
+  // transitions a roadmap from incomplete -> complete (not on initial load
+  // of an already-completed roadmap).
+  useEffect(() => {
+    if (!selectedRoadmapId || progressNodeCount === 0) return;
+    const previous = completionSeenRef.current[selectedRoadmapId];
+    if (previous === false && isRoadmapComplete) {
+      setCelebrationOpen(true);
+    }
+    completionSeenRef.current[selectedRoadmapId] = isRoadmapComplete;
+  }, [selectedRoadmapId, isRoadmapComplete, progressNodeCount]);
 
   const progress = useMemo(() => {
     if (!flatNodes.length) return normalizeProgress(roadmap?.progress);
@@ -1014,6 +1033,15 @@ async function handleCancelReviewRequest(node, request) {
             </section>
           ) : (
             <>
+              {isRoadmapComplete && (
+                <div className="roadmap-completion-banner">
+                  <span aria-hidden="true">🎉</span>
+                  <div>
+                    <strong>Bạn đã hoàn thành lộ trình này!</strong>
+                    <p>Tất cả module đã được hoàn thành. Làm tốt lắm!</p>
+                  </div>
+                </div>
+              )}
               <Fade inView={true}>
                 <section className="roadmap-summary">
                   <div>
@@ -1084,6 +1112,12 @@ async function handleCancelReviewRequest(node, request) {
         </div>
       </section>
     </section>
+
+      <RoadmapCompletionCelebration
+        open={celebrationOpen}
+        roadmapTitle={roadmap?.title}
+        onClose={() => setCelebrationOpen(false)}
+      />
 
       {reviewModalNode && (
         <NodeReviewRequestModal
