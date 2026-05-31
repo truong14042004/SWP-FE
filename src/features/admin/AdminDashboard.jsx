@@ -6,6 +6,7 @@ import {
   deleteAdminUser,
   deleteCareerRole,
   deleteCounselorAssignment,
+  enableCounselorAssignment,
   deleteLearningResource,
   deleteRoleSkillRequirement,
   deleteSkill,
@@ -228,6 +229,9 @@ export function AdminDashboard({ session, onSignOut }) {
   async function handleDeleteAssignment(assignment) {
     await runAction(() => deleteCounselorAssignment(session, assignment.id), 'Assignment ended.');
   }
+  async function handleEnableAssignment(assignment) {
+    await runAction(() => enableCounselorAssignment(session, assignment.id), 'Assignment re-activated.');
+  }
 
   function renderSection() {
     if (!data) return null;
@@ -252,6 +256,7 @@ export function AdminDashboard({ session, onSignOut }) {
             users={data.users}
             onCreate={handleCreateAssignment}
             onDelete={handleDeleteAssignment}
+            onEnable={handleEnableAssignment}
           />
         );
       case 'payments':

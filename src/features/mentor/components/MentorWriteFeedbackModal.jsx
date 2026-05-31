@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getStudentQuota } from '../api/industryMentorApi';
 import { Dialog, DialogContent } from '@/components/animate-ui/components/radix/dialog';
-import { Button } from '@/components/animate-ui/components/buttons/button';
 import { validateMentorFeedbackForm } from '../../feedbackValidation';
 
 const READINESS_OPTIONS = [
@@ -90,20 +89,14 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
                 tiếp theo.
               </p>
             </div>
-            <Button
-              asChild
-              hoverScale={1.1}
-              tapScale={0.9}
+            <button
+              type="button"
+              className="imentor-modal-close"
+              onClick={onClose}
+              aria-label="Đóng"
             >
-              <button
-                type="button"
-                className="imentor-modal-close"
-                onClick={onClose}
-                aria-label="Đóng"
-              >
-                ✕
-              </button>
-            </Button>
+              ✕
+            </button>
           </div>
 
           <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
@@ -140,21 +133,15 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
                 <label>Overall rating</label>
                 <div className="imentor-rating">
                   {[1, 2, 3, 4, 5].map((n) => (
-                    <Button
+                    <button
                       key={n}
-                      asChild
-                      hoverScale={1.1}
-                      tapScale={0.9}
+                      type="button"
+                      className={rating === n ? 'active' : ''}
+                      onClick={() => setRating(rating === n ? null : n)}
+                      disabled={submitting}
                     >
-                      <button
-                        type="button"
-                        className={rating === n ? 'active' : ''}
-                        onClick={() => setRating(rating === n ? null : n)}
-                        disabled={submitting}
-                      >
-                        {n}
-                      </button>
-                    </Button>
+                      {n}
+                    </button>
                   ))}
                 </div>
                 {errors.rating && <p className="imentor-form-error">{errors.rating}</p>}
@@ -214,26 +201,20 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
                 <label>Job readiness level</label>
                 <div className="imentor-readiness-grid">
                   {READINESS_OPTIONS.map((opt) => (
-                    <Button
+                    <button
                       key={opt.value}
-                      asChild
-                      hoverScale={1.02}
-                      tapScale={0.98}
+                      type="button"
+                      className={jobReadinessLevel === opt.value ? 'active' : ''}
+                      onClick={() =>
+                        setJobReadinessLevel(
+                          jobReadinessLevel === opt.value ? '' : opt.value,
+                        )
+                      }
+                      disabled={submitting}
                     >
-                      <button
-                        type="button"
-                        className={jobReadinessLevel === opt.value ? 'active' : ''}
-                        onClick={() =>
-                          setJobReadinessLevel(
-                            jobReadinessLevel === opt.value ? '' : opt.value,
-                          )
-                        }
-                        disabled={submitting}
-                      >
-                        <strong>{opt.label}</strong>
-                        <span>{opt.hint}</span>
-                      </button>
-                    </Button>
+                      <strong>{opt.label}</strong>
+                      <span>{opt.hint}</span>
+                    </button>
                   ))}
                 </div>
                 {errors.jobReadinessLevel && (
@@ -253,25 +234,21 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
                   : 'Đang tải quota...'}
               </span>
               <div className="imentor-modal-actions">
-                <Button
+                <button
                   type="button"
                   className="imentor-btn-ghost"
                   onClick={onClose}
                   disabled={submitting}
-                  hoverScale={1.05}
-                  tapScale={0.95}
                 >
                   Huỷ
-                </Button>
-                <Button
+                </button>
+                <button
                   type="submit"
                   className="imentor-btn-primary"
                   disabled={!canSubmit}
-                  hoverScale={1.05}
-                  tapScale={0.95}
                 >
                   {submitting ? 'Đang gửi...' : 'Gửi feedback'}
-                </Button>
+                </button>
               </div>
             </div>
           </form>

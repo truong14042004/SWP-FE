@@ -201,6 +201,12 @@ export function deleteCounselorAssignment(session, id) {
   });
 }
 
+export function enableCounselorAssignment(session, id) {
+  return authorizedRequest(`/api/admin/counselor-assignments/${id}/enable`, session, {
+    method: 'PUT',
+  });
+}
+
 export function fetchDailyStats(session, year, month) {
   const params = new URLSearchParams();
   if (year)  params.set('year',  String(year));

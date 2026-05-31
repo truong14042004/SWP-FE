@@ -30,7 +30,7 @@ export function MarketPulseAdminView({ session }) {
 
   async function handleScrape() {
     if (scraping || reExtracting) return;
-    if (!window.confirm('Cào TopCV ngay? Có thể mất 4-5 phút.')) return;
+    if (!window.confirm('Cào TopDev ngay? Có thể mất vài phút.')) return;
     setScraping(true);
     try {
       const result = await triggerScrape(session);
@@ -87,7 +87,7 @@ export function MarketPulseAdminView({ session }) {
               </>
             ) : (
               <>
-                <PlayCircle size={14} /> Scrape TopCV ngay
+                <PlayCircle size={14} /> Scrape TopDev ngay
               </>
             )}
           </button>

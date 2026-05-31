@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { Dialog, DialogContent } from '@/components/animate-ui/components/radix/dialog';
-import { Button } from '@/components/animate-ui/components/buttons/button';
 import { validateCounselorFeedbackForm } from '../../feedbackValidation';
 import {
   getStudentRoadmap,
@@ -178,20 +177,14 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
         >
           <header className="counselor-modal-header">
             <h3 id="counselor-modal-title">Viết feedback</h3>
-            <Button
-              asChild
-              hoverScale={1.1}
-              tapScale={0.9}
+            <button
+              type="button"
+              className="counselor-modal-close"
+              onClick={onClose}
+              aria-label="Đóng modal"
             >
-              <button
-                type="button"
-                className="counselor-modal-close"
-                onClick={onClose}
-                aria-label="Đóng modal"
-              >
-                ✕
-              </button>
-            </Button>
+              ✕
+            </button>
           </header>
 
         <form onSubmit={handleSubmit}>
@@ -219,33 +212,27 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
                     (type.id === 'roadmap' && !roadmapAvailable) ||
                     (type.id === 'skillgap' && !skillGapAvailable);
                   return (
-                    <Button
+                    <button
                       key={type.id}
-                      asChild
-                      hoverScale={1.02}
-                      tapScale={0.98}
+                      type="button"
+                      role="radio"
+                      aria-checked={form.feedbackType === type.id}
+                      disabled={disabled || linkingDataLoading}
+                      className={`counselor-feedback-type-option ${
+                        form.feedbackType === type.id ? 'active' : ''
+                      }`}
+                      onClick={() => setFeedbackType(type.id)}
+                      title={
+                        disabled
+                          ? type.id === 'roadmap'
+                            ? 'Sinh viên chưa có roadmap'
+                            : 'Sinh viên chưa có báo cáo skill gap'
+                          : undefined
+                      }
                     >
-                      <button
-                        type="button"
-                        role="radio"
-                        aria-checked={form.feedbackType === type.id}
-                        disabled={disabled || linkingDataLoading}
-                        className={`counselor-feedback-type-option ${
-                          form.feedbackType === type.id ? 'active' : ''
-                        }`}
-                        onClick={() => setFeedbackType(type.id)}
-                        title={
-                          disabled
-                            ? type.id === 'roadmap'
-                              ? 'Sinh viên chưa có roadmap'
-                              : 'Sinh viên chưa có báo cáo skill gap'
-                            : undefined
-                        }
-                      >
-                        <strong>{type.label}</strong>
-                        <small>{type.desc}</small>
-                      </button>
-                    </Button>
+                      <strong>{type.label}</strong>
+                      <small>{type.desc}</small>
+                    </button>
                   );
                 })}
               </div>
@@ -295,25 +282,19 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
                 aria-label="Chọn số sao đánh giá"
               >
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Button
+                  <button
                     key={star}
-                    asChild
-                    hoverScale={1.2}
-                    tapScale={0.8}
+                    type="button"
+                    role="radio"
+                    aria-checked={star === form.rating}
+                    aria-label={`${star} sao`}
+                    className={`counselor-rating-star ${
+                      star <= form.rating ? 'active' : ''
+                    }`}
+                    onClick={() => updateField('rating', star)}
                   >
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={star === form.rating}
-                      aria-label={`${star} sao`}
-                      className={`counselor-rating-star ${
-                        star <= form.rating ? 'active' : ''
-                      }`}
-                      onClick={() => updateField('rating', star)}
-                    >
-                      ★
-                    </button>
-                  </Button>
+                    ★
+                  </button>
                 ))}
               </div>
               <div className="counselor-form-row">
@@ -380,25 +361,21 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
           </div>
 
           <footer className="counselor-modal-footer">
-            <Button
+            <button
               type="button"
               className="counselor-btn counselor-btn-secondary"
               onClick={onClose}
               disabled={saving}
-              hoverScale={1.05}
-              tapScale={0.95}
             >
               Hủy
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
               className="counselor-btn counselor-btn-primary"
               disabled={!canSubmit}
-              hoverScale={1.05}
-              tapScale={0.95}
             >
               {saving ? 'Đang gửi...' : 'Gửi feedback'}
-            </Button>
+            </button>
           </footer>
         </form>
       </div>

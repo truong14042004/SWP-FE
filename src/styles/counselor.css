@@ -1945,10 +1945,11 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  transition: background 0.18s ease;
+  transition: background 0.18s ease, transform 0.15s ease;
 }
 
-.counselor-modal-close:hover { background: var(--c-hairline); }
+.counselor-modal-close:hover { background: var(--c-hairline); transform: scale(1.08); }
+.counselor-modal-close:active { transform: scale(0.92); }
 
 .counselor-modal-body {
   padding: 32px;
@@ -2092,6 +2093,10 @@
   box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.08);
 }
 
+.counselor-feedback-type-option:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .counselor-feedback-type-option:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -2146,6 +2151,10 @@
 .counselor-rating-star.active {
   color: #ff9f0a;
   transform: scale(1.08);
+}
+
+.counselor-rating-star:active {
+  transform: scale(0.95);
 }
 
 .counselor-private-textarea {

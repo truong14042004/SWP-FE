@@ -9,7 +9,7 @@ import {
 
 const emptyAssignment = { counselorId: '', studentId: '', note: '' };
 
-export function AssignmentsView({ assignments = [], users = [], onCreate, onDelete }) {
+export function AssignmentsView({ assignments = [], users = [], onCreate, onDelete, onEnable }) {
   const [form, setForm] = useState(emptyAssignment);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -167,6 +167,9 @@ export function AssignmentsView({ assignments = [], users = [], onCreate, onDele
                   <td className="table-actions">
                     {item.status === 'Active' && (
                       <button type="button" className="btn-secondary danger-action" onClick={() => onDelete(item)}>End</button>
+                    )}
+                    {item.status === 'Inactive' && onEnable && (
+                      <button type="button" className="btn-secondary" onClick={() => onEnable(item)}>Enable</button>
                     )}
                   </td>
                 </tr>

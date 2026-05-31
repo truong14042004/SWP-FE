@@ -433,11 +433,19 @@
   font-size: 14px;
   font-weight: 400;
   letter-spacing: -0.224px;
-  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
+
+.imentor-btn-primary:hover:not(:disabled),
+.imentor-btn-secondary:hover:not(:disabled),
+.imentor-btn-ghost:hover:not(:disabled) { transform: translateY(-1px); }
+
+.imentor-btn-primary:active:not(:disabled),
+.imentor-btn-secondary:active:not(:disabled),
+.imentor-btn-ghost:active:not(:disabled) { transform: scale(0.97); }
 
 .imentor-btn-primary {
   background: var(--imentor-action);
@@ -931,11 +939,16 @@
   cursor: pointer;
   font-size: 18px;
   flex-shrink: 0;
-  transition: background 0.18s ease;
+  transition: background 0.18s ease, transform 0.15s ease;
 }
 
 .imentor-modal-close:hover {
   background: var(--imentor-divider);
+  transform: scale(1.08);
+}
+
+.imentor-modal-close:active {
+  transform: scale(0.92);
 }
 
 .imentor-modal-body {
@@ -1042,6 +1055,11 @@
   background: var(--imentor-action);
   border-color: var(--imentor-action);
   color: #fff;
+  transform: scale(1.06);
+}
+
+.imentor-rating button:active {
+  transform: scale(0.92);
 }
 
 .imentor-readiness-grid {
@@ -1067,6 +1085,15 @@
   border-color: var(--imentor-action);
   background: rgba(0, 102, 204, 0.05);
   color: var(--imentor-ink);
+}
+
+.imentor-readiness-grid button:hover:not(.active) {
+  border-color: var(--imentor-ink-muted);
+  transform: translateY(-1px);
+}
+
+.imentor-readiness-grid button:active {
+  transform: scale(0.98);
 }
 
 .imentor-readiness-grid button strong {
