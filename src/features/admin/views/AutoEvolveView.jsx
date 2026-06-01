@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getCareerRoles, getPendingProposals, generateProposals, approveProposal, rejectProposal } from '../adminApi';
+import { SectionTitle } from '../components/DashboardPrimitives';
 
 export function AutoEvolveView({ session }) {
   const [roles, setRoles] = useState([]);
@@ -92,73 +93,83 @@ export function AutoEvolveView({ session }) {
   if (loading) return <div>Đang tải dữ liệu...</div>;
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2>Auto-Evolve Roadmap (Đề xuất AI)</h2>
-      </div>
+    <section className="admin-section">
+      <SectionTitle
+        eyebrow="AI Auto-Evolve"
+        title="Auto-Evolve Roadmap"
+        subtitle={`${proposals.length} đề xuất chờ duyệt`}
+      />
 
-      <div className="card-body">
-        {error && <div className="alert error">{error}</div>}
-        
-        <div className="form-group" style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '2rem' }}>
-          <select 
-            value={selectedRole} 
-            onChange={e => setSelectedRole(e.target.value)}
-            disabled={generating}
-          >
-            {roles.map(r => (
-              <option key={r.id} value={r.id}>{r.name}</option>
-            ))}
-          </select>
-          <button 
-            type="button" 
-            className="primary" 
-            onClick={handleGenerate}
-            disabled={generating}
-          >
-            {generating ? 'AI đang phân tích...' : 'Phân tích Thị trường & Sinh Đề xuất'}
-          </button>
-        </div>
-
-        <h3>Các đề xuất chờ duyệt ({proposals.length})</h3>
-        {proposals.length === 0 ? (
-          <p className="text-muted">Không có đề xuất nào đang chờ duyệt.</p>
-        ) : (
-          <div className="table-responsive">
-            <table>
-              <thead>
-                <tr>
-                  <th>Định hướng</th>
-                  <th>Kỹ năng</th>
-                  <th>Loại</th>
-                  <th>Thay đổi đề xuất</th>
-                  <th>Lý do từ AI</th>
-                  <th>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {proposals.map(p => (
-                  <tr key={p.id}>
-                    <td>{p.careerRoleName}</td>
-                    <td><b>{p.skillName}</b></td>
-                    <td>{formatAction(p.actionType)}</td>
-                    <td>{formatChange(p)}</td>
-                    <td style={{ maxWidth: '300px', whiteSpace: 'normal', fontStyle: 'italic' }}>
-                      {p.reason}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button type="button" className="success" onClick={() => handleApprove(p.id)}>Duyệt</button>
-                        <button type="button" className="danger" onClick={() => handleReject(p.id)}>Hủy</button>
-                      </div>
-                    </td>
-                  </tr>
+      <div className="form-card" style={{ marginBottom: '2rem' }}>
+        <header className="form-card-header">
+          <h3>Phân tích dữ liệu & Sinh đề xuất</h3>
+        </header>
+        <div className="field-stack" style={{ padding: '1rem' }}>
+          <div className="field-row">
+            <label>
+              <span>Định hướng nghề nghiệp</span>
+              <select 
+                value={selectedRole} 
+                onChange={e => setSelectedRole(e.target.value)}
+                disabled={generating}
+              >
+                {roles.map(r => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
                 ))}
-              </tbody>
-            </table>
+              </select>
+            </label>
           </div>
-        )}
+          <div className="button-row">
+            <button 
+              type="button" 
+              className="pill-button" 
+              onClick={handleGenerate}
+              disabled={generating}
+            >
+              {generating ? 'AI đang phân tích...' : 'Phân tích & Sinh Đề xuất'}
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+
+      {error && <div className="alert error" style={{ marginBottom: '1rem' }}>{error}</div>}
+
+      <div className="data-table-wrap">
+        <div className="scroll-x">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Định hướng</th>
+                <th>Kỹ năng</th>
+                <th>Loại</th>
+                <th>Thay đổi đề xuất</th>
+                <th>Lý do từ AI</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {proposals.map(p => (
+                <tr key={p.id}>
+                  <td>{p.careerRoleName}</td>
+                  <td><b>{p.skillName}</b></td>
+                  <td>{formatAction(p.actionType)}</td>
+                  <td>{formatChange(p)}</td>
+                  <td style={{ maxWidth: '300px', whiteSpace: 'normal', fontStyle: 'italic' }}>
+                    {p.reason}
+                  </td>
+                  <td className="table-actions">
+                    <button type="button" className="btn-secondary" onClick={() => handleApprove(p.id)} style={{ color: 'var(--semantic-success)' }}>Duyệt</button>
+                    <button type="button" className="btn-secondary danger-action" onClick={() => handleReject(p.id)}>Hủy</button>
+                  </td>
+                </tr>
+              ))}
+              {proposals.length === 0 && (
+                <tr><td colSpan={6}><p className="empty-state">Không có đề xuất nào đang chờ duyệt.</p></td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   );
 }
