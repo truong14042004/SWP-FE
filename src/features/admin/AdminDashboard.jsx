@@ -42,10 +42,11 @@ import { CareerRolesView } from './views/CareerRolesView';
 import { AssignmentsView } from './views/AssignmentsView';
 import { MarketPulseAdminView } from './views/MarketPulseAdminView';
 import { PrerequisitesView } from './views/PrerequisitesView';
+import { AutoEvolveView } from './views/AutoEvolveView';
 
 const VALID_SECTIONS = new Set([
   'overview', 'users', 'assignments', 'payments', 'plans',
-  'skills', 'resources', 'requirements', 'prerequisites', 'careerRoles', 'marketPulse',
+  'skills', 'resources', 'requirements', 'prerequisites', 'careerRoles', 'marketPulse', 'autoEvolve',
 ]);
 
 function readHashSection() {
@@ -340,6 +341,8 @@ export function AdminDashboard({ session, onSignOut }) {
         );
       case 'marketPulse':
         return <MarketPulseAdminView session={session} />;
+      case 'autoEvolve':
+        return <AutoEvolveView session={session} />;
       default:
         return <OverviewView stats={data.stats} session={session} />;
     }

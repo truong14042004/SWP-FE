@@ -77,6 +77,11 @@ const NAV_ICONS = {
       <path d="M2 11l3-5 3 7 3-9 3 7h2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   ),
+  autoEvolve: (
+    <svg className="nav-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 1L11.5 6.5L17 9L11.5 11.5L9 17L6.5 11.5L1 9L6.5 6.5L9 1Z" fill="currentColor" />
+    </svg>
+  ),
 };
 
 /**
@@ -95,6 +100,7 @@ const MANAGEMENT_SECTIONS = [
   { id: 'prerequisites', label: 'Prerequisites' },
   { id: 'careerRoles',  label: 'Career roles' },
   { id: 'marketPulse',  label: 'Market pulse' },
+  { id: 'autoEvolve',   label: 'AI Auto-Evolve' },
 ];
 
 const MANAGEMENT_IDS = new Set(MANAGEMENT_SECTIONS.map((s) => s.id));
@@ -120,6 +126,7 @@ const SECTION_LABELS = {
   prerequisites: { title: 'Skill prerequisites', sub: 'Which skills must be learned first' },
   careerRoles:  { title: 'Career roles',       sub: 'Target roles students can pursue' },
   marketPulse:  { title: 'Market pulse',        sub: 'Job market trends from scraped postings' },
+  autoEvolve:   { title: 'AI Auto-Evolve',      sub: 'AI-generated roadmap proposals' },
 };
 
 const MGMT_OPEN_STORAGE_KEY = 'admin.sidebar.mgmtOpen';

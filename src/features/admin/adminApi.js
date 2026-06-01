@@ -182,8 +182,36 @@ export function saveSkillPrerequisite(session, prerequisite) {
   });
 }
 
-export function deleteSkillPrerequisite(session, id) {
-  return authorizedRequest(`/api/admin/skill-prerequisites/${id}`, session, { method: 'DELETE' });
+export function deleteSkillPrerequisite(session, skillId, prerequisiteSkillId) {
+  return authorizedRequest(`/api/admin/skill-prerequisites/${skillId}/${prerequisiteSkillId}`, session, {
+    method: 'DELETE'
+  });
+}
+
+// ==========================================
+// Auto-Evolve Roadmap (AI Proposals)
+// ==========================================
+
+export function generateProposals(session, careerRoleId) {
+  return authorizedRequest(`/api/admin/auto-evolve/generate/${careerRoleId}`, session, {
+    method: 'POST'
+  });
+}
+
+export function getPendingProposals(session) {
+  return authorizedRequest('/api/admin/auto-evolve/proposals', session);
+}
+
+export function approveProposal(session, id) {
+  return authorizedRequest(`/api/admin/auto-evolve/proposals/${id}/approve`, session, {
+    method: 'POST'
+  });
+}
+
+export function rejectProposal(session, id) {
+  return authorizedRequest(`/api/admin/auto-evolve/proposals/${id}/reject`, session, {
+    method: 'POST'
+  });
 }
 
 export function getCareerRole(session, id) {
