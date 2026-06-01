@@ -7,6 +7,7 @@ import { Fade, Fades } from '@/components/animate-ui/primitives/effects/fade';
 import { toast } from 'react-toastify';
 import {
   Bot,
+  BrainCircuit,
   BriefcaseBusiness,
   ChevronLeft,
   ChevronRight,
@@ -42,6 +43,7 @@ import { StudentMentorPage } from './components/StudentMentorPage';
 import { StudentSubscriptionPage } from './components/StudentSubscriptionPage';
 import { StudentFeedbacksPage } from './components/StudentFeedbacksPage';
 import { StudentCartPage } from './components/StudentCartPage';
+import { TalentRadarView } from './components/TalentRadarView';
 import { MarketPulsePage } from '../market/MarketPulsePage';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { getGithubRepositories } from './githubApi';
@@ -53,6 +55,7 @@ const STUDENT_SECTIONS = [
   { id: 'roadmap', label: 'Lộ trình nghề nghiệp', Icon: MapIcon },
   { id: 'skills', label: 'Kỹ năng & Phân tích', Icon: TrendingUp },
   { id: 'github', label: 'Tích hợp GitHub', Icon: GitBranch },
+  { id: 'talent', label: 'AI Tài năng tiềm ẩn', Icon: BrainCircuit },
   { id: 'portfolio', label: 'Xây dựng Portfolio', Icon: BriefcaseBusiness },
   { id: 'mentors', label:'AI tư vấn', Icon: Bot },
   { id: 'market-pulse', label: 'Market Pulse', Icon: TrendingUp },
@@ -1070,6 +1073,8 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
   <Fade inView={false}><StudentSkillsPage session={session} /></Fade>
 ) : activeSection === 'github' ? (
   <Fade inView={false}><StudentGithubPage session={session} /></Fade>
+) : activeSection === 'talent' ? (
+  <Fade inView={false}><TalentRadarView session={session} /></Fade>
 ) : activeSection === 'mentors' ? (
   <Fade inView={false}><StudentMentorPage session={session} /></Fade>
 ) : activeSection === 'market-pulse' ? (

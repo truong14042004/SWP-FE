@@ -1,0 +1,332 @@
+.talent-radar-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+/* Hero */
+.talent-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.75rem 2rem;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #0ea5e9 100%);
+  color: #fff;
+  box-shadow: 0 20px 45px rgba(79, 70, 229, 0.32);
+  position: relative;
+  overflow: hidden;
+}
+
+.talent-hero::after {
+  content: '';
+  position: absolute;
+  right: -60px;
+  top: -60px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 70%);
+  pointer-events: none;
+}
+
+.talent-hero-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+  flex-shrink: 0;
+}
+
+.talent-eyebrow {
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.talent-hero-copy h1 {
+  margin: 0.25rem 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.talent-hero-copy p {
+  margin: 0;
+  font-size: 0.92rem;
+  max-width: 560px;
+  opacity: 0.92;
+  line-height: 1.5;
+}
+
+/* Input card */
+.talent-input-card {
+  background: #fff;
+  border: 1px solid #e8eaf2;
+  border-radius: 18px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+}
+
+.talent-input-card label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1e293b;
+  margin-bottom: 0.6rem;
+}
+
+.talent-input-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.talent-input-wrap {
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0 1rem;
+  border: 1.5px solid #dfe3ee;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #64748b;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.talent-input-wrap:focus-within {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+  background: #fff;
+}
+
+.talent-input-wrap input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0.85rem 0;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.talent-analyze-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1.6rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.28);
+}
+
+.talent-analyze-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(79, 70, 229, 0.36);
+}
+
+.talent-analyze-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.talent-input-card small {
+  display: block;
+  margin-top: 0.75rem;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+/* Loading + Empty */
+.talent-loading,
+.talent-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  padding: 3.5rem 1rem;
+  color: #94a3b8;
+  text-align: center;
+  background: #fff;
+  border: 1px dashed #d8dded;
+  border-radius: 18px;
+}
+
+.talent-empty h3 {
+  margin: 0;
+  color: #475569;
+  font-size: 1.1rem;
+}
+
+.talent-empty p {
+  margin: 0;
+  max-width: 420px;
+  font-size: 0.9rem;
+}
+
+.talent-empty svg,
+.talent-loading svg {
+  color: #6366f1;
+}
+
+.talent-spin {
+  animation: talent-spin 0.9s linear infinite;
+}
+
+@keyframes talent-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Result grid */
+.talent-result-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(300px, 1.2fr);
+  gap: 1.5rem;
+}
+
+.talent-radar-card,
+.talent-scores-card {
+  background: #fff;
+  border: 1px solid #e8eaf2;
+  border-radius: 18px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+}
+
+.talent-radar-card h2,
+.talent-scores-card h2 {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+  color: #1e293b;
+}
+
+.talent-radar-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.talent-radar-svg {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+}
+
+.talent-grid-ring {
+  fill: rgba(99, 102, 241, 0.04);
+  stroke: #e2e8f0;
+  stroke-width: 1;
+}
+
+.talent-grid-axis {
+  stroke: #e2e8f0;
+  stroke-width: 1;
+}
+
+.talent-axis-label {
+  fill: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.talent-data-polygon {
+  fill: rgba(124, 58, 237, 0.22);
+  stroke: #7c3aed;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.talent-data-dot {
+  fill: #4f46e5;
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+/* Scores */
+.talent-score-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.talent-score-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.45rem;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.talent-score-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.talent-score-value.excellent { color: #16a34a; }
+.talent-score-value.good { color: #4f46e5; }
+.talent-score-value.fair { color: #d97706; }
+.talent-score-value.low { color: #dc2626; }
+
+.talent-score-bar {
+  height: 9px;
+  border-radius: 999px;
+  background: #eef1f8;
+  overflow: hidden;
+}
+
+.talent-score-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.talent-score-fill.excellent { background: linear-gradient(90deg, #22c55e, #16a34a); }
+.talent-score-fill.good { background: linear-gradient(90deg, #6366f1, #4f46e5); }
+.talent-score-fill.fair { background: linear-gradient(90deg, #fbbf24, #d97706); }
+.talent-score-fill.low { background: linear-gradient(90deg, #f87171, #dc2626); }
+
+/* Feedback */
+.talent-feedback {
+  margin-top: 1.5rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f5f3ff, #eff6ff);
+  border: 1px solid #e0e7ff;
+}
+
+.talent-feedback-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #6d28d9;
+  margin-bottom: 0.5rem;
+}
+
+.talent-feedback p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 860px) {
+  .talent-result-grid {
+    grid-template-columns: 1fr;
+  }
+}
