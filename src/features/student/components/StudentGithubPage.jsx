@@ -852,6 +852,29 @@ function RepositoryCard({
               )}
             </div>
           )}
+
+          {talentProfile && (
+            <div className="github-evidence-panel anim-hover-lift" style={{ marginTop: '14px', background: 'linear-gradient(to right, rgba(59,130,246,0.05), rgba(139,92,246,0.05))', borderColor: 'rgba(59,130,246,0.1)' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <small style={{ color: '#3b82f6', fontWeight: 600 }}>Hồ sơ Năng lực Khám phá (AI)</small>
+                {[
+                  { label: 'Tư duy Logic', score: talentProfile.logicalThinkingScore, color: '#3b82f6' },
+                  { label: 'Kiến trúc Hệ thống', score: talentProfile.systemArchitectureScore, color: '#10b981' },
+                  { label: 'Cảm quan Thiết kế', score: talentProfile.visualDesignScore, color: '#8b5cf6' },
+                ].map(axis => (
+                  <div key={axis.label}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '2px', color: '#4b5563' }}>
+                      <span>{axis.label}</span>
+                      <strong>{axis.score}/10</strong>
+                    </div>
+                    <div style={{ height: '4px', background: 'rgba(0,0,0,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${axis.score * 10}%`, background: axis.color, borderRadius: '2px' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       ) : !analyzed ? (
         <div className="github-unanalysed-state">
