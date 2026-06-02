@@ -828,9 +828,18 @@ function RepositoryCard({
                 <div>
                   <span>Files reviewed</span>
                   <div className="github-file-list">
-                    {Array.from(new Set(analyzedFiles)).map((file) => (
-                      <code key={file}>{file}</code>
+                    {Array.from(new Set(analyzedFiles))
+                      .slice(0, 15)
+                      .map((file) => (
+                      <code key={file} title={file}>
+                        {file.split('/').pop()}
+                      </code>
                     ))}
+                    {Array.from(new Set(analyzedFiles)).length > 15 && (
+                      <code title="Còn nữa..." style={{ background: '#f3f4f6', color: '#6b7280', borderStyle: 'dashed' }}>
+                        +{Array.from(new Set(analyzedFiles)).length - 15} files
+                      </code>
+                    )}
                   </div>
                 </div>
               )}
