@@ -792,8 +792,8 @@
     border-radius: 18px;
     background: var(--student-canvas, #ffffff);
     padding: 14px;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 14px;
     box-shadow: none;
 }
