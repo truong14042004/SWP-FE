@@ -402,10 +402,11 @@ export function RoadmapReviewQueue({ session, role }) {
                     )}
 
                     {isMentor && item.evidenceType === 'GitRepository' && (
-                      <AiReviewBlock
+                        <AiReviewBlock
                         summary={aiSummaryByItemId[item.id]}
                         loading={aiLoadingId === item.id}
                         error={aiErrorByItemId[item.id]}
+                        talentProfile={item.student.talentProfile}
                         onTrigger={() => handleAiReview(item)}
                         onRegenerate={() =>
                           handleAiReview(item, { forceRegenerate: true })
@@ -500,6 +501,7 @@ function AiReviewBlock({
   onRegenerate,
   canInsert,
   onInsert,
+  talentProfile,
 }) {
   const hasSummary = Boolean(summary && summary.id);
 
@@ -584,6 +586,37 @@ function AiReviewBlock({
                 </ul>
               </div>
             )}
+        </div>
+      )}
+
+      {talentProfile && (
+        <div className="review-queue-ai-section" style={{ background: 'rgba(255,149,0,0.05)', padding: '12px', borderRadius: '8px' }}>
+          <small style={{ color: '#d97706', fontWeight: 600 }}>Hồ sơ Năng lực Khám phá</small>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+            {[
+              { label: 'Tư duy Logic', score: talentProfile.logicalThinkingScore, color: '#3b82f6' },
+              { label: 'Hệ thống', score: talentProfile.systemArchitectureScore, color: '#10b981' },
+              { label: 'Thiết kế', score: talentProfile.visualDesignScore, color: '#8b5cf6' },
+            ].map(axis => (
+              <div key={axis.label}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '2px', color: '#4b5563' }}>
+                  <span>{axis.label}</span>
+                  <strong>{axis.score}/10</strong>
+                </div>
+                <div style={{ height: '4px', background: 'rgba(0,0,0,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', 
+                    width: `${axis.score * 10}%`, 
+                    background: axis.color,
+                    borderRadius: '2px'
+                  }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          {talentProfile.aiFeedback && (
+             <p style={{ marginTop: '8px', fontSize: '0.75rem', fontStyle: 'italic', color: '#6b7280', lineHeight: 1.4 }}>"{talentProfile.aiFeedback}"</p>
+          )}
         </div>
       )}
 

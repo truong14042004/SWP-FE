@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
-import { Command, LoaderCircle } from 'lucide-react';
+import { Command, LoaderCircle, Sparkles } from 'lucide-react';
 import '../../../styles/github.css';
 import {
   analyzeGithubReadme,
@@ -12,6 +12,7 @@ import {
   syncGithubRepositories,
 } from '../githubApi';
 import { getStudentProfile } from '../studentApi';
+import { getTalentProfile } from '../talentApi';
 const EMPTY_ANALYZE_FORM = {
   repoUrl: '',
   readmeContent: '',
@@ -164,6 +165,7 @@ function getLanguageClass(language) {
 
 export function StudentGithubPage({ session }) {
   const [profile, setProfile] = useState(null);
+  const [talentProfile, setTalentProfile] = useState(null);
   const [repositories, setRepositories] = useState([]);
   const [username, setUsername] = useState('');
   const [includePrivate, setIncludePrivate] = useState(true);
@@ -227,13 +229,15 @@ export function StudentGithubPage({ session }) {
     try {
       await handlePossibleCallback();
 
-      const [profileResult, repoResult, connectionResult] = await Promise.all([
+      const [profileResult, repoResult, connectionResult, talentResult] = await Promise.all([
         getStudentProfile(session).catch(() => null),
         getGithubRepositories(session).catch(() => []),
         getGithubConnection(session).catch(() => null),
+        getTalentProfile(session).catch(() => null),
       ]);
 
       setProfile(profileResult);
+      setTalentProfile(talentResult?.hasProfile ? talentResult : null);
       const resolvedUsername =
         connectionResult?.githubUsername ||
         profileResult?.githubUsername ||
@@ -576,6 +580,42 @@ export function StudentGithubPage({ session }) {
           <small>main languages</small>
         </article>
       </section>
+
+      {talentProfile && (
+        <section className="github-sync-card anim-hover-lift" style={{ marginTop: '24px', background: 'linear-gradient(to right, rgba(59,130,246,0.05), rgba(139,92,246,0.05))', borderColor: 'rgba(59,130,246,0.1)' }}>
+          <div className="github-sync-copy">
+            <h2 style={{ color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Sparkles size={20} /> Hồ sơ Năng lực Khám phá
+            </h2>
+            <p style={{ fontStyle: 'italic', color: '#6b7280', marginTop: '8px', lineHeight: 1.5 }}>
+              "{talentProfile.feedback || talentProfile.aiFeedback}"
+            </p>
+          </div>
+          
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '280px' }}>
+            {[
+              { label: 'Tư duy Logic', score: talentProfile.logicalThinkingScore, color: '#3b82f6' },
+              { label: 'Kiến trúc Hệ thống', score: talentProfile.systemArchitectureScore, color: '#10b981' },
+              { label: 'Cảm quan Thiết kế', score: talentProfile.visualDesignScore, color: '#8b5cf6' },
+            ].map(axis => (
+              <div key={axis.label}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '4px', fontWeight: 500, color: '#374151' }}>
+                  <span>{axis.label}</span>
+                  <strong>{axis.score}/10</strong>
+                </div>
+                <div style={{ height: '6px', background: 'rgba(0,0,0,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', 
+                    width: `${axis.score * 10}%`, 
+                    background: axis.color,
+                    borderRadius: '3px'
+                  }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="github-repositories-section">
         <div className="github-section-head">
