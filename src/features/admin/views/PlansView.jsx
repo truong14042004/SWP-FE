@@ -9,6 +9,7 @@ const initialPlanForm = {
   currency: 'VND',
   billingCycle: 'Monthly',
   mentorReviewLimit: 5,
+  aiChatLimit: 100,
   features: '',
   isActive: true,
 };
@@ -34,6 +35,7 @@ export function PlansView({ plans, onLoadPlan, onSavePlan, onDeletePlan }) {
       currency: latest.currency,
       billingCycle: latest.billingCycle,
       mentorReviewLimit: latest.mentorReviewLimit,
+      aiChatLimit: latest.aiChatLimit !== undefined ? latest.aiChatLimit : 100,
       features: (latest.features || []).join('\n'),
       isActive: latest.isActive,
     });
@@ -53,6 +55,7 @@ export function PlansView({ plans, onLoadPlan, onSavePlan, onDeletePlan }) {
       ...planForm,
       price: Number(planForm.price),
       mentorReviewLimit: Number(planForm.mentorReviewLimit),
+      aiChatLimit: Number(planForm.aiChatLimit),
       features: planForm.features.split('\n').map((item) => item.trim()).filter(Boolean),
     };
     await onSavePlan(payload, editingPlanId);
@@ -99,7 +102,7 @@ export function PlansView({ plans, onLoadPlan, onSavePlan, onDeletePlan }) {
                 <input name="currency" value={planForm.currency} onChange={updatePlanField} required />
               </label>
             </div>
-            <div className="field-row">
+            <div className="field-row three">
               <label>
                 <span>Billing cycle</span>
                 <select name="billingCycle" value={planForm.billingCycle} onChange={updatePlanField}>
@@ -109,8 +112,12 @@ export function PlansView({ plans, onLoadPlan, onSavePlan, onDeletePlan }) {
                 </select>
               </label>
               <label>
-                <span>Mentor review limit</span>
-                <input name="mentorReviewLimit" type="number" min="0" value={planForm.mentorReviewLimit} onChange={updatePlanField} required />
+                <span>Mentor review limit (-1 = unlimited)</span>
+                <input name="mentorReviewLimit" type="number" min="-1" value={planForm.mentorReviewLimit} onChange={updatePlanField} required />
+              </label>
+              <label>
+                <span>AI chat limit (-1 = unlimited)</span>
+                <input name="aiChatLimit" type="number" min="-1" value={planForm.aiChatLimit} onChange={updatePlanField} required />
               </label>
             </div>
             <label>
@@ -151,8 +158,13 @@ export function PlansView({ plans, onLoadPlan, onSavePlan, onDeletePlan }) {
               <span>/ {plan.billingCycle}</span>
             </div>
 
-            <div className="plan-card-meta">
-              {plan.mentorReviewLimit} mentor reviews / cycle
+            <div className="plan-card-meta" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div>
+                <strong>Mentor reviews:</strong> {plan.mentorReviewLimit === -1 ? 'Unlimited' : plan.mentorReviewLimit}
+              </div>
+              <div>
+                <strong>AI Chat limit:</strong> {plan.aiChatLimit === -1 ? 'Unlimited' : plan.aiChatLimit}
+              </div>
             </div>
 
             {plan.features?.length > 0 && (
