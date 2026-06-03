@@ -300,9 +300,9 @@ export function HomePage({ session, onLogin, onStart, onSignOut, onOpenDashboard
         </a>
 
         <ul className="hp-nav-links">
+          <li><a href="#network">Mạng lưới</a></li>
           <li><a href="#process">Quy trình</a></li>
           <li><a href="#features">Tính năng</a></li>
-          <li><a href="#network">Mạng lưới</a></li>
           <li><a href="#pricing">Đăng ký</a></li>
           <li><a href="#faq">Hỏi đáp</a></li>
         </ul>
@@ -327,6 +327,121 @@ export function HomePage({ session, onLogin, onStart, onSignOut, onOpenDashboard
 
       {/* ── HERO ───────────────────────────────────────── */}
       <HeroSection onStart={onStartFn} />
+
+      {/* ── PERSONA (LIGHT) ─────── */}
+      <section className="hp-tile hp-tile-light" id="network">
+        <div className="hp-tile-inner">
+          <span className="hp-eyebrow">Dành cho ai</span>
+          <h2>Một nền tảng. <em>Hai chiều giá trị.</em></h2>
+          <p className="hp-tile-body">
+            CareerMap phục vụ cả người học và mạng lưới chuyên gia, tạo nên một vòng tròn khép kín giữa đào tạo và thực hành.
+          </p>
+
+          <div className="hp-persona-grid">
+            <TiltCard className="hp-persona">
+              <span className="hp-persona-tag">Học viên</span>
+              <h3>Tăng tốc sự nghiệp với dữ liệu, không phỏng đoán.</h3>
+              <p>Phù hợp với sinh viên năm cuối, người đang chuyển ngành và developer muốn lên cấp độ tiếp theo.</p>
+              <ul>
+                <li>Lộ trình rõ ràng theo vai trò mục tiêu</li>
+                <li>Phản hồi từ người đã đi trước, không phải lý thuyết</li>
+                <li>Theo dõi tiến độ và năng suất hằng tuần</li>
+              </ul>
+            </TiltCard>
+
+            <TiltCard className="hp-persona">
+              <span className="hp-persona-tag">Mentor &amp; Counselor</span>
+              <h3>Truyền lại kinh nghiệm. Tạo ảnh hưởng có thể đo lường.</h3>
+              <p>Cộng đồng mentor đến từ Big Tech, startup và các công ty sản phẩm đang phát triển nhanh.</p>
+              <ul>
+                <li>Lịch review linh hoạt, kiểm soát khối lượng</li>
+                <li>Hồ sơ học viên rõ ràng, có dữ liệu kỹ năng</li>
+                <li>Hệ thống ghi nhận đóng góp minh bạch</li>
+              </ul>
+            </TiltCard>
+          </div>
+
+          <div style={{ marginTop: '72px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span className="hp-eyebrow" style={{ marginBottom: '12px' }}>Đội ngũ Chuyên gia</span>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '28px', fontWeight: '600', fontFamily: 'var(--hp-font-display)', textAlign: 'center' }}>
+              Kết nối trực tiếp với <em>Mentor &amp; Counselor</em>
+            </h3>
+            <p className="hp-tile-body" style={{ marginBottom: '36px', textAlign: 'center' }}>
+              Những người đang làm việc tại các tập đoàn công nghệ hàng đầu và đội ngũ tư vấn giàu kinh nghiệm sẵn sàng hỗ trợ bạn.
+            </p>
+
+            {loadingMentors ? (
+              <p style={{ color: 'var(--hp-ink-muted-48)' }}>Đang tải danh sách chuyên gia...</p>
+            ) : mentors.length === 0 ? (
+              <p style={{ color: 'var(--hp-ink-muted-48)' }}>Hiện chưa có mentor nào hoạt động.</p>
+            ) : (
+              <div className="hp-mentor-grid">
+                {mentors.map((mentor) => {
+                  const initials = (mentor.fullName || 'M')
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase();
+                  const avatarSrc = resolveAvatarSrc(mentor.avatarUrl, mentor.id);
+
+                  return (
+                    <TiltCard
+                      key={mentor.id}
+                      className="hp-mentor-card"
+                      onClick={() => setSelectedMentor(mentor)}
+                    >
+                      <div className="hp-mentor-avatar-wrap">
+                        {avatarSrc ? (
+                          <img
+                            src={avatarSrc}
+                            alt={mentor.fullName}
+                            className="hp-mentor-avatar"
+                          />
+                        ) : (
+                          <div className="hp-mentor-avatar-placeholder">{initials}</div>
+                        )}
+                      </div>
+
+                      <span className={`hp-mentor-badge ${mentor.role === 'IndustryMentor' ? 'mentor' : 'counselor'}`}>
+                        {mentor.role === 'IndustryMentor' ? 'Industry Mentor' : 'Counselor'}
+                      </span>
+
+                      <h3>{mentor.fullName}</h3>
+
+                      <div className="hp-mentor-meta">
+                        {mentor.profile?.jobTitle && mentor.profile?.company ? (
+                          <div>{mentor.profile.jobTitle} tại {mentor.profile.company}</div>
+                        ) : mentor.profile?.jobTitle ? (
+                          <div>{mentor.profile.jobTitle}</div>
+                        ) : mentor.profile?.company ? (
+                          <div>Chuyên gia tại {mentor.profile.company}</div>
+                        ) : (
+                          <div>Chuyên gia công nghệ</div>
+                        )}
+                      </div>
+
+                      {mentor.profile?.yearsOfExperience !== undefined && mentor.profile?.yearsOfExperience > 0 && (
+                        <div className="hp-mentor-exp">
+                          {mentor.profile.yearsOfExperience} năm kinh nghiệm
+                        </div>
+                      )}
+
+                      <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div className="hp-mentor-stars">
+                          ★ {mentor.stats?.averageRating ? mentor.stats.averageRating.toFixed(1) : '0.0'}
+                          <span>({mentor.stats?.totalFeedbacksGiven || 0} reviews)</span>
+                        </div>
+                        <span style={{ fontSize: '12px', color: 'var(--hp-primary)', fontWeight: '500' }}>Chi tiết →</span>
+                      </div>
+                    </TiltCard>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* ── PROCESS (DARK) ─────────────────────────────── */}
       <section className="hp-tile hp-tile-dark" id="process">
@@ -454,120 +569,7 @@ export function HomePage({ session, onLogin, onStart, onSignOut, onOpenDashboard
         </div>
       </section>
 
-      {/* ── PERSONA (LIGHT) ─────── */}
-      <section className="hp-tile hp-tile-light" id="network">
-        <div className="hp-tile-inner">
-          <span className="hp-eyebrow">Dành cho ai</span>
-          <h2>Một nền tảng. <em>Hai chiều giá trị.</em></h2>
-          <p className="hp-tile-body">
-            CareerMap phục vụ cả người học và mạng lưới chuyên gia, tạo nên một vòng tròn khép kín giữa đào tạo và thực hành.
-          </p>
 
-          <div className="hp-persona-grid">
-            <TiltCard className="hp-persona">
-              <span className="hp-persona-tag">Học viên</span>
-              <h3>Tăng tốc sự nghiệp với dữ liệu, không phỏng đoán.</h3>
-              <p>Phù hợp với sinh viên năm cuối, người đang chuyển ngành và developer muốn lên cấp độ tiếp theo.</p>
-              <ul>
-                <li>Lộ trình rõ ràng theo vai trò mục tiêu</li>
-                <li>Phản hồi từ người đã đi trước, không phải lý thuyết</li>
-                <li>Theo dõi tiến độ và năng suất hằng tuần</li>
-              </ul>
-            </TiltCard>
-
-            <TiltCard className="hp-persona">
-              <span className="hp-persona-tag">Mentor &amp; Counselor</span>
-              <h3>Truyền lại kinh nghiệm. Tạo ảnh hưởng có thể đo lường.</h3>
-              <p>Cộng đồng mentor đến từ Big Tech, startup và các công ty sản phẩm đang phát triển nhanh.</p>
-              <ul>
-                <li>Lịch review linh hoạt, kiểm soát khối lượng</li>
-                <li>Hồ sơ học viên rõ ràng, có dữ liệu kỹ năng</li>
-                <li>Hệ thống ghi nhận đóng góp minh bạch</li>
-              </ul>
-            </TiltCard>
-          </div>
-
-          <div style={{ marginTop: '72px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span className="hp-eyebrow" style={{ marginBottom: '12px' }}>Đội ngũ Chuyên gia</span>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '28px', fontWeight: '600', fontFamily: 'var(--hp-font-display)', textAlign: 'center' }}>
-              Kết nối trực tiếp với <em>Mentor &amp; Counselor</em>
-            </h3>
-            <p className="hp-tile-body" style={{ marginBottom: '36px', textAlign: 'center' }}>
-              Những người đang làm việc tại các tập đoàn công nghệ hàng đầu và đội ngũ tư vấn giàu kinh nghiệm sẵn sàng hỗ trợ bạn.
-            </p>
-
-            {loadingMentors ? (
-              <p style={{ color: 'var(--hp-ink-muted-48)' }}>Đang tải danh sách chuyên gia...</p>
-            ) : mentors.length === 0 ? (
-              <p style={{ color: 'var(--hp-ink-muted-48)' }}>Hiện chưa có mentor nào hoạt động.</p>
-            ) : (
-              <div className="hp-mentor-grid">
-                {mentors.map((mentor) => {
-                  const initials = (mentor.fullName || 'M')
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')
-                    .substring(0, 2)
-                    .toUpperCase();
-                  const avatarSrc = resolveAvatarSrc(mentor.avatarUrl, mentor.id);
-
-                  return (
-                    <TiltCard
-                      key={mentor.id}
-                      className="hp-mentor-card"
-                      onClick={() => setSelectedMentor(mentor)}
-                    >
-                      <div className="hp-mentor-avatar-wrap">
-                        {avatarSrc ? (
-                          <img
-                            src={avatarSrc}
-                            alt={mentor.fullName}
-                            className="hp-mentor-avatar"
-                          />
-                        ) : (
-                          <div className="hp-mentor-avatar-placeholder">{initials}</div>
-                        )}
-                      </div>
-
-                      <span className={`hp-mentor-badge ${mentor.role === 'IndustryMentor' ? 'mentor' : 'counselor'}`}>
-                        {mentor.role === 'IndustryMentor' ? 'Industry Mentor' : 'Counselor'}
-                      </span>
-
-                      <h3>{mentor.fullName}</h3>
-
-                      <div className="hp-mentor-meta">
-                        {mentor.profile?.jobTitle && mentor.profile?.company ? (
-                          <div>{mentor.profile.jobTitle} tại {mentor.profile.company}</div>
-                        ) : mentor.profile?.jobTitle ? (
-                          <div>{mentor.profile.jobTitle}</div>
-                        ) : mentor.profile?.company ? (
-                          <div>Chuyên gia tại {mentor.profile.company}</div>
-                        ) : (
-                          <div>Chuyên gia công nghệ</div>
-                        )}
-                      </div>
-
-                      {mentor.profile?.yearsOfExperience !== undefined && mentor.profile?.yearsOfExperience > 0 && (
-                        <div className="hp-mentor-exp">
-                          {mentor.profile.yearsOfExperience} năm kinh nghiệm
-                        </div>
-                      )}
-
-                      <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div className="hp-mentor-stars">
-                          ★ {mentor.stats?.averageRating ? mentor.stats.averageRating.toFixed(1) : '0.0'}
-                          <span>({mentor.stats?.totalFeedbacksGiven || 0} reviews)</span>
-                        </div>
-                        <span style={{ fontSize: '12px', color: 'var(--hp-primary)', fontWeight: '500' }}>Chi tiết →</span>
-                      </div>
-                    </TiltCard>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
 
       {/* ── STATS RIBBON ── */}
       <section className="hp-tile hp-tile-parchment">
