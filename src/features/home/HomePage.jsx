@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useSpring } from 'motion/react';
+import { motion, useScroll, useSpring, AnimatePresence } from 'motion/react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -14,6 +14,7 @@ import { TypingText } from '../../components/animate-ui/primitives/texts/typing'
 import { CountingNumber } from '../../components/animate-ui/primitives/texts/counting-number';
 import '../../styles/home.css';
 import { GridScan } from '../../components/GridScan';
+import { apiRequest } from '../../api/http';
 
 // Register GSAP plugins
 gsap.registerPlugin(useGSAP, ScrollTrigger);
@@ -116,6 +117,17 @@ function ParallaxOrb({ className, style }) {
   );
 }
 
+const apiUrl = import.meta.env.VITE_API_URL || '';
+
+function resolveAvatarSrc(avatarUrl, userId) {
+  if (!avatarUrl) return '';
+  const trimmed = avatarUrl.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith('/api/storage/public/')) return `${apiUrl}${trimmed}`;
+  if (trimmed.startsWith('api/storage/public/')) return `${apiUrl}/${trimmed}`;
+  return `${apiUrl}/api/storage/public/users/${userId}/avatar/download`;
+}
+
 export function HomePage({ session, onLogin, onStart, onSignOut, onOpenDashboard }) {
   const isLoggedIn = Boolean(session);
   const onStartFn = onStart || onLogin;
@@ -123,6 +135,9 @@ export function HomePage({ session, onLogin, onStart, onSignOut, onOpenDashboard
   const [subscriptions, setSubscriptions] = useState([]);
   const [checkoutPlanId, setCheckoutPlanId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [mentors, setMentors] = useState([]);
+  const [selectedMentor, setSelectedMentor] = useState(null);
+  const [loadingMentors, setLoadingMentors] = useState(false);
 
   // Scroll-linked progress bar at the very top
   const { scrollYProgress } = useScroll();
@@ -134,6 +149,7 @@ export function HomePage({ session, onLogin, onStart, onSignOut, onOpenDashboard
 
   useEffect(() => {
     loadPlans();
+    loadMentors();
   }, [session?.token]);
 
   async function loadPlans() {
@@ -146,6 +162,18 @@ export function HomePage({ session, onLogin, onStart, onSignOut, onOpenDashboard
       setSubscriptions(subList);
     } catch (error) {
       console.error(error);
+    }
+  }
+
+  async function loadMentors() {
+    setLoadingMentors(true);
+    try {
+      const data = await apiRequest('/api/mentors');
+      setMentors(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Không thể lấy danh sách mentor:', err);
+    } finally {
+      setLoadingMentors(false);
     }
   }
 
@@ -458,6 +486,86 @@ export function HomePage({ session, onLogin, onStart, onSignOut, onOpenDashboard
               </ul>
             </TiltCard>
           </div>
+
+          <div style={{ marginTop: '72px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span className="hp-eyebrow" style={{ marginBottom: '12px' }}>Đội ngũ Chuyên gia</span>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '28px', fontWeight: '600', fontFamily: 'var(--hp-font-display)', textAlign: 'center' }}>
+              Kết nối trực tiếp với <em>Mentor &amp; Counselor</em>
+            </h3>
+            <p className="hp-tile-body" style={{ marginBottom: '36px', textAlign: 'center' }}>
+              Những người đang làm việc tại các tập đoàn công nghệ hàng đầu và đội ngũ tư vấn giàu kinh nghiệm sẵn sàng hỗ trợ bạn.
+            </p>
+
+            {loadingMentors ? (
+              <p style={{ color: 'var(--hp-ink-muted-48)' }}>Đang tải danh sách chuyên gia...</p>
+            ) : mentors.length === 0 ? (
+              <p style={{ color: 'var(--hp-ink-muted-48)' }}>Hiện chưa có mentor nào hoạt động.</p>
+            ) : (
+              <div className="hp-mentor-grid">
+                {mentors.map((mentor) => {
+                  const initials = (mentor.fullName || 'M')
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase();
+                  const avatarSrc = resolveAvatarSrc(mentor.avatarUrl, mentor.id);
+
+                  return (
+                    <TiltCard
+                      key={mentor.id}
+                      className="hp-mentor-card"
+                      onClick={() => setSelectedMentor(mentor)}
+                    >
+                      <div className="hp-mentor-avatar-wrap">
+                        {avatarSrc ? (
+                          <img
+                            src={avatarSrc}
+                            alt={mentor.fullName}
+                            className="hp-mentor-avatar"
+                          />
+                        ) : (
+                          <div className="hp-mentor-avatar-placeholder">{initials}</div>
+                        )}
+                      </div>
+
+                      <span className={`hp-mentor-badge ${mentor.role === 'IndustryMentor' ? 'mentor' : 'counselor'}`}>
+                        {mentor.role === 'IndustryMentor' ? 'Industry Mentor' : 'Counselor'}
+                      </span>
+
+                      <h3>{mentor.fullName}</h3>
+
+                      <div className="hp-mentor-meta">
+                        {mentor.profile?.jobTitle && mentor.profile?.company ? (
+                          <div>{mentor.profile.jobTitle} tại {mentor.profile.company}</div>
+                        ) : mentor.profile?.jobTitle ? (
+                          <div>{mentor.profile.jobTitle}</div>
+                        ) : mentor.profile?.company ? (
+                          <div>Chuyên gia tại {mentor.profile.company}</div>
+                        ) : (
+                          <div>Chuyên gia công nghệ</div>
+                        )}
+                      </div>
+
+                      {mentor.profile?.yearsOfExperience !== undefined && mentor.profile?.yearsOfExperience > 0 && (
+                        <div className="hp-mentor-exp">
+                          {mentor.profile.yearsOfExperience} năm kinh nghiệm
+                        </div>
+                      )}
+
+                      <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div className="hp-mentor-stars">
+                          ★ {mentor.stats?.averageRating ? mentor.stats.averageRating.toFixed(1) : '0.0'}
+                          <span>({mentor.stats?.totalFeedbacksGiven || 0} reviews)</span>
+                        </div>
+                        <span style={{ fontSize: '12px', color: 'var(--hp-primary)', fontWeight: '500' }}>Chi tiết →</span>
+                      </div>
+                    </TiltCard>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -569,6 +677,121 @@ export function HomePage({ session, onLogin, onStart, onSignOut, onOpenDashboard
           </div>
         </div>
       </footer>
+
+      {/* ── MENTOR DETAIL MODAL ─────────────────────────── */}
+      <AnimatePresence>
+        {selectedMentor && (
+          <motion.div
+            className="hp-modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedMentor(null)}
+          >
+            <motion.div
+              className="hp-modal-content"
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              transition={{ type: 'spring', duration: 0.4 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="hp-modal-close"
+                onClick={() => setSelectedMentor(null)}
+                aria-label="Đóng"
+              >
+                ✕
+              </button>
+
+              <div className="hp-modal-body">
+                <div className="hp-modal-left">
+                  {resolveAvatarSrc(selectedMentor.avatarUrl, selectedMentor.id) ? (
+                    <img
+                      src={resolveAvatarSrc(selectedMentor.avatarUrl, selectedMentor.id)}
+                      alt={selectedMentor.fullName}
+                      className="hp-modal-avatar"
+                    />
+                  ) : (
+                    <div className="hp-modal-avatar-placeholder">
+                      {(selectedMentor.fullName || 'M')
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .substring(0, 2)
+                        .toUpperCase()}
+                    </div>
+                  )}
+
+                  <span className={`hp-mentor-badge ${selectedMentor.role === 'IndustryMentor' ? 'mentor' : 'counselor'}`}>
+                    {selectedMentor.role === 'IndustryMentor' ? 'Industry Mentor' : 'Counselor'}
+                  </span>
+
+                  {selectedMentor.profile?.yearsOfExperience !== undefined && selectedMentor.profile?.yearsOfExperience > 0 && (
+                    <span className="hp-mentor-exp" style={{ fontSize: '13px', marginTop: '4px' }}>
+                      {selectedMentor.profile.yearsOfExperience} năm kinh nghiệm
+                    </span>
+                  )}
+                </div>
+
+                <div className="hp-modal-right">
+                  <div className="hp-modal-title">
+                    <h2>{selectedMentor.fullName}</h2>
+                    <div style={{ color: 'var(--hp-ink-muted-80)', fontSize: '15px', fontWeight: '500' }}>
+                      {selectedMentor.profile?.jobTitle && selectedMentor.profile?.company ? (
+                        <span>{selectedMentor.profile.jobTitle} tại {selectedMentor.profile.company}</span>
+                      ) : selectedMentor.profile?.jobTitle ? (
+                        <span>{selectedMentor.profile.jobTitle}</span>
+                      ) : selectedMentor.profile?.company ? (
+                        <span>Chuyên gia tại {selectedMentor.profile.company}</span>
+                      ) : (
+                        <span>Chuyên gia công nghệ</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="hp-modal-stats">
+                    <div className="hp-modal-stat-item">
+                      <small>Sao đánh giá</small>
+                      <strong style={{ color: '#f1c40f' }}>
+                        ★ {selectedMentor.stats?.averageRating ? selectedMentor.stats.averageRating.toFixed(1) : '0.0'} / 5.0
+                      </strong>
+                    </div>
+                    <div className="hp-modal-stat-item">
+                      <small>Lượt review</small>
+                      <strong>{selectedMentor.stats?.totalFeedbacksGiven || 0} feedbacks</strong>
+                    </div>
+                  </div>
+
+                  {selectedMentor.profile?.linkedInUrl && (
+                    <a
+                      href={selectedMentor.profile.linkedInUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hp-modal-linkedin"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                      </svg>
+                      Xem trang LinkedIn
+                    </a>
+                  )}
+
+                  <div style={{ borderTop: '1px solid var(--hp-divider-soft)', paddingTop: '16px' }}>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', textTransform: 'uppercase', color: 'var(--hp-ink-muted-48)', letterSpacing: '0.5px' }}>
+                      Giới thiệu
+                    </h4>
+                    <p className="hp-modal-bio">
+                      {selectedMentor.profile?.bio || 'Chuyên gia chưa cập nhật thông tin giới thiệu.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

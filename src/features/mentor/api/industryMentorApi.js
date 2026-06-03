@@ -51,3 +51,23 @@ export function getSignedUrl(session, objectName) {
   return authorizedRequest(`/api/storage/signed-url?objectName=${encodeURIComponent(objectName)}`, session);
 }
 
+export function getMentorProfile(session, mentorId) {
+  return authorizedRequest(`/api/mentors/${mentorId}`, session);
+}
+
+export function updateMyMentorProfile(session, payload) {
+  return authorizedRequest('/api/mentors/my-profile', session, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function uploadMentorAvatar(session, file) {
+  const formData = new FormData();
+  formData.append('File', file);
+  return authorizedRequest('/api/storage/avatar', session, {
+    method: 'POST',
+    body: formData,
+  });
+}
+

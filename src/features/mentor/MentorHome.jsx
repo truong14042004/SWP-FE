@@ -6,6 +6,7 @@ import { MentorStudentDetail } from './components/MentorStudentDetail';
 import { MentorFeedbackHistory } from './components/MentorFeedbackHistory';
 import { MentorWriteFeedbackModal } from './components/MentorWriteFeedbackModal';
 import { RoadmapReviewQueue } from '../roadmap-review/RoadmapReviewQueue';
+import { MentorProfileView } from './components/MentorProfileView';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { DashboardShell } from '@/components/dashboard-shell/DashboardShell';
 import {
@@ -48,6 +49,12 @@ const ICONS = {
       <path d="M5.5 6.5h7M5.5 9h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ),
+  profile: (
+    <svg viewBox="0 0 18 18" fill="none" aria-hidden>
+      <circle cx="9" cy="6" r="3.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M2.5 15.5c0-3 2.5-5.5 6.5-5.5s6.5 2.5 6.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
 };
 
 const VIEW_META = {
@@ -55,9 +62,10 @@ const VIEW_META = {
   queue:             { title: 'Review queue',      sub: 'Hàng chờ review từ học viên' },
   'roadmap-reviews': { title: 'Roadmap reviews',   sub: 'Hàng chờ duyệt lộ trình' },
   feedback:          { title: 'Lịch sử feedback',  sub: 'Phản hồi bạn đã gửi' },
+  profile:           { title: 'Hồ sơ cá nhân',     sub: 'Quản lý thông tin và ảnh đại diện của bạn' },
 };
 
-const VALID_VIEWS = ['overview', 'queue', 'roadmap-reviews', 'feedback'];
+const VALID_VIEWS = ['overview', 'queue', 'roadmap-reviews', 'feedback', 'profile'];
 
 export function MentorHome({ session, onSignOut }) {
   const getInitialViewInfo = () => {
@@ -159,6 +167,7 @@ export function MentorHome({ session, onSignOut }) {
     { id: 'queue',             label: 'Review queue',     icon: ICONS.queue,    badge: reviewQueue.length || null },
     { id: 'roadmap-reviews',   label: 'Roadmap reviews',  icon: ICONS.roadmap,  badge: pendingReviewCount || null },
     { id: 'feedback',          label: 'Lịch sử feedback', icon: ICONS.feedback, badge: feedbacks.length || null },
+    { id: 'profile',           label: 'Hồ sơ cá nhân',    icon: ICONS.profile },
   ];
 
   const meta = VIEW_META[currentView] || VIEW_META.overview;
@@ -269,6 +278,18 @@ export function MentorHome({ session, onSignOut }) {
                 reviewQueue={reviewQueue}
                 onSelectStudent={handleSelectStudent}
               />
+            </motion.div>
+          )}
+
+          {currentView === 'profile' && (
+            <motion.div
+              key="profile"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -14 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              <MentorProfileView session={session} />
             </motion.div>
           )}
         </AnimatePresence>
