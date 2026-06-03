@@ -478,7 +478,7 @@ export function RoadmapReviewQueue({ session, role }) {
                           onClick={() => startAction(item.id, 'approve')}
                           disabled={actionLoadingId === item.id}
                         >
-                          {actionLoadingId === item.id ? 'Đang duyệt...' : '✓ Duyệt verify'}
+                          {actionLoadingId === item.id ? 'Đang xử lý...' : 'Viết feedback'}
                         </button>
                       </>
                     )}
