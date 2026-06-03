@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { toast } from 'react-toastify';
+import { apiUrl } from '../../config';
+import { getSessionToken } from '../../auth/session';
 import {
   getMyNotifications,
   markAllNotificationsRead,
   markNotificationRead,
 } from './notificationApi';
 import '../../styles/notification-bell.css';
-
-const POLL_INTERVAL_MS = 30_000;
-
 function timeAgo(value) {
   if (!value) return '';
   const date = new Date(value);
@@ -36,9 +37,9 @@ export function NotificationBell({ session, onNavigate }) {
 
   useEffect(() => {
     let cancelled = false;
-    let intervalId = null;
+    let connection = null;
 
-    async function poll() {
+    async function loadInitial() {
       try {
         const result = await getMyNotifications(session, { take: 30 });
         if (!cancelled) {
@@ -46,16 +47,56 @@ export function NotificationBell({ session, onNavigate }) {
           setUnreadCount(result?.unreadCount || 0);
         }
       } catch {
-        // silent fail — bell không nên gây toast lỗi
+        // silent fail
       }
     }
 
-    poll();
-    intervalId = setInterval(poll, POLL_INTERVAL_MS);
+    async function setupSignalR() {
+      const token = getSessionToken(session);
+      if (!token) return;
+
+      const hubUrl = `${apiUrl || ''}/hubs/notification`;
+      
+      connection = new HubConnectionBuilder()
+        .withUrl(hubUrl, { accessTokenFactory: () => token })
+        .withAutomaticReconnect()
+        .configureLogging(LogLevel.Information)
+        .build();
+
+      connection.on('ReceiveNotification', (notification) => {
+        if (cancelled) return;
+        
+        setItems((current) => {
+          if (current.some(n => n.id === notification.id)) return current;
+          return [notification, ...current].slice(0, 30);
+        });
+        
+        setUnreadCount((count) => count + 1);
+        toast.info(notification.title, {
+          position: "bottom-right",
+          autoClose: 5000,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true
+        });
+      });
+
+      try {
+        await connection.start();
+      } catch (err) {
+        console.error('SignalR Connection Error: ', err);
+      }
+    }
+
+    loadInitial();
+    setupSignalR();
 
     return () => {
       cancelled = true;
-      if (intervalId) clearInterval(intervalId);
+      if (connection) {
+        connection.stop();
+      }
     };
   }, [session]);
 
