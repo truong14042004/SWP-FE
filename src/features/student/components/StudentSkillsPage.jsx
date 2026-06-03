@@ -951,7 +951,7 @@ function SkillGapPanel({
       <div className="skill-gap-head">
         <div>
           <span className="skill-gap-eyebrow">Skill gap analysis</span>
-          <h2>Phân tích khoảng cách kỹ năng</h2>
+          <h2>Phân tích khoảng cách kỹ năng với yêu cầu thực tế</h2>
           <p>
             Hệ thống dùng vai trò mục tiêu trong hồ sơ để so sánh với kỹ năng hiện tại của bạn.
           </p>
