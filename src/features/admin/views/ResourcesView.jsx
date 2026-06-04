@@ -143,7 +143,11 @@ export function ResourcesView({
               </label>
               <label>
                 <span>Difficulty</span>
-                <input name="difficulty" value={form.difficulty} onChange={updateField} />
+                <select name="difficulty" value={form.difficulty} onChange={updateField}>
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                </select>
               </label>
             </div>
 
