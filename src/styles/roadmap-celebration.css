@@ -153,3 +153,84 @@
     font-size: 13px;
     color: #4b5563;
 }
+
+.roadmap-outdated-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(239, 68, 68, 0.08));
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    flex-wrap: wrap;
+}
+
+.roadmap-outdated-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    min-width: 250px;
+}
+
+.roadmap-outdated-banner span {
+    font-size: 30px;
+    line-height: 1;
+}
+
+.roadmap-outdated-banner strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.roadmap-outdated-banner p {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.roadmap-outdated-banner-btn {
+    background: #f59e0b;
+    color: #ffffff;
+    border: none;
+    border-radius: 9999px;
+    padding: 10px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.roadmap-outdated-banner-btn:hover:not(:disabled) {
+    background: #d97706;
+    transform: translateY(-1px);
+}
+
+.roadmap-outdated-banner-btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.97);
+}
+
+.roadmap-outdated-banner-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}

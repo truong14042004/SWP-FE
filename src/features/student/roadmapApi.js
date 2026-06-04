@@ -41,3 +41,9 @@ export function unmarkLessonCompleted(session, nodeId, lessonId) {
         { method: 'DELETE' }
     );
 }
+
+export function regenerateRoadmap(session, id) {
+    return authorizedRequest(`/api/roadmap/${id}/regenerate`, session, {
+        method: 'POST',
+    });
+}

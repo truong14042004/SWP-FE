@@ -14,6 +14,7 @@ import {
   markLessonCompleted,
   unmarkLessonCompleted,
   updateRoadmapNodeStatus,
+  regenerateRoadmap,
 } from '../roadmapApi';
 import { getCareerRoles } from '../studentApi';
 import { getLatestSkillGap } from '../skillsApi';
@@ -523,6 +524,7 @@ export function StudentRoadmapPage({ session }) {
 const [reviewRequestsByNodeId, setReviewRequestsByNodeId] = useState({});
 const [cancelingReviewRequestId, setCancelingReviewRequestId] = useState('');
 const [lessonProgressByNodeId, setLessonProgressByNodeId] = useState({});
+const [regeneratingId, setRegeneratingId] = useState('');
 const [togglingLessonKey, setTogglingLessonKey] = useState('');
 const [celebrationOpen, setCelebrationOpen] = useState(false);
 const completionSeenRef = useRef({});
@@ -771,6 +773,37 @@ async function loadReviewRequestsForRoadmap(roadmapData) {
       toast.error(message);
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleRegenerate(id) {
+    if (!id) return;
+    setRegeneratingId(id);
+    setError('');
+
+    try {
+      const result = await regenerateRoadmap(session, id);
+      const detail = result?.id
+        ? await getRoadmapById(session, result.id).catch(() => result)
+        : result;
+
+      const summarizedDetail = summarizeRoadmap(detail);
+      setRoadmap(summarizedDetail);
+      toast.success('Đã cập nhật lộ trình thành công theo xu hướng mới nhất.');
+
+      // Reload lists and details
+      loadReviewRequestsForRoadmap(summarizedDetail);
+      loadLessonProgressForRoadmap(summarizedDetail);
+
+      setRoadmaps((currentList) =>
+        currentList.map((item) => (item.id === id ? { ...item, ...summarizedDetail } : item))
+      );
+    } catch (requestError) {
+      const message = requestError.message || 'Không cập nhật được lộ trình.';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setRegeneratingId('');
     }
   }
 
@@ -1033,6 +1066,32 @@ async function handleCancelReviewRequest(node, request) {
             </section>
           ) : (
             <>
+              {roadmap?.isOutdated && (
+                <div className="roadmap-outdated-banner animate-fade-in">
+                  <div className="roadmap-outdated-banner-content">
+                    <span aria-hidden="true">💡</span>
+                    <div>
+                      <strong>Lộ trình học tập có cập nhật mới!</strong>
+                      <p>
+                        Xu hướng thị trường hoặc yêu cầu kỹ năng của vai trò này vừa được cập nhật. Cập nhật ngay để theo kịp xu hướng mới nhất.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="roadmap-outdated-banner-btn"
+                    onClick={() => handleRegenerate(roadmap.id)}
+                    disabled={regeneratingId === roadmap.id}
+                  >
+                    <RefreshCw
+                      size={16}
+                      className={regeneratingId === roadmap.id ? 'animate-spin' : ''}
+                      aria-hidden="true"
+                    />
+                    {regeneratingId === roadmap.id ? 'Đang cập nhật...' : 'Cập nhật lộ trình'}
+                  </button>
+                </div>
+              )}
               {isRoadmapComplete && (
                 <div className="roadmap-completion-banner">
                   <span aria-hidden="true">🎉</span>
