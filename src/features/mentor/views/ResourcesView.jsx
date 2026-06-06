@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { formatDate } from '../../../shared/format';
-import { SectionTitle, StatusPill } from '../components/DashboardPrimitives';
+import { SectionTitle, StatusPill } from '../../admin/components/DashboardPrimitives';
 
 const emptyResource = {
   skillId: '',

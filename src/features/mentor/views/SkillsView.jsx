@@ -1,31 +1,45 @@
 import { useState } from 'react';
-import { SectionTitle, StatusPill } from '../components/DashboardPrimitives';
+import { SectionTitle, StatusPill } from '../../admin/components/DashboardPrimitives';
 
-const emptyCareerRole = { name: '', description: '', level: '', isActive: true };
+const emptySkill = { name: '', category: '', description: '', isActive: true };
 
-export function CareerRolesView({
-  careerRoles,
-  onLoadCareerRole,
-  onSaveCareerRole,
-  onDeleteCareerRole,
-}) {
-  const [form, setForm] = useState(emptyCareerRole);
+const defaultSkillCategories = [
+  'AI',
+  'Backend',
+  'Career',
+  'Cloud',
+  'Data',
+  'DevOps',
+  'Engineering',
+  'Frontend',
+  'Mobile',
+  'QA',
+];
+
+export function SkillsView({ skills, onLoadSkill, onSaveSkill, onDeleteSkill }) {
+  const [form, setForm] = useState(emptySkill);
   const [editingId, setEditingId] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const categoryOptions = Array.from(
+    new Set([
+      ...defaultSkillCategories,
+      ...skills.map((skill) => skill.category).filter(Boolean),
+    ]),
+  ).sort((first, second) => first.localeCompare(second));
 
   function updateField(event) {
     const { name, value, type, checked } = event.target;
     setForm((current) => ({ ...current, [name]: type === 'checkbox' ? checked : value }));
   }
 
-  async function edit(role) {
-    const latest = await onLoadCareerRole(role.id);
+  async function edit(skill) {
+    const latest = await onLoadSkill(skill.id);
     setEditingId(latest.id);
     setForm({
       name: latest.name,
+      category: latest.category,
       description: latest.description || '',
-      level: latest.level || '',
       isActive: latest.isActive,
     });
     setShowForm(true);
@@ -33,7 +47,7 @@ export function CareerRolesView({
 
   function reset() {
     setEditingId('');
-    setForm(emptyCareerRole);
+    setForm(emptySkill);
     setShowForm(false);
   }
 
@@ -41,7 +55,7 @@ export function CareerRolesView({
     event.preventDefault();
     setSaving(true);
     try {
-      await onSaveCareerRole(form, editingId);
+      await onSaveSkill(form, editingId);
       reset();
     } finally {
       setSaving(false);
@@ -51,12 +65,12 @@ export function CareerRolesView({
   return (
     <section className="admin-section">
       <SectionTitle
-        eyebrow="Career"
-        title="Career roles"
-        subtitle={`${careerRoles.length} roles`}
+        eyebrow="Catalog"
+        title="Skills"
+        subtitle={`${skills.length} skills tracked`}
         action={
           <button type="button" className="pill-button" onClick={() => { reset(); setShowForm(true); }}>
-            New career role
+            New skill
           </button>
         }
       />
@@ -64,7 +78,7 @@ export function CareerRolesView({
       {showForm && (
         <div className="form-card">
           <header className="form-card-header">
-            <h3>{editingId ? 'Edit career role' : 'New career role'}</h3>
+            <h3>{editingId ? 'Edit skill' : 'Create new skill'}</h3>
             <button type="button" className="icon-close" onClick={reset} aria-label="Close form">✕</button>
           </header>
 
@@ -75,8 +89,13 @@ export function CareerRolesView({
                 <input name="name" value={form.name} onChange={updateField} required />
               </label>
               <label>
-                <span>Level</span>
-                <input name="level" value={form.level} onChange={updateField} placeholder="Junior, Mid, Senior…" />
+                <span>Category</span>
+                <select name="category" value={form.category} onChange={updateField} required>
+                  <option value="">Select category</option>
+                  {categoryOptions.map((category) => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
               </label>
             </div>
             <label>
@@ -89,7 +108,7 @@ export function CareerRolesView({
             </label>
             <div className="button-row">
               <button className="pill-button" type="submit" disabled={saving}>
-                {saving ? 'Saving…' : editingId ? 'Save changes' : 'Create role'}
+                {saving ? 'Saving…' : editingId ? 'Save changes' : 'Create skill'}
               </button>
               <button type="button" className="btn-secondary" onClick={reset}>Cancel</button>
             </div>
@@ -102,29 +121,29 @@ export function CareerRolesView({
           <table className="data-table">
             <thead>
               <tr>
-                <th>Role</th>
-                <th>Level</th>
+                <th>Name</th>
+                <th>Category</th>
                 <th>Status</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {careerRoles.map((role) => (
-                <tr key={role.id}>
+              {skills.map((skill) => (
+                <tr key={skill.id}>
                   <td>
-                    <strong>{role.name}</strong>
-                    <span>{role.description || 'No description'}</span>
+                    <strong>{skill.name}</strong>
+                    <span>{skill.description || 'No description'}</span>
                   </td>
-                  <td>{role.level || '—'}</td>
-                  <td><StatusPill active={role.isActive} /></td>
+                  <td>{skill.category}</td>
+                  <td><StatusPill active={skill.isActive} /></td>
                   <td className="table-actions">
-                    <button type="button" className="btn-secondary" onClick={() => edit(role)}>Edit</button>
-                    <button type="button" className="btn-secondary danger-action" onClick={() => onDeleteCareerRole(role)}>Disable</button>
+                    <button type="button" className="btn-secondary" onClick={() => edit(skill)}>Edit</button>
+                    <button type="button" className="btn-secondary danger-action" onClick={() => onDeleteSkill(skill)}>Delete</button>
                   </td>
                 </tr>
               ))}
-              {!careerRoles.length && (
-                <tr><td colSpan={4}><p className="empty-state">No career roles yet.</p></td></tr>
+              {!skills.length && (
+                <tr><td colSpan={4}><p className="empty-state">No skills yet.</p></td></tr>
               )}
             </tbody>
           </table>

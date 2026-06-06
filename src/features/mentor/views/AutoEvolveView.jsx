@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getCareerRoles, getPendingProposals, generateProposals, approveProposal, rejectProposal } from '../adminApi';
-import { SectionTitle } from '../components/DashboardPrimitives';
+import { getCareerRoles, getPendingProposals, generateProposals, approveProposal, rejectProposal } from '../api/industryMentorApi';
+import { SectionTitle } from '../../admin/components/DashboardPrimitives';
 
 export function AutoEvolveView({ session }) {
   const [roles, setRoles] = useState([]);
