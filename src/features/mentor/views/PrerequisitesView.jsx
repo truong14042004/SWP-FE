@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SectionTitle } from '../components/DashboardPrimitives';
+import { SectionTitle } from '../../admin/components/DashboardPrimitives';
 
 const emptyPrerequisite = {
   skillId: '',

@@ -94,13 +94,7 @@ const MANAGEMENT_SECTIONS = [
   { id: 'assignments',  label: 'Assignments' },
   { id: 'payments',     label: 'Payments' },
   { id: 'plans',        label: 'Plans' },
-  { id: 'skills',       label: 'Skills' },
-  { id: 'resources',    label: 'Resources' },
-  { id: 'requirements', label: 'Requirements' },
-  { id: 'prerequisites', label: 'Prerequisites' },
-  { id: 'careerRoles',  label: 'Career roles' },
   { id: 'marketPulse',  label: 'Market pulse' },
-  { id: 'autoEvolve',   label: 'AI Auto-Evolve' },
 ];
 
 const MANAGEMENT_IDS = new Set(MANAGEMENT_SECTIONS.map((s) => s.id));
@@ -120,13 +114,7 @@ const SECTION_LABELS = {
   assignments:  { title: 'Counselor assignments', sub: 'Match counselors with students' },
   payments:     { title: 'Payments',           sub: 'Transactions, subscriptions, invoices' },
   plans:        { title: 'Subscription plans', sub: 'Pricing and feature limits' },
-  skills:       { title: 'Skills',             sub: 'Skill catalog' },
-  resources:    { title: 'Learning resources', sub: 'Articles, videos, files' },
-  requirements: { title: 'Role requirements',  sub: 'Skills mapped to career roles' },
-  prerequisites: { title: 'Skill prerequisites', sub: 'Which skills must be learned first' },
-  careerRoles:  { title: 'Career roles',       sub: 'Target roles students can pursue' },
   marketPulse:  { title: 'Market pulse',        sub: 'Job market trends from scraped postings' },
-  autoEvolve:   { title: 'AI Auto-Evolve',      sub: 'AI-generated roadmap proposals' },
 };
 
 const MGMT_OPEN_STORAGE_KEY = 'admin.sidebar.mgmtOpen';
