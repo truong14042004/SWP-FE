@@ -139,7 +139,14 @@ export function ResourcesView({
             <div className="field-row">
               <label>
                 <span>Type</span>
-                <input name="resourceType" value={form.resourceType} onChange={updateField} required />
+                <select name="resourceType" value={form.resourceType} onChange={updateField} required>
+                  <option value="Article">Article (Bài viết)</option>
+                  <option value="Video">Video</option>
+                  <option value="Course">Course (Khóa học)</option>
+                  <option value="Documentation">Documentation (Tài liệu)</option>
+                  <option value="Book">Book (Sách)</option>
+                  <option value="Exercise">Exercise (Bài tập)</option>
+                </select>
               </label>
               <label>
                 <span>Difficulty</span>
