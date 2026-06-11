@@ -927,6 +927,12 @@ function UserSkillCard({ userSkill, onEdit, onDelete, session }) {
         <span>Cập nhật: <b>{formatDate(userSkill.updatedAt)}</b></span>
       </div>
 
+      {userSkill.verificationStatus === 'Unverified' && userSkill.rejectionReason && (
+        <div className="user-skill-reject-reason">
+          <strong>Lý do từ chối:</strong> {userSkill.rejectionReason}
+        </div>
+      )}
+
       {userSkill.evidenceUrl && (
         <a
           href="#"

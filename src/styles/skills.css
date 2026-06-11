@@ -1209,3 +1209,15 @@
 .user-skill-verify-tag.pending { background: rgba(255, 178, 0, 0.14); color: #b87a00; }
 .user-skill-verify-tag.unverified { background: rgba(197, 48, 44, 0.1); color: #c5302c; }
 .user-skill-verify-tag.self { background: rgba(110, 110, 115, 0.12); color: #6e6e73; }
+
+/* Rejection reason on a rejected/unverified skill card */
+.user-skill-reject-reason {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(197, 48, 44, 0.08);
+  color: #b3261e;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.user-skill-reject-reason strong { font-weight: 600; }
