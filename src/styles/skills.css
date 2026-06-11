@@ -1196,3 +1196,16 @@
         border-radius: 24px;
     }
 }
+
+/* Verification status tag on student skill cards (Luồng 1) */
+.user-skill-verify-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.user-skill-verify-tag.verified { background: rgba(45, 185, 96, 0.12); color: #1f8a48; }
+.user-skill-verify-tag.pending { background: rgba(255, 178, 0, 0.14); color: #b87a00; }
+.user-skill-verify-tag.unverified { background: rgba(197, 48, 44, 0.1); color: #c5302c; }
+.user-skill-verify-tag.self { background: rgba(110, 110, 115, 0.12); color: #6e6e73; }

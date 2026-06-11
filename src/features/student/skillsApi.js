@@ -45,6 +45,17 @@ export function importUserSkillEvidenceFromUrl(session, userSkillId, payload) {
     });
 }
 
+/**
+ * Nộp minh chứng để chuyển kỹ năng sang trạng thái chờ xác thực
+ * (PendingVerification) — đưa kỹ năng vào hàng đợi duyệt của cố vấn.
+ */
+export function submitUserSkillEvidence(session, userSkillId, payload) {
+    return authorizedRequest(`/api/user-skills/${userSkillId}/submit-evidence`, session, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}
+
 /* Skill Gap APIs */
 
 export function analyzeSkillGap(session, careerRoleId) {

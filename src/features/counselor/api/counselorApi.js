@@ -49,3 +49,52 @@ export function getSignedUrl(session, objectName) {
     session
   );
 }
+
+/* ── Luồng 1: Duyệt kỹ năng (skill verification) ─────────────── */
+
+export function getSkillVerificationQueue(session) {
+  return authorizedRequest('/api/counselor/skill-verification-queue', session);
+}
+
+export function verifyStudentSkill(session, userSkillId, payload) {
+  return authorizedRequest(`/api/user-skills/${userSkillId}/verify`, session, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function unverifyStudentSkill(session, userSkillId) {
+  return authorizedRequest(`/api/user-skills/${userSkillId}/unverify`, session, {
+    method: 'POST',
+  });
+}
+
+export function rejectStudentSkillEvidence(session, userSkillId, reason) {
+  return authorizedRequest(`/api/user-skills/${userSkillId}/reject-evidence`, session, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  });
+}
+
+/* ── Luồng 2: Duyệt khung lộ trình (roadmap approval) ────────── */
+
+export function getRoadmapApprovalQueue(session) {
+  return authorizedRequest('/api/counselor/roadmap-approval-queue', session);
+}
+
+export function getRoadmapApprovalRequestDetails(session, requestId) {
+  return authorizedRequest(`/api/counselor/roadmap-approval-requests/${requestId}`, session);
+}
+
+export function approveRoadmapRequest(session, requestId) {
+  return authorizedRequest(`/api/counselor/roadmap-approval-requests/${requestId}/approve`, session, {
+    method: 'POST',
+  });
+}
+
+export function rejectRoadmapRequest(session, requestId, rejectionReason) {
+  return authorizedRequest(`/api/counselor/roadmap-approval-requests/${requestId}/reject`, session, {
+    method: 'POST',
+    body: JSON.stringify({ rejectionReason }),
+  });
+}

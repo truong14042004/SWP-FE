@@ -1344,3 +1344,46 @@
     opacity: 0.45;
     cursor: not-allowed;
 }
+
+/* ============================================================
+   Roadmap approval requests panel (Luồng 2 — student side)
+   ============================================================ */
+.roadmap-approval-panel {
+  margin: 0 0 20px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  padding: 18px 20px;
+  background: #fff;
+}
+.roadmap-approval-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.roadmap-approval-panel-head h3 { font-size: 16px; margin: 0; color: #1d1d1f; }
+.roadmap-approval-panel-head span { font-size: 13px; color: #6e6e73; }
+
+.roadmap-approval-list { display: flex; flex-direction: column; gap: 10px; }
+
+.roadmap-approval-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: #fafafc;
+}
+.roadmap-approval-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+}
+.roadmap-approval-item.pending .roadmap-approval-icon { background: rgba(255, 178, 0, 0.12); color: #b87a00; }
+.roadmap-approval-item.approved .roadmap-approval-icon { background: rgba(45, 185, 96, 0.12); color: #2db960; }
+.roadmap-approval-item.rejected .roadmap-approval-icon { background: rgba(197, 48, 44, 0.1); color: #c5302c; }
+
+.roadmap-approval-body { display: flex; flex-direction: column; gap: 2px; }
+.roadmap-approval-body strong { font-size: 14px; color: #1d1d1f; }
+.roadmap-approval-status-label { font-size: 13px; font-weight: 500; }
+.roadmap-approval-item.pending .roadmap-approval-status-label { color: #b87a00; }
+.roadmap-approval-item.approved .roadmap-approval-status-label { color: #2db960; }
+.roadmap-approval-item.rejected .roadmap-approval-status-label { color: #c5302c; }
+.roadmap-approval-reason { font-size: 13px; color: #424245; margin: 4px 0 0; }
+.roadmap-approval-body small { font-size: 12px; color: #86868b; margin-top: 2px; }

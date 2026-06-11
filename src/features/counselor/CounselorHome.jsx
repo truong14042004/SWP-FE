@@ -6,12 +6,16 @@ import { CounselorStudentDetail } from './components/CounselorStudentDetail';
 import { CounselorFeedbackHistory } from './components/CounselorFeedbackHistory';
 import { CounselorWriteFeedbackModal } from './components/CounselorWriteFeedbackModal';
 import { RoadmapReviewQueue } from '../roadmap-review/RoadmapReviewQueue';
+import { SkillVerificationQueue } from './components/SkillVerificationQueue';
+import { RoadmapApprovalQueue } from './components/RoadmapApprovalQueue';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { DashboardShell } from '@/components/dashboard-shell/DashboardShell';
 import {
   getCounselorStudents,
   getMyFeedbacks,
   createFeedback,
+  getSkillVerificationQueue,
+  getRoadmapApprovalQueue,
 } from './api/counselorApi';
 import { getCounselorRoadmapQueue } from '../roadmap-review/reviewApi';
 import { AnimatePresence, motion } from 'motion/react';
@@ -42,6 +46,18 @@ const ICONS = {
       <path d="M4 6v3a3 3 0 0 0 3 3h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ),
+  skillVerify: (
+    <svg viewBox="0 0 18 18" fill="none" aria-hidden>
+      <path d="M9 1.5l2.06 1.5 2.55-.02.78 2.43 2.06 1.51-.79 2.42.79 2.43-2.06 1.5-.78 2.43-2.55-.02L9 16.5l-2.06-1.5-2.55.02-.78-2.43L1.55 11l.79-2.43L1.55 6.15l2.06-1.51.78-2.43 2.55.02L9 1.5Z" fill="currentColor" opacity="0.18" />
+      <path d="M6 9l2 2 4-4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  approval: (
+    <svg viewBox="0 0 18 18" fill="none" aria-hidden>
+      <rect x="3" y="2" width="12" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6 7h6M6 10h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
   feedback: (
     <svg viewBox="0 0 18 18" fill="none" aria-hidden>
       <path d="M2 4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7l-4 3v-3a2 2 0 0 1-1-2V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
@@ -53,11 +69,13 @@ const ICONS = {
 const VIEW_META = {
   overview:           { title: 'Tổng quan',           sub: 'Hoạt động đào tạo & feedback gần đây' },
   students:           { title: 'Sinh viên',           sub: 'Danh sách học viên bạn đang đồng hành' },
-  'roadmap-reviews':  { title: 'Roadmap reviews',     sub: 'Hàng chờ duyệt lộ trình học viên' },
+  'skill-verifications': { title: 'Duyệt kỹ năng',    sub: 'Hàng chờ xác thực minh chứng kỹ năng' },
+  'roadmap-approvals':   { title: 'Duyệt lộ trình',   sub: 'Hàng chờ duyệt khung lộ trình AI đề xuất' },
+  'roadmap-reviews':  { title: 'Roadmap reviews',     sub: 'Hàng chờ duyệt tiến độ module học viên' },
   feedback:           { title: 'Lịch sử feedback',    sub: 'Các phản hồi bạn đã gửi' },
 };
 
-const VALID_VIEWS = ['overview', 'students', 'roadmap-reviews', 'feedback'];
+const VALID_VIEWS = ['overview', 'students', 'skill-verifications', 'roadmap-approvals', 'roadmap-reviews', 'feedback'];
 
 export function CounselorHome({ session, onSignOut }) {
   const getInitialViewInfo = () => {
@@ -80,6 +98,8 @@ export function CounselorHome({ session, onSignOut }) {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackModalStudent, setFeedbackModalStudent] = useState(null);
   const [pendingReviewCount, setPendingReviewCount] = useState(0);
+  const [skillQueueCount, setSkillQueueCount] = useState(0);
+  const [roadmapApprovalCount, setRoadmapApprovalCount] = useState(0);
 
   useEffect(() => {
     loadInitialData();
@@ -96,16 +116,20 @@ export function CounselorHome({ session, onSignOut }) {
   async function loadInitialData() {
     setLoading(true);
     try {
-      const [studentsData, feedbacksData, queueData] = await Promise.all([
+      const [studentsData, feedbacksData, queueData, skillQueueData, roadmapApprovalData] = await Promise.all([
         getCounselorStudents(session).catch(() => []),
         getMyFeedbacks(session).catch(() => []),
         getCounselorRoadmapQueue(session).catch(() => []),
+        getSkillVerificationQueue(session).catch(() => []),
+        getRoadmapApprovalQueue(session).catch(() => []),
       ]);
       setStudents(Array.isArray(studentsData) ? studentsData : []);
       setFeedbacks(Array.isArray(feedbacksData) ? feedbacksData : []);
       const pending = (Array.isArray(queueData) ? queueData : [])
         .filter((item) => item.status === 'Pending').length;
       setPendingReviewCount(pending);
+      setSkillQueueCount(Array.isArray(skillQueueData) ? skillQueueData.length : 0);
+      setRoadmapApprovalCount(Array.isArray(roadmapApprovalData) ? roadmapApprovalData.length : 0);
     } finally {
       setLoading(false);
     }
@@ -153,6 +177,8 @@ export function CounselorHome({ session, onSignOut }) {
   const navItems = [
     { id: 'overview',          label: 'Tổng quan',        icon: ICONS.overview },
     { id: 'students',          label: 'Sinh viên',        icon: ICONS.students, badge: students.length || null },
+    { id: 'skill-verifications', label: 'Duyệt kỹ năng',  icon: ICONS.skillVerify, badge: skillQueueCount || null },
+    { id: 'roadmap-approvals', label: 'Duyệt lộ trình',   icon: ICONS.approval, badge: roadmapApprovalCount || null },
     { id: 'roadmap-reviews',   label: 'Roadmap reviews',  icon: ICONS.roadmap,  badge: pendingReviewCount || null },
     { id: 'feedback',          label: 'Lịch sử feedback', icon: ICONS.feedback, badge: feedbacks.length || null },
   ];
@@ -238,6 +264,38 @@ export function CounselorHome({ session, onSignOut }) {
                 onBack={handleBack}
                 onOpenFeedbackModal={handleOpenFeedbackModal}
               />
+            </motion.div>
+          )}
+
+          {currentView === 'skill-verifications' && !selectedStudentId && (
+            <motion.div
+              key="skill-verifications"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -14 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              <section className="counselor-section counselor-section--tight">
+                <div className="counselor-section-inner counselor-section-inner--wide">
+                  <SkillVerificationQueue session={session} />
+                </div>
+              </section>
+            </motion.div>
+          )}
+
+          {currentView === 'roadmap-approvals' && !selectedStudentId && (
+            <motion.div
+              key="roadmap-approvals"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -14 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              <section className="counselor-section counselor-section--tight">
+                <div className="counselor-section-inner counselor-section-inner--wide">
+                  <RoadmapApprovalQueue session={session} />
+                </div>
+              </section>
             </motion.div>
           )}
 

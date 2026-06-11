@@ -25,3 +25,7 @@ export function applyAiRoadmap(session, roadmap) {
         body: JSON.stringify({ roadmap }),
     });
 }
+
+export function getStudentRoadmapApprovalRequests(session) {
+    return authorizedRequest('/api/ai-mentor/roadmap-approval-requests', session);
+}

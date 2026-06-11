@@ -15,6 +15,7 @@ import {
   getSkills,
   getUserSkills,
   importUserSkillEvidenceFromUrl,
+  submitUserSkillEvidence,
   updateUserSkill,
   uploadUserSkillEvidence,
 } from '../skillsApi';
@@ -92,6 +93,19 @@ function formatDate(value) {
     month: '2-digit',
     year: 'numeric',
   }).format(new Date(value));
+}
+
+const VERIFICATION_META = {
+  Verified: { label: 'Đã xác minh', className: 'verified' },
+  PendingVerification: { label: 'Đang chờ xác thực', className: 'pending' },
+  Unverified: { label: 'Chưa xác thực', className: 'unverified' },
+  SelfDeclared: { label: 'Tự đánh giá', className: 'self' },
+};
+
+function getVerificationMeta(userSkill) {
+  const status = userSkill?.verificationStatus;
+  if (status && VERIFICATION_META[status]) return VERIFICATION_META[status];
+  return userSkill?.isVerified ? VERIFICATION_META.Verified : VERIFICATION_META.SelfDeclared;
 }
 
 function resolveStorageUrl(value) {
@@ -357,11 +371,23 @@ function focusSkillForm() {
     setUploadingEvidence(true);
     try {
       const uploaded = await uploadUserSkillEvidence(session, editingId, file);
+      const evidenceUrl = getStorageValue(uploaded, '');
+      const evidenceType = uploaded?.contentType || form.evidenceType || 'Project';
+      // Flip the skill to PendingVerification so it lands in the counselor queue.
+      const submitted = await submitUserSkillEvidence(session, editingId, {
+        evidenceUrl,
+        evidenceType,
+      }).catch(() => null);
       setForm((current) => ({
         ...current,
         evidenceUrl: getStorageValue(uploaded, current.evidenceUrl),
       }));
-      toast.success('Đã tải lên minh chứng.');
+      if (submitted) {
+        setUserSkills((current) =>
+          current.map((item) => (item.id === editingId ? submitted : item)),
+        );
+      }
+      toast.success('Đã nộp minh chứng. Kỹ năng đang chờ cố vấn xác thực.');
     } catch (requestError) {
       toast.error(requestError.message || 'Không thể tải lên minh chứng.');
     } finally {
@@ -387,11 +413,22 @@ function focusSkillForm() {
         url,
         fileName: getFileNameFromUrl(url),
       });
+      const evidenceUrl = getStorageValue(imported, url);
+      const evidenceType = imported?.contentType || form.evidenceType || 'GitHub';
+      const submitted = await submitUserSkillEvidence(session, editingId, {
+        evidenceUrl,
+        evidenceType,
+      }).catch(() => null);
       setForm((current) => ({
         ...current,
         evidenceUrl: getStorageValue(imported, url),
       }));
-      toast.success('Đã nhập minh chứng từ URL.');
+      if (submitted) {
+        setUserSkills((current) =>
+          current.map((item) => (item.id === editingId ? submitted : item)),
+        );
+      }
+      toast.success('Đã nhập minh chứng. Kỹ năng đang chờ cố vấn xác thực.');
     } catch (requestError) {
       toast.error(requestError.message || 'Không thể nhập minh chứng.');
     } finally {
@@ -447,13 +484,17 @@ function focusSkillForm() {
             );
             const evidenceUrl = getStorageValue(uploaded, '');
             if (evidenceUrl) {
-              finalSkill = {
+              const submitted = await submitUserSkillEvidence(session, created.id, {
+                evidenceUrl,
+                evidenceType: created.evidenceType || form.evidenceType || 'Project',
+              }).catch(() => null);
+              finalSkill = submitted || {
                 ...created,
                 evidenceUrl,
                 evidenceType: created.evidenceType || form.evidenceType,
               };
             }
-            toast.success('Đã tải lên minh chứng cho kỹ năng mới.');
+            toast.success('Đã nộp minh chứng — kỹ năng mới đang chờ xác thực.');
           } catch (uploadError) {
             toast.error(uploadError.message || 'Không thể tải lên minh chứng sau khi lưu.');
           } finally {
@@ -879,7 +920,9 @@ function UserSkillCard({ userSkill, onEdit, onDelete, session }) {
       <div className="user-skill-meta">
         <span>
           Trạng thái:{' '}
-          <b>{userSkill.isVerified ? 'Đã xác minh' : 'Chưa xác minh'}</b>
+          <b className={`user-skill-verify-tag ${getVerificationMeta(userSkill).className}`}>
+            {getVerificationMeta(userSkill).label}
+          </b>
         </span>
         <span>Cập nhật: <b>{formatDate(userSkill.updatedAt)}</b></span>
       </div>

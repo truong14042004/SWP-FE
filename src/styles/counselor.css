@@ -2255,3 +2255,113 @@
   .counselor-modal-body,
   .counselor-modal-footer { padding-left: 22px; padding-right: 22px; }
 }
+
+/* ============================================================
+   Skill verification & Roadmap approval queues (Luồng 1 & 2)
+   ============================================================ */
+
+.cv-queue { display: flex; flex-direction: column; gap: 14px; }
+
+.cv-queue-list { display: flex; flex-direction: column; gap: 12px; }
+
+.cv-queue-card {
+  border: 1px solid var(--c-hairline-subtle);
+  border-radius: var(--c-r-lg);
+  padding: 16px 18px;
+  background: var(--c-canvas);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cv-queue-card-head { display: flex; align-items: center; gap: 12px; }
+
+.cv-queue-student { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.cv-queue-student strong { font-size: 15px; color: var(--c-ink); }
+.cv-queue-student span {
+  font-size: 13px; color: var(--c-ink-muted-48);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.cv-queue-time { font-size: 12px; color: var(--c-ink-muted-30); white-space: nowrap; }
+
+.cv-queue-card-body {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  padding: 10px 12px;
+  background: var(--c-parchment);
+  border-radius: var(--c-r-md);
+}
+.cv-queue-skill { display: flex; flex-direction: column; gap: 2px; }
+.cv-queue-skill-name { font-weight: 600; color: var(--c-ink); }
+.cv-queue-skill-cat { font-size: 12px; color: var(--c-ink-muted-48); }
+.cv-queue-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cv-queue-evidence-type {
+  font-size: 12px; font-weight: 500;
+  padding: 3px 10px; border-radius: var(--c-r-pill);
+  background: rgba(0, 102, 204, 0.08); color: var(--c-primary);
+}
+
+.cv-queue-card-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Buttons */
+.counselor-btn-danger {
+  background: var(--c-danger-bg); color: var(--c-danger);
+  border: 1px solid rgba(197, 48, 44, 0.2);
+}
+.counselor-btn-danger:hover { background: rgba(197, 48, 44, 0.14); }
+.counselor-btn-sm { padding: 6px 14px; font-size: 13px; }
+
+.counselor-skill-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+
+/* Modal */
+.cv-modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0, 0, 0, 0.42);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.cv-modal {
+  background: var(--c-canvas);
+  border-radius: var(--c-r-xl);
+  padding: 28px;
+  width: 100%; max-width: 460px;
+  box-shadow: var(--c-shadow-product);
+  display: flex; flex-direction: column; gap: 14px;
+}
+.cv-modal--wide { max-width: 640px; max-height: 86vh; overflow-y: auto; }
+.cv-modal h3 { font-size: 20px; color: var(--c-ink); margin: 0; }
+.cv-modal-sub { font-size: 14px; color: var(--c-ink-muted-48); margin: 0; }
+.cv-modal-head { display: flex; flex-direction: column; gap: 2px; }
+
+.cv-modal-field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--c-ink); }
+.cv-modal-field select,
+.cv-modal-field textarea {
+  border: 1px solid var(--c-hairline);
+  border-radius: var(--c-r-sm);
+  padding: 10px 12px;
+  font: inherit; color: var(--c-ink); background: var(--c-canvas);
+  width: 100%; resize: vertical;
+}
+.cv-modal-field select:focus,
+.cv-modal-field textarea:focus { outline: none; border-color: var(--c-primary-focus); }
+
+.cv-modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+
+.cv-modal-tree {
+  border: 1px solid var(--c-hairline-subtle);
+  border-radius: var(--c-r-md);
+  padding: 12px; max-height: 46vh; overflow-y: auto;
+  background: var(--c-pearl);
+}
+.cv-modal-tree-node { padding-left: calc(var(--depth, 0) * 16px); margin: 4px 0; }
+.cv-modal-tree-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cv-modal-tree-row strong { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--c-ink); font-weight: 600; }
+.cv-modal-tree-row small { font-size: 12px; color: var(--c-ink-muted-48); }
+.cv-modal-tree-node p { font-size: 12px; color: var(--c-ink-muted-48); margin: 2px 0 0; }
+
+.counselor-skill-vstatus {
+  font-size: 11px; font-weight: 600;
+  padding: 2px 9px; border-radius: var(--c-r-pill);
+}
+.counselor-skill-vstatus.pending { background: var(--c-warning-bg); color: var(--c-warning); }

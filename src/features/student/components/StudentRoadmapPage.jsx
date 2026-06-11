@@ -20,6 +20,7 @@ import { getCareerRoles } from '../studentApi';
 import { getLatestSkillGap } from '../skillsApi';
 import { NodeReviewRequestModal } from './NodeReviewRequestModal';
 import { RoadmapCompletionCelebration } from './RoadmapCompletionCelebration';
+import { RoadmapApprovalStatus } from './RoadmapApprovalStatus';
 import {
   cancelReviewRequest,
   getReviewRequestsForNode,
@@ -1005,6 +1006,8 @@ async function handleCancelReviewRequest(node, request) {
           {error}
         </div>
       )}
+
+      <RoadmapApprovalStatus session={session} />
 
       <section className="roadmap-layout">
         <aside className="roadmap-list-card">

@@ -17,7 +17,7 @@ function totalHours(nodes = []) {
 export function RoadmapPreviewCard({ session, roadmap, onApplied }) {
   const [expanded, setExpanded] = useState(false);
   const [applying, setApplying] = useState(false);
-  const [appliedResult, setAppliedResult] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
 
   if (!roadmap) return null;
 
@@ -25,20 +25,16 @@ export function RoadmapPreviewCard({ session, roadmap, onApplied }) {
   const hours = roadmap.totalEstimatedHours || totalHours(roadmap.nodes);
 
   async function handleApply() {
-    if (appliedResult) {
-      onApplied?.(appliedResult);
-      return;
-    }
+    if (submitted) return;
 
     setApplying(true);
     try {
       const result = await applyAiRoadmap(session, roadmap);
-      const isExisting = result?.isExisting || result?.IsExisting;
-      toast.success(isExisting ? 'Roadmap này đã tồn tại — đang mở lộ trình hiện có.' : 'Đã tạo roadmap mới từ gợi ý AI.');
-      setAppliedResult(result);
+      toast.success('Đã gửi yêu cầu duyệt lộ trình tới cố vấn học tập. Lộ trình sẽ khả dụng sau khi được duyệt.');
+      setSubmitted(true);
       onApplied?.(result);
     } catch (error) {
-      toast.error(error.message || 'Không áp dụng được roadmap.');
+      toast.error(error.message || 'Không gửi được yêu cầu duyệt lộ trình.');
     } finally {
       setApplying(false);
     }
@@ -89,9 +85,13 @@ export function RoadmapPreviewCard({ session, roadmap, onApplied }) {
         type="button"
         className="ai-roadmap-apply"
         onClick={handleApply}
-        disabled={applying}
+        disabled={applying || submitted}
       >
-        {applying ? 'Đang xử lý...' : appliedResult ? <><Check size={16} aria-hidden="true" /> Đi đến lộ trình này</> : <><Check size={16} aria-hidden="true" /> Áp dụng roadmap này</>}
+        {applying
+          ? 'Đang gửi...'
+          : submitted
+            ? <><Check size={16} aria-hidden="true" /> Đã gửi yêu cầu duyệt</>
+            : <><Check size={16} aria-hidden="true" /> Gửi yêu cầu duyệt lộ trình</>}
       </button>
     </article>
   );

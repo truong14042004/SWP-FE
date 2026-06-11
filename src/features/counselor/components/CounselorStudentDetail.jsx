@@ -14,7 +14,12 @@ import {
   getStudentRoadmap,
   getStudentFeedbacks,
   getSignedUrl,
+  verifyStudentSkill,
+  unverifyStudentSkill,
+  rejectStudentSkillEvidence,
 } from '../api/counselorApi';
+import { VerifyLevelModal, RejectReasonModal } from './SkillVerificationQueue';
+import { AnimatePresence } from 'motion/react';
 
 function getInitials(name = '') {
   return (
@@ -112,6 +117,9 @@ export function CounselorStudentDetail({
   const [skillGapLoading, setSkillGapLoading] = useState(false);
   const [roadmap, setRoadmap] = useState(null);
   const [feedbacks, setFeedbacks] = useState([]);
+  const [verifyTarget, setVerifyTarget] = useState(null);
+  const [unverifyingId, setUnverifyingId] = useState(null);
+  const [rejectTarget, setRejectTarget] = useState(null);
 
   const student = students.find((s) => s.id === studentId);
   const profileDetails = profile?.profile;
@@ -163,6 +171,49 @@ export function CounselorStudentDetail({
       return acc;
     }, {});
   }, [skills]);
+
+  async function handleConfirmVerify(verifiedLevel) {
+    if (!verifyTarget) return;
+    try {
+      const updated = await verifyStudentSkill(session, verifyTarget.id, { verifiedLevel });
+      setSkills((prev) => prev.map((s) => (s.id === verifyTarget.id
+        ? { ...s, ...updated, isVerified: true }
+        : s)));
+      toast.success(`Đã xác nhận kỹ năng ${verifyTarget.skillName}.`);
+      setVerifyTarget(null);
+    } catch (error) {
+      toast.error(error.message || 'Không thể xác nhận kỹ năng.');
+    }
+  }
+
+  async function handleUnverify(skill) {
+    setUnverifyingId(skill.id);
+    try {
+      const updated = await unverifyStudentSkill(session, skill.id);
+      setSkills((prev) => prev.map((s) => (s.id === skill.id
+        ? { ...s, ...updated, isVerified: false, verifiedByFullName: null }
+        : s)));
+      toast.success(`Đã thu hồi xác minh kỹ năng ${skill.skillName}.`);
+    } catch (error) {
+      toast.error(error.message || 'Không thể thu hồi xác minh.');
+    } finally {
+      setUnverifyingId(null);
+    }
+  }
+
+  async function handleConfirmReject(reason) {
+    if (!rejectTarget) return;
+    try {
+      const updated = await rejectStudentSkillEvidence(session, rejectTarget.id, reason);
+      setSkills((prev) => prev.map((s) => (s.id === rejectTarget.id
+        ? { ...s, ...updated, isVerified: false, verificationStatus: 'Unverified' }
+        : s)));
+      toast.success(`Đã từ chối minh chứng kỹ năng ${rejectTarget.skillName}.`);
+      setRejectTarget(null);
+    } catch (error) {
+      toast.error(error.message || 'Không thể từ chối minh chứng.');
+    }
+  }
 
   const gapStats = useMemo(() => {
     const items = selectedSkillGapReport?.items || [];
@@ -299,8 +350,15 @@ export function CounselorStudentDetail({
               {activeTab === 'profile' && <ProfileTab profile={profileDetails} session={session} />}
 
               {activeTab === 'skills' && (
-                <SkillsTab skills={skills} skillsByCategory={skillsByCategory} />
-              )}
+                <SkillsTab
+                  skills={skills}
+                  skillsByCategory={skillsByCategory}
+                  session={session}
+                  onVerify={(skill) => setVerifyTarget(skill)}
+                  onUnverify={handleUnverify}
+                  onReject={(skill) => setRejectTarget(skill)}
+                  unverifyingId={unverifyingId}
+                />)}
 
               {activeTab === 'skillgap' && (
                 <SkillGapTab
@@ -350,6 +408,24 @@ export function CounselorStudentDetail({
           </div>
         </div>
       </section>
+
+      <AnimatePresence>
+        {verifyTarget && (
+          <VerifyLevelModal
+            skillName={verifyTarget.skillName}
+            currentLevel={verifyTarget.level}
+            onCancel={() => setVerifyTarget(null)}
+            onConfirm={handleConfirmVerify}
+          />
+        )}
+        {rejectTarget && (
+          <RejectReasonModal
+            skillName={rejectTarget.skillName}
+            onCancel={() => setRejectTarget(null)}
+            onConfirm={handleConfirmReject}
+          />
+        )}
+      </AnimatePresence>
     </ScrollProgressProvider>
   );
 }
@@ -442,7 +518,7 @@ function ProfileItem({ label, value, fullWidth }) {
 }
 
 /* ── Skills Tab ──────────────────────────────────────────── */
-function SkillsTab({ skills, skillsByCategory }) {
+function SkillsTab({ skills, skillsByCategory, session, onVerify, onUnverify, onReject, unverifyingId }) {
   if (skills.length === 0) {
     return (
       <div className="counselor-empty">
@@ -454,6 +530,20 @@ function SkillsTab({ skills, skillsByCategory }) {
   }
 
   const verifiedCount = skills.filter((s) => s.isVerified).length;
+
+  async function handleViewEvidence(objectName) {
+    if (!objectName) return;
+    if (/^https?:\/\//i.test(objectName)) {
+      window.open(objectName, '_blank', 'noopener');
+      return;
+    }
+    try {
+      const response = await getSignedUrl(session, objectName);
+      if (response.url) window.open(response.url, '_blank', 'noopener');
+    } catch (error) {
+      toast.error('Không thể mở minh chứng.');
+    }
+  }
 
   return (
     <div>
@@ -490,11 +580,62 @@ function SkillsTab({ skills, skillsByCategory }) {
               >
                 {skill.level}
               </span>
+              {skill.verificationStatus === 'PendingVerification' && (
+                <span className="counselor-skill-vstatus pending">Chờ xác thực</span>
+              )}
               {skill.verifiedByFullName && (
                 <span className="counselor-skill-verifier">
                   Verify: {skill.verifiedByFullName}
                 </span>
               )}
+              <div className="counselor-skill-actions">
+                {skill.evidenceUrl && (
+                  <Button
+                    type="button"
+                    className="counselor-btn counselor-btn-link"
+                    onClick={() => handleViewEvidence(skill.evidenceUrl)}
+                    hoverScale={1.04}
+                    tapScale={0.96}
+                  >
+                    Minh chứng
+                  </Button>
+                )}
+                {skill.isVerified ? (
+                  <Button
+                    type="button"
+                    className="counselor-btn counselor-btn-danger counselor-btn-sm"
+                    onClick={() => onUnverify(skill)}
+                    disabled={unverifyingId === skill.id}
+                    hoverScale={1.04}
+                    tapScale={0.96}
+                  >
+                    {unverifyingId === skill.id ? 'Đang thu hồi...' : 'Thu hồi'}
+                  </Button>
+                ) : (
+                  <>
+                    {skill.verificationStatus === 'PendingVerification' && (
+                      <Button
+                        type="button"
+                        className="counselor-btn counselor-btn-danger counselor-btn-sm"
+                        onClick={() => onReject(skill)}
+                        hoverScale={1.04}
+                        tapScale={0.96}
+                      >
+                        Từ chối
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      className="counselor-btn counselor-btn-primary counselor-btn-sm"
+                      onClick={() => onVerify(skill)}
+                      hoverScale={1.04}
+                      tapScale={0.96}
+                    >
+                      Xác nhận
+                    </Button>
+                  </>
+                )}
+              </div>
             </motion.div>
           ))}
         </div>

@@ -489,9 +489,11 @@ function cleanGithubUsername(value) {
               message={message}
               userInitials={initials}
               session={session}
-              onApplied={(result) => {
-                const rId = result?.roadmapId || result?.RoadmapId;
-                window.location.hash = rId ? `roadmap?id=${rId}` : 'roadmap';
+              onApplied={() => {
+                // The roadmap is no longer created instantly — it now waits for
+                // counselor approval. Send the student to the roadmap page where
+                // the pending approval request is shown.
+                window.location.hash = 'roadmap';
               }}
             />
           ))}
