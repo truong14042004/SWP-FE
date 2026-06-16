@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { toast } from 'react-toastify';
-import { Check, Circle, Clock3, Compass, LoaderCircle, Pin, RefreshCw } from 'lucide-react';
+import { Check, Circle, Clock3, Compass, LoaderCircle, Pin, RefreshCw, ChevronDown, ExternalLink } from 'lucide-react';
 import '../../../styles/roadmap.css';
 import { CountingNumber } from '@/components/animate-ui/primitives/texts/counting-number';
 import { Button } from '@/components/animate-ui/components/buttons/button';
@@ -340,6 +340,9 @@ function getNodeResources(node) {
     return titleA.localeCompare(titleB);
   });
 }
+function getResourceOpenKey(resource) {
+  return String(resource?.id || resource?.url || resource?.title || '');
+}
 
 function getChildren(node) {
   return safeArray(node?.children).filter((child) => typeof child === 'object');
@@ -673,9 +676,10 @@ async function loadLessonProgressForRoadmap(roadmapData) {
 }
 
 async function handleToggleLesson(nodeId, lessonId, nextChecked) {
-  if (!nodeId || !lessonId) return;
+  if (!nodeId || !lessonId) return false;
+
   const key = `${nodeId}:${lessonId}`;
-  if (togglingLessonKey === key) return;
+  if (togglingLessonKey === key) return false;
 
   const previous = lessonProgressByNodeId[nodeId];
   const previousSet = previous instanceof Set ? new Set(previous) : new Set();
@@ -683,14 +687,17 @@ async function handleToggleLesson(nodeId, lessonId, nextChecked) {
   setLessonProgressByNodeId((current) => {
     const next = { ...current };
     const set = next[nodeId] instanceof Set ? new Set(next[nodeId]) : new Set();
+
     if (nextChecked) {
       set.add(lessonId);
     } else {
       set.delete(lessonId);
     }
+
     next[nodeId] = set;
     return next;
   });
+
   setTogglingLessonKey(key);
 
   try {
@@ -699,9 +706,12 @@ async function handleToggleLesson(nodeId, lessonId, nextChecked) {
     } else {
       await unmarkLessonCompleted(session, nodeId, lessonId);
     }
+
+    return true;
   } catch (error) {
     setLessonProgressByNodeId((current) => ({ ...current, [nodeId]: previousSet }));
     toast.error(error.message || 'Không lưu được trạng thái bài học.');
+    return false;
   } finally {
     setTogglingLessonKey('');
   }
@@ -1236,6 +1246,7 @@ function RoadmapNodeCard({
   const StatusIcon = statusMeta.Icon;
   const resources = getNodeResources(node);
   const lessonChecks = computeLessonStats(node?.id, resources, lessonProgressByNodeId);
+  const [openResourceKey, setOpenResourceKey] = useState('');
   const lessonsBlockingCompletion =
     lessonChecks.total > 0 && !lessonChecks.allCompleted;
   const children = getChildren(node);
@@ -1479,27 +1490,51 @@ function RoadmapNodeCard({
             </div>
 
             <div className="roadmap-resource-list">
-              {resources.map((resource) => {
-                const resourceId = resource.id;
-                const checked = resourceId
-                  ? lessonChecks.checkedSet.has(resourceId)
-                  : false;
-                const toggleKey = `${node?.id || ''}:${resourceId || ''}`;
-                const isToggling = togglingLessonKey === toggleKey;
-                return (
-                  <ResourceButton
-                    key={resourceId || resource.title}
-                    resource={resource}
-                    checked={checked}
-                    busy={isToggling}
-                    onToggleCheck={
-                      resourceId && node?.id && onToggleLesson
-                        ? () => onToggleLesson(node.id, resourceId, !checked)
-                        : undefined
-                    }
-                  />
-                );
-              })}
+             {resources.map((resource, resourceIndex) => {
+  const resourceId = resource.id;
+  const checked = resourceId
+    ? lessonChecks.checkedSet.has(resourceId)
+    : false;
+
+  const toggleKey = `${node?.id || ''}:${resourceId || ''}`;
+  const isToggling = togglingLessonKey === toggleKey;
+
+  const openKey = getResourceOpenKey(resource);
+  const expanded = openResourceKey === openKey;
+
+  return (
+    <ResourceButton
+      key={resourceId || resource.title}
+      resource={resource}
+      checked={checked}
+      busy={isToggling}
+      expanded={expanded}
+      onToggleOpen={() => {
+        setOpenResourceKey((current) => current === openKey ? '' : openKey);
+      }}
+      onToggleCheck={
+        resourceId && node?.id && onToggleLesson
+          ? async () => {
+              const nextChecked = !checked;
+              const ok = await onToggleLesson(node.id, resourceId, nextChecked);
+
+              if (ok === false) return;
+
+              if (nextChecked) {
+                const nextResource = resources
+                  .slice(resourceIndex + 1)
+                  .find((item) => item.id && !lessonChecks.checkedSet.has(item.id));
+
+                setOpenResourceKey(nextResource ? getResourceOpenKey(nextResource) : '');
+              } else {
+                setOpenResourceKey(openKey);
+              }
+            }
+          : undefined
+      }
+    />
+  );
+})}
             </div>
           </div>
         )}
@@ -1579,7 +1614,14 @@ function formatDifficulty(diff) {
   return diff;
 }
 
-function ResourceButton({ resource, checked = false, busy = false, onToggleCheck }) {
+function ResourceButton({
+  resource,
+  checked = false,
+  busy = false,
+  expanded = false,
+  onToggleOpen,
+  onToggleCheck,
+}) {
   const prefix = resource.lessonNumber ? `Bài ${resource.lessonNumber}: ` : '';
   const cleanedTitle = (resource.title || '').trim();
   const label = `${prefix}${cleanedTitle || resource.skillName || 'Tài liệu học tập'}`;
@@ -1590,13 +1632,6 @@ function ResourceButton({ resource, checked = false, busy = false, onToggleCheck
     formatDifficulty(resource.difficulty),
     resource.estimatedHours ? `${resource.estimatedHours} giờ` : '',
   ].filter(Boolean);
-
-  const content = (
-    <>
-      <strong>{label}{resource.url ? ' ↗' : ''}</strong>
-      {metaItems.length > 0 && <small>{metaItems.join(' • ')}</small>}
-    </>
-  );
 
   const checkbox = onToggleCheck ? (
     <label
@@ -1615,31 +1650,87 @@ function ResourceButton({ resource, checked = false, busy = false, onToggleCheck
     </label>
   ) : null;
 
-  const wrapperClass = `roadmap-resource-row ${checked ? 'is-done' : ''}`;
-
-  if (resource.url) {
-    return (
-      <div className={wrapperClass}>
-        {checkbox}
-        <a
-          className="roadmap-resource"
-          href={resource.url}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {content}
-          <span className="roadmap-resource-icon" aria-hidden="true">↗</span>
-        </a>
-      </div>
-    );
-  }
+  const wrapperClass = `roadmap-resource-row ${checked ? 'is-done' : ''} ${expanded ? 'is-expanded' : ''}`;
 
   return (
     <div className={wrapperClass}>
-      {checkbox}
-      <button type="button" className="roadmap-resource">
-        {content}
-      </button>
+      <div className="roadmap-resource-main">
+        {checkbox}
+
+        <button
+          type="button"
+          className="roadmap-resource"
+          onClick={onToggleOpen}
+        >
+          <span className="roadmap-resource-label">
+            <strong>{label}</strong>
+            {metaItems.length > 0 && <small>{metaItems.join(' • ')}</small>}
+          </span>
+
+          <span className="roadmap-resource-actions">
+            {resource.url && <ExternalLink size={14} aria-hidden="true" />}
+            <ChevronDown
+              size={16}
+              className={`roadmap-resource-chevron ${expanded ? 'is-open' : ''}`}
+              aria-hidden="true"
+            />
+          </span>
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="roadmap-resource-panel">
+          {resource.description && (
+            <p className="roadmap-resource-description">
+              {resource.description}
+            </p>
+          )}
+
+          {resource.url ? (
+            <>
+              <div className="roadmap-resource-frame-wrap">
+                <iframe
+                  className="roadmap-resource-frame"
+                  src={resource.url}
+                  title={label}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+
+              <div className="roadmap-resource-panel-actions">
+                <a
+                  href={resource.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="roadmap-resource-open-link"
+                >
+                  Mở link gốc
+                </a>
+
+                {onToggleCheck && (
+                  <button
+                    type="button"
+                    className="roadmap-resource-complete-btn"
+                    onClick={onToggleCheck}
+                    disabled={busy}
+                  >
+                    {checked ? 'Bỏ hoàn thành' : 'Đã học xong, chuyển bài tiếp theo'}
+                  </button>
+                )}
+              </div>
+
+              <small className="roadmap-resource-frame-note">
+                Nếu nội dung không hiển thị, website nguồn đang chặn nhúng. Hãy bấm “Mở link gốc”.
+              </small>
+            </>
+          ) : (
+            <div className="roadmap-resource-empty">
+              Tài liệu này chưa có đường dẫn học tập.
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
