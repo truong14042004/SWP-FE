@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { apiUrl } from '../../../config';
 import { formatDate } from '../../../shared/format';
 import { SectionTitle, StatusPill } from '../../admin/components/DashboardPrimitives';
 
@@ -13,13 +12,20 @@ const emptyResource = {
   lessonNumber: 1,
   isActive: true,
   file: null,
+  hasExistingFile: false,
 };
 
-function resolveResourceUrl(url) {
-  if (!url) return '#';
-  if (/^https?:\/\//i.test(url)) return url;
-  if (url.startsWith('/')) return apiUrl ? `${apiUrl}${url}` : url;
-  return url;
+function isFileResource(resource) {
+  return resource?.sourceType === 'File';
+}
+
+function isInternalResourceUrl(url) {
+  return typeof url === 'string' && url.startsWith('/api/storage/');
+}
+
+function getEditableUrl(resource) {
+  if (isFileResource(resource) || isInternalResourceUrl(resource?.url)) return '';
+  return resource?.url || '';
 }
 
 export function ResourcesView({
@@ -51,13 +57,14 @@ export function ResourcesView({
     setForm({
       skillId: resource.skillId || '',
       title: resource.title || '',
-      url: resource.url || '',
+      url: getEditableUrl(resource),
       resourceType: resource.resourceType || 'Article',
       difficulty: resource.difficulty || '',
       estimatedHours: resource.estimatedHours ?? 0,
       lessonNumber: resource.lessonNumber ?? 1,
       isActive: resource.isActive ?? true,
       file: null,
+      hasExistingFile: isFileResource(resource),
     });
     setShowForm(true);
 
@@ -67,13 +74,14 @@ export function ResourcesView({
       setForm({
         skillId: latest.skillId || '',
         title: latest.title,
-        url: latest.url,
+        url: getEditableUrl(latest),
         resourceType: latest.resourceType,
         difficulty: latest.difficulty || '',
         estimatedHours: latest.estimatedHours || 0,
         lessonNumber: latest.lessonNumber ?? 1,
         isActive: latest.isActive,
         file: null,
+        hasExistingFile: isFileResource(latest),
       });
     } catch (error) {
       setFormError(error?.message || 'Không tải được tài nguyên để chỉnh sửa.');
@@ -90,8 +98,9 @@ export function ResourcesView({
   async function submit(event) {
     event.preventDefault();
     setSaving(true);
+    const { hasExistingFile, ...resourceForm } = form;
     const payload = {
-      ...form,
+      ...resourceForm,
       skillId: form.skillId || null,
       estimatedHours: Number(form.estimatedHours),
       lessonNumber: Number(form.lessonNumber),
@@ -108,9 +117,13 @@ export function ResourcesView({
   }
 
   async function openResource(resource) {
-    const directUrl = resolveResourceUrl(resource.url);
-    if (!resource.url?.startsWith('/api/storage/')) {
-      window.open(directUrl, '_blank', 'noopener,noreferrer');
+    if (!isFileResource(resource)) {
+      if (!resource.url) {
+        setFormError('No external URL is available for this resource.');
+        return;
+      }
+
+      window.open(resource.url, '_blank', 'noopener,noreferrer');
       return;
     }
 
@@ -171,14 +184,14 @@ export function ResourcesView({
 
             <div className="field-row">
               <label>
-                <span>URL</span>
+                <span>External URL</span>
                 <input
                   name="url"
                   type="text"
                   value={form.url}
                   onChange={updateField}
-                  placeholder="https://... hoặc /api/storage/..."
-                  required={!form.file}
+                  placeholder="https://..."
+                  required={!form.file && !form.hasExistingFile}
                 />
               </label>
               <label>
@@ -189,7 +202,7 @@ export function ResourcesView({
                   onChange={updateField}
                 />
                 {form.file && <small style={{ color: 'var(--ink-muted-48)', display: 'block', marginTop: '4px' }}>{form.file.name}</small>}
-                {editingId && <small style={{ color: 'var(--ink-muted-48)', display: 'block', marginTop: '4px' }}>Leave empty to keep existing file (or just update URL)</small>}
+                {editingId && form.hasExistingFile && <small style={{ color: 'var(--ink-muted-48)', display: 'block', marginTop: '4px' }}>Leave URL and file empty to keep the uploaded file.</small>}
               </label>
             </div>
 
