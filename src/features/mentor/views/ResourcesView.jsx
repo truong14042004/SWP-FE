@@ -32,6 +32,11 @@ function hasExternalUrl(resource) {
   return Boolean(getEditableUrl(resource));
 }
 
+function getSourceLabel(resource) {
+  if (hasExternalUrl(resource) && isFileResource(resource)) return 'Link + File';
+  return resource.sourceType;
+}
+
 export function ResourcesView({
   resources,
   skills,
@@ -145,6 +150,19 @@ export function ResourcesView({
       setFormError(error?.message || 'Could not open the resource. Please try again.');
     } finally {
       setOpeningId('');
+    }
+  }
+
+  function handleOpenAction(resource, event) {
+    const action = event.target.value;
+    event.target.value = '';
+
+    if (action === 'url') {
+      openExternalUrl(resource);
+    }
+
+    if (action === 'file') {
+      downloadResourceFile(resource);
     }
   }
 
@@ -278,19 +296,20 @@ export function ResourcesView({
                     <span>Lesson {resource.lessonNumber} · {resource.resourceType} · {formatDate(resource.updatedAt)}</span>
                   </td>
                   <td>{resource.skillName || '—'}</td>
-                  <td>{resource.sourceType}</td>
+                  <td>{getSourceLabel(resource)}</td>
                   <td><StatusPill active={resource.isActive} /></td>
                   <td className="table-actions">
-                    {hasExternalUrl(resource) && (
-                      <button type="button" className="btn-secondary text-link" onClick={() => openExternalUrl(resource)}>
-                        Open URL
-                      </button>
-                    )}
-                    {isFileResource(resource) && (
-                      <button type="button" className="btn-secondary text-link" onClick={() => downloadResourceFile(resource)} disabled={openingId === resource.id}>
-                        {openingId === resource.id ? 'Downloading...' : 'Download file'}
-                      </button>
-                    )}
+                    <select
+                      className="resource-action-select"
+                      aria-label={'Open actions for ' + resource.title}
+                      defaultValue=""
+                      onChange={(event) => handleOpenAction(resource, event)}
+                      disabled={openingId === resource.id || (!hasExternalUrl(resource) && !isFileResource(resource))}
+                    >
+                      <option value="" disabled>{openingId === resource.id ? 'Downloading...' : 'Open resource'}</option>
+                      {hasExternalUrl(resource) && <option value="url">Open URL</option>}
+                      {isFileResource(resource) && <option value="file">Download file</option>}
+                    </select>
                     <button type="button" className="btn-secondary" onClick={() => edit(resource)}>Edit</button>
                     <button type="button" className="btn-secondary danger-action" onClick={() => onDeleteResource(resource)}>Delete</button>
                   </td>
