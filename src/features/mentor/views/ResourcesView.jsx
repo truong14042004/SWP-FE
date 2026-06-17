@@ -13,6 +13,7 @@ const emptyResource = {
   isActive: true,
   file: null,
   hasExistingFile: false,
+  existingFileLabel: '',
 };
 
 function isFileResource(resource) {
@@ -35,6 +36,24 @@ function hasExternalUrl(resource) {
 function getSourceLabel(resource) {
   if (hasExternalUrl(resource) && isFileResource(resource)) return 'Link + File';
   return resource.sourceType;
+}
+
+function formatFileSize(size) {
+  if (!Number.isFinite(Number(size)) || Number(size) <= 0) return '';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = Number(size);
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1) + ' ' + units[unitIndex];
+}
+
+function getExistingFileLabel(resource) {
+  if (!isFileResource(resource)) return '';
+  const details = [resource.contentType, formatFileSize(resource.fileSize)].filter(Boolean).join(', ');
+  return details ? 'Current file: ' + details : 'Current file uploaded';
 }
 
 export function ResourcesView({
@@ -74,6 +93,7 @@ export function ResourcesView({
       isActive: resource.isActive ?? true,
       file: null,
       hasExistingFile: isFileResource(resource),
+      existingFileLabel: getExistingFileLabel(resource),
     });
     setShowForm(true);
 
@@ -91,6 +111,7 @@ export function ResourcesView({
         isActive: latest.isActive,
         file: null,
         hasExistingFile: isFileResource(latest),
+        existingFileLabel: getExistingFileLabel(latest),
       });
     } catch (error) {
       setFormError(error?.message || 'Không tải được tài nguyên để chỉnh sửa.');
@@ -107,7 +128,7 @@ export function ResourcesView({
   async function submit(event) {
     event.preventDefault();
     setSaving(true);
-    const { hasExistingFile, ...resourceForm } = form;
+    const { hasExistingFile, existingFileLabel, ...resourceForm } = form;
     const payload = {
       ...resourceForm,
       skillId: form.skillId || null,
@@ -153,17 +174,8 @@ export function ResourcesView({
     }
   }
 
-  function handleOpenAction(resource, event) {
-    const action = event.target.value;
-    event.target.value = '';
-
-    if (action === 'url') {
-      openExternalUrl(resource);
-    }
-
-    if (action === 'file') {
-      downloadResourceFile(resource);
-    }
+  function closeActionMenu(event) {
+    event.currentTarget.closest('details')?.removeAttribute('open');
   }
 
   return (
@@ -223,8 +235,9 @@ export function ResourcesView({
                   type="file"
                   onChange={updateField}
                 />
-                {form.file && <small style={{ color: 'var(--ink-muted-48)', display: 'block', marginTop: '4px' }}>{form.file.name}</small>}
-                {editingId && form.hasExistingFile && <small style={{ color: 'var(--ink-muted-48)', display: 'block', marginTop: '4px' }}>Leave URL and file empty to keep the uploaded file.</small>}
+                {form.file && <small style={{ color: 'var(--ink-muted-48)', display: 'block', marginTop: '4px' }}>New file: {form.file.name}</small>}
+                {!form.file && form.existingFileLabel && <small style={{ color: 'var(--primary)', display: 'block', marginTop: '4px', fontWeight: 600 }}>{form.existingFileLabel}</small>}
+                {editingId && form.hasExistingFile && <small style={{ color: 'var(--ink-muted-48)', display: 'block', marginTop: '4px' }}>Choose a new file only when you want to replace the current upload.</small>}
               </label>
             </div>
 
@@ -299,17 +312,36 @@ export function ResourcesView({
                   <td>{getSourceLabel(resource)}</td>
                   <td><StatusPill active={resource.isActive} /></td>
                   <td className="table-actions">
-                    <select
-                      className="resource-action-select"
-                      aria-label={'Open actions for ' + resource.title}
-                      defaultValue=""
-                      onChange={(event) => handleOpenAction(resource, event)}
-                      disabled={openingId === resource.id || (!hasExternalUrl(resource) && !isFileResource(resource))}
-                    >
-                      <option value="" disabled>{openingId === resource.id ? 'Downloading...' : 'Open resource'}</option>
-                      {hasExternalUrl(resource) && <option value="url">Open URL</option>}
-                      {isFileResource(resource) && <option value="file">Download file</option>}
-                    </select>
+                    <details className="resource-action-menu">
+                      <summary aria-label={'Open actions for ' + resource.title}>
+                        {openingId === resource.id ? 'Downloading...' : 'Actions'}
+                      </summary>
+                      <div className="resource-action-menu-list">
+                        {hasExternalUrl(resource) && (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              closeActionMenu(event);
+                              openExternalUrl(resource);
+                            }}
+                          >
+                            Open URL
+                          </button>
+                        )}
+                        {isFileResource(resource) && (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              closeActionMenu(event);
+                              downloadResourceFile(resource);
+                            }}
+                            disabled={openingId === resource.id}
+                          >
+                            Download file
+                          </button>
+                        )}
+                      </div>
+                    </details>
                     <button type="button" className="btn-secondary" onClick={() => edit(resource)}>Edit</button>
                     <button type="button" className="btn-secondary danger-action" onClick={() => onDeleteResource(resource)}>Delete</button>
                   </td>
