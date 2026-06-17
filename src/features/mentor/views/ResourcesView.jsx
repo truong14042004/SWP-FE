@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiUrl } from '../../../config';
 import { formatDate } from '../../../shared/format';
 import { SectionTitle, StatusPill } from '../../admin/components/DashboardPrimitives';
 
@@ -14,10 +15,18 @@ const emptyResource = {
   file: null,
 };
 
+function resolveResourceUrl(url) {
+  if (!url) return '#';
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith('/')) return apiUrl ? `${apiUrl}${url}` : url;
+  return url;
+}
+
 export function ResourcesView({
   resources,
   skills,
   onLoadResource,
+  onOpenResource,
   onSaveResource,
   onDeleteResource,
 }) {
@@ -25,6 +34,8 @@ export function ResourcesView({
   const [editingId, setEditingId] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [openingId, setOpeningId] = useState('');
 
   function updateField(event) {
     const { name, value, type, checked, files } = event.target;
@@ -35,25 +46,44 @@ export function ResourcesView({
   }
 
   async function edit(resource) {
-    const latest = await onLoadResource(resource.id);
-    setEditingId(latest.id);
+    setFormError('');
+    setEditingId(resource.id);
     setForm({
-      skillId: latest.skillId || '',
-      title: latest.title,
-      url: latest.url,
-      resourceType: latest.resourceType,
-      difficulty: latest.difficulty || '',
-      estimatedHours: latest.estimatedHours || 0,
-      lessonNumber: latest.lessonNumber ?? 1,
-      isActive: latest.isActive,
+      skillId: resource.skillId || '',
+      title: resource.title || '',
+      url: resource.url || '',
+      resourceType: resource.resourceType || 'Article',
+      difficulty: resource.difficulty || '',
+      estimatedHours: resource.estimatedHours ?? 0,
+      lessonNumber: resource.lessonNumber ?? 1,
+      isActive: resource.isActive ?? true,
       file: null,
     });
     setShowForm(true);
+
+    try {
+      const latest = await onLoadResource(resource.id);
+      setEditingId(latest.id);
+      setForm({
+        skillId: latest.skillId || '',
+        title: latest.title,
+        url: latest.url,
+        resourceType: latest.resourceType,
+        difficulty: latest.difficulty || '',
+        estimatedHours: latest.estimatedHours || 0,
+        lessonNumber: latest.lessonNumber ?? 1,
+        isActive: latest.isActive,
+        file: null,
+      });
+    } catch (error) {
+      setFormError(error?.message || 'Không tải được tài nguyên để chỉnh sửa.');
+    }
   }
 
   function reset() {
     setEditingId('');
     setForm(emptyResource);
+    setFormError('');
     setShowForm(false);
   }
 
@@ -70,8 +100,34 @@ export function ResourcesView({
     try {
       await onSaveResource(payload, editingId);
       reset();
+    } catch (error) {
+      setFormError(error?.message || 'Không lưu được tài nguyên.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function openResource(resource) {
+    const directUrl = resolveResourceUrl(resource.url);
+    if (!resource.url?.startsWith('/api/storage/')) {
+      window.open(directUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    const targetWindow = window.open('', '_blank', 'noopener,noreferrer');
+    setOpeningId(resource.id);
+    try {
+      const result = await onOpenResource(resource);
+      if (targetWindow) {
+        targetWindow.location.href = result.url;
+      } else {
+        window.location.href = result.url;
+      }
+    } catch (error) {
+      targetWindow?.close();
+      setFormError(error?.message || 'Không mở được tài nguyên. Vui lòng thử lại.');
+    } finally {
+      setOpeningId('');
     }
   }
 
@@ -96,6 +152,7 @@ export function ResourcesView({
           </header>
 
           <form className="field-stack" onSubmit={submit}>
+            {formError && <p className="form-error">{formError}</p>}
             <div className="field-row">
               <label>
                 <span>Skill</span>
@@ -117,10 +174,10 @@ export function ResourcesView({
                 <span>URL</span>
                 <input
                   name="url"
-                  type="url"
+                  type="text"
                   value={form.url}
                   onChange={updateField}
-                  placeholder="https://..."
+                  placeholder="https://... hoặc /api/storage/..."
                   required={!form.file}
                 />
               </label>
@@ -207,7 +264,9 @@ export function ResourcesView({
                   <td>{resource.sourceType}</td>
                   <td><StatusPill active={resource.isActive} /></td>
                   <td className="table-actions">
-                    <a className="btn-secondary text-link" href={resource.url} target="_blank" rel="noreferrer">Open</a>
+                    <button type="button" className="btn-secondary text-link" onClick={() => openResource(resource)} disabled={openingId === resource.id}>
+                      {openingId === resource.id ? 'Opening...' : 'Open'}
+                    </button>
                     <button type="button" className="btn-secondary" onClick={() => edit(resource)}>Edit</button>
                     <button type="button" className="btn-secondary danger-action" onClick={() => onDeleteResource(resource)}>Delete</button>
                   </td>

@@ -112,6 +112,10 @@ export function getLearningResource(session, id) {
   return authorizedRequest(`/api/industry-mentor/learning-resources/${id}`, session);
 }
 
+export function getLearningResourceSignedUrl(session, id) {
+  return authorizedRequest(`/api/storage/learning-resources/${id}/signed-url`, session);
+}
+
 export function saveLearningResource(session, resource, id) {
   const formData = new FormData();
   const formKeys = {

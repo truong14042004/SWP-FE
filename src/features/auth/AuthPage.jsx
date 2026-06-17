@@ -530,7 +530,7 @@ export function AuthPage({ onAuthenticated, onBackHome, initialMode = 'login' })
                       placeholder="your_username"
                       minLength={3}
                       maxLength={32}
-                      pattern="[A-Za-z0-9._-]{3,32}"
+                      pattern="[A-Za-z0-9._\\-]{3,32}"
                       title="Tên đăng nhập chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang."
                       autoComplete="username"
                       required
@@ -551,7 +551,7 @@ export function AuthPage({ onAuthenticated, onBackHome, initialMode = 'login' })
                         onChange={field(setRegForm)}
                         placeholder="you@gmail.com"
                         maxLength={256}
-                        pattern="[a-zA-Z0-9]([a-zA-Z0-9._%+-]{0,62}[a-zA-Z0-9])?@gmail\.com"
+                        pattern="[a-zA-Z0-9]([a-zA-Z0-9._%+\\-]{0,62}[a-zA-Z0-9])?@gmail\.com"
                         title="Chỉ chấp nhận địa chỉ Gmail, ví dụ name@gmail.com."
                         autoComplete="email"
                         required

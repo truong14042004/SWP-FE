@@ -25,6 +25,7 @@ import {
   saveSkill,
   deleteSkill,
   getLearningResource,
+  getLearningResourceSignedUrl,
   saveLearningResource,
   deleteLearningResource,
   getRoleSkillRequirement,
@@ -219,6 +220,7 @@ export function MentorHome({ session, onSignOut }) {
 
   /* Learning resources */
   const handleLoadResource = (id) => getLearningResource(session, id);
+  const handleOpenResource = (resource) => getLearningResourceSignedUrl(session, resource.id);
   const handleSaveResource = (resource, id) => runCatalogAction(() => saveLearningResource(session, resource, id));
   const handleDeleteResource = (resource) => runCatalogAction(() => deleteLearningResource(session, resource.id));
 
@@ -445,6 +447,7 @@ export function MentorHome({ session, onSignOut }) {
                 resources={catalog.learningResources}
                 skills={catalog.skills}
                 onLoadResource={handleLoadResource}
+                onOpenResource={handleOpenResource}
                 onSaveResource={handleSaveResource}
                 onDeleteResource={handleDeleteResource}
               />
