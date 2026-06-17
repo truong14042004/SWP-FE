@@ -24,8 +24,12 @@ function isInternalResourceUrl(url) {
 }
 
 function getEditableUrl(resource) {
-  if (isFileResource(resource) || isInternalResourceUrl(resource?.url)) return '';
+  if (isInternalResourceUrl(resource?.url)) return '';
   return resource?.url || '';
+}
+
+function hasExternalUrl(resource) {
+  return Boolean(getEditableUrl(resource));
 }
 
 export function ResourcesView({
@@ -116,17 +120,17 @@ export function ResourcesView({
     }
   }
 
-  async function openResource(resource) {
-    if (!isFileResource(resource)) {
-      if (!resource.url) {
-        setFormError('No external URL is available for this resource.');
-        return;
-      }
-
-      window.open(resource.url, '_blank', 'noopener,noreferrer');
+  function openExternalUrl(resource) {
+    const externalUrl = getEditableUrl(resource);
+    if (!externalUrl) {
+      setFormError('No external URL is available for this resource.');
       return;
     }
 
+    window.open(externalUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  async function downloadResourceFile(resource) {
     const targetWindow = window.open('', '_blank', 'noopener,noreferrer');
     setOpeningId(resource.id);
     try {
@@ -138,7 +142,7 @@ export function ResourcesView({
       }
     } catch (error) {
       targetWindow?.close();
-      setFormError(error?.message || 'Không mở được tài nguyên. Vui lòng thử lại.');
+      setFormError(error?.message || 'Could not open the resource. Please try again.');
     } finally {
       setOpeningId('');
     }
@@ -277,9 +281,16 @@ export function ResourcesView({
                   <td>{resource.sourceType}</td>
                   <td><StatusPill active={resource.isActive} /></td>
                   <td className="table-actions">
-                    <button type="button" className="btn-secondary text-link" onClick={() => openResource(resource)} disabled={openingId === resource.id}>
-                      {openingId === resource.id ? 'Opening...' : 'Open'}
-                    </button>
+                    {hasExternalUrl(resource) && (
+                      <button type="button" className="btn-secondary text-link" onClick={() => openExternalUrl(resource)}>
+                        Open URL
+                      </button>
+                    )}
+                    {isFileResource(resource) && (
+                      <button type="button" className="btn-secondary text-link" onClick={() => downloadResourceFile(resource)} disabled={openingId === resource.id}>
+                        {openingId === resource.id ? 'Downloading...' : 'Download file'}
+                      </button>
+                    )}
                     <button type="button" className="btn-secondary" onClick={() => edit(resource)}>Edit</button>
                     <button type="button" className="btn-secondary danger-action" onClick={() => onDeleteResource(resource)}>Delete</button>
                   </td>
