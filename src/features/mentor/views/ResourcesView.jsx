@@ -52,7 +52,8 @@ function formatFileSize(size) {
 
 function getExistingFileLabel(resource) {
   if (!isFileResource(resource)) return '';
-  const details = [resource.contentType, formatFileSize(resource.fileSize)].filter(Boolean).join(', ');
+  const fileName = resource.fileName || resource.originalFileName || '';
+  const details = [fileName, formatFileSize(resource.fileSize)].filter(Boolean).join(' - ');
   return details ? 'Current file: ' + details : 'Current file uploaded';
 }
 
@@ -172,10 +173,6 @@ export function ResourcesView({
     } finally {
       setOpeningId('');
     }
-  }
-
-  function closeActionMenu(event) {
-    event.currentTarget.closest('details')?.removeAttribute('open');
   }
 
   return (
@@ -312,36 +309,23 @@ export function ResourcesView({
                   <td>{getSourceLabel(resource)}</td>
                   <td><StatusPill active={resource.isActive} /></td>
                   <td className="table-actions">
-                    <details className="resource-action-menu">
-                      <summary aria-label={'Open actions for ' + resource.title}>
-                        {openingId === resource.id ? 'Downloading...' : 'Actions'}
-                      </summary>
-                      <div className="resource-action-menu-list">
-                        {hasExternalUrl(resource) && (
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              closeActionMenu(event);
-                              openExternalUrl(resource);
-                            }}
-                          >
-                            Open URL
-                          </button>
-                        )}
-                        {isFileResource(resource) && (
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              closeActionMenu(event);
-                              downloadResourceFile(resource);
-                            }}
-                            disabled={openingId === resource.id}
-                          >
-                            Download file
-                          </button>
-                        )}
-                      </div>
-                    </details>
+                    <div className="resource-quick-actions" aria-label={'Open actions for ' + resource.title}>
+                      {hasExternalUrl(resource) && (
+                        <button type="button" className="resource-action-chip" onClick={() => openExternalUrl(resource)}>
+                          Open link
+                        </button>
+                      )}
+                      {isFileResource(resource) && (
+                        <button
+                          type="button"
+                          className="resource-action-chip"
+                          onClick={() => downloadResourceFile(resource)}
+                          disabled={openingId === resource.id}
+                        >
+                          {openingId === resource.id ? 'Downloading...' : 'Download file'}
+                        </button>
+                      )}
+                    </div>
                     <button type="button" className="btn-secondary" onClick={() => edit(resource)}>Edit</button>
                     <button type="button" className="btn-secondary danger-action" onClick={() => onDeleteResource(resource)}>Delete</button>
                   </td>
