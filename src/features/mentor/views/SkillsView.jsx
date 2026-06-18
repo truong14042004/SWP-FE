@@ -21,6 +21,7 @@ export function SkillsView({ skills, onLoadSkill, onSaveSkill, onDeleteSkill }) 
   const [editingId, setEditingId] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
   const categoryOptions = Array.from(
     new Set([
       ...defaultSkillCategories,
@@ -34,20 +35,27 @@ export function SkillsView({ skills, onLoadSkill, onSaveSkill, onDeleteSkill }) 
   }
 
   async function edit(skill) {
-    const latest = await onLoadSkill(skill.id);
-    setEditingId(latest.id);
-    setForm({
-      name: latest.name,
-      category: latest.category,
-      description: latest.description || '',
-      isActive: latest.isActive,
-    });
-    setShowForm(true);
+    setFormError('');
+    try {
+      const latest = await onLoadSkill(skill.id);
+      setEditingId(latest.id);
+      setForm({
+        name: latest.name,
+        category: latest.category,
+        description: latest.description || '',
+        isActive: latest.isActive,
+      });
+      setShowForm(true);
+    } catch (error) {
+      setFormError(error?.message || 'Could not load this skill for editing.');
+      setShowForm(true);
+    }
   }
 
   function reset() {
     setEditingId('');
     setForm(emptySkill);
+    setFormError('');
     setShowForm(false);
   }
 
@@ -57,6 +65,8 @@ export function SkillsView({ skills, onLoadSkill, onSaveSkill, onDeleteSkill }) 
     try {
       await onSaveSkill(form, editingId);
       reset();
+    } catch (error) {
+      setFormError(error?.message || 'Could not save this skill.');
     } finally {
       setSaving(false);
     }
@@ -83,6 +93,7 @@ export function SkillsView({ skills, onLoadSkill, onSaveSkill, onDeleteSkill }) 
           </header>
 
           <form className="field-stack" onSubmit={submit}>
+            {formError && <p className="form-error">{formError}</p>}
             <div className="field-row">
               <label>
                 <span>Name</span>

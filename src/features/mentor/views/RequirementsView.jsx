@@ -21,6 +21,7 @@ export function RequirementsView({
   const [editingId, setEditingId] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
 
   function updateField(event) {
     const { name, value } = event.target;
@@ -28,21 +29,28 @@ export function RequirementsView({
   }
 
   async function edit(requirement) {
-    const latest = await onLoadRequirement(requirement.id);
-    setEditingId(latest.id);
-    setForm({
-      careerRoleId: latest.careerRoleId,
-      skillId: latest.skillId,
-      requiredLevel: latest.requiredLevel,
-      priority: latest.priority,
-      weight: latest.weight,
-    });
-    setShowForm(true);
+    setFormError('');
+    try {
+      const latest = await onLoadRequirement(requirement.id);
+      setEditingId(latest.id);
+      setForm({
+        careerRoleId: latest.careerRoleId,
+        skillId: latest.skillId,
+        requiredLevel: latest.requiredLevel,
+        priority: latest.priority,
+        weight: latest.weight,
+      });
+      setShowForm(true);
+    } catch (error) {
+      setFormError(error?.message || 'Could not load this requirement for editing.');
+      setShowForm(true);
+    }
   }
 
   function reset() {
     setEditingId('');
     setForm(emptyRequirement);
+    setFormError('');
     setShowForm(false);
   }
 
@@ -61,6 +69,8 @@ export function RequirementsView({
         editingId,
       );
       reset();
+    } catch (error) {
+      setFormError(error?.message || 'Could not save this requirement.');
     } finally {
       setSaving(false);
     }
@@ -87,6 +97,7 @@ export function RequirementsView({
           </header>
 
           <form className="field-stack" onSubmit={submit}>
+            {formError && <p className="form-error">{formError}</p>}
             <div className="field-row">
               <label>
                 <span>Career role</span>

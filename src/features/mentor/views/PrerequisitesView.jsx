@@ -15,6 +15,7 @@ export function PrerequisitesView({
   const [form, setForm] = useState(emptyPrerequisite);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
 
   function updateField(event) {
     const { name, value } = event.target;
@@ -23,6 +24,7 @@ export function PrerequisitesView({
 
   function reset() {
     setForm(emptyPrerequisite);
+    setFormError('');
     setShowForm(false);
   }
 
@@ -35,6 +37,8 @@ export function PrerequisitesView({
         prerequisiteSkillId: form.prerequisiteSkillId,
       });
       reset();
+    } catch (error) {
+      setFormError(error?.message || 'Could not save this prerequisite.');
     } finally {
       setSaving(false);
     }
@@ -61,6 +65,7 @@ export function PrerequisitesView({
           </header>
 
           <form className="field-stack" onSubmit={submit}>
+            {formError && <p className="form-error">{formError}</p>}
             <div className="field-row">
               <label>
                 <span>Skill</span>

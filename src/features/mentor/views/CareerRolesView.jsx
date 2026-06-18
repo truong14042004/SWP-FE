@@ -13,6 +13,7 @@ export function CareerRolesView({
   const [editingId, setEditingId] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
 
   function updateField(event) {
     const { name, value, type, checked } = event.target;
@@ -20,20 +21,27 @@ export function CareerRolesView({
   }
 
   async function edit(role) {
-    const latest = await onLoadCareerRole(role.id);
-    setEditingId(latest.id);
-    setForm({
-      name: latest.name,
-      description: latest.description || '',
-      level: latest.level || '',
-      isActive: latest.isActive,
-    });
-    setShowForm(true);
+    setFormError('');
+    try {
+      const latest = await onLoadCareerRole(role.id);
+      setEditingId(latest.id);
+      setForm({
+        name: latest.name,
+        description: latest.description || '',
+        level: latest.level || '',
+        isActive: latest.isActive,
+      });
+      setShowForm(true);
+    } catch (error) {
+      setFormError(error?.message || 'Could not load this career role for editing.');
+      setShowForm(true);
+    }
   }
 
   function reset() {
     setEditingId('');
     setForm(emptyCareerRole);
+    setFormError('');
     setShowForm(false);
   }
 
@@ -43,6 +51,8 @@ export function CareerRolesView({
     try {
       await onSaveCareerRole(form, editingId);
       reset();
+    } catch (error) {
+      setFormError(error?.message || 'Could not save this career role.');
     } finally {
       setSaving(false);
     }
@@ -69,6 +79,7 @@ export function CareerRolesView({
           </header>
 
           <form className="field-stack" onSubmit={submit}>
+            {formError && <p className="form-error">{formError}</p>}
             <div className="field-row">
               <label>
                 <span>Name</span>
