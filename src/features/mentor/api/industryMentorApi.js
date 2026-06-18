@@ -177,8 +177,8 @@ export function saveSkillPrerequisite(session, prerequisite) {
   });
 }
 
-export function deleteSkillPrerequisite(session, skillId, prerequisiteSkillId) {
-  return authorizedRequest(`/api/industry-mentor/skill-prerequisites/${skillId}/${prerequisiteSkillId}`, session, {
+export function deleteSkillPrerequisite(session, id) {
+  return authorizedRequest(`/api/industry-mentor/skill-prerequisites/${id}`, session, {
     method: 'DELETE',
   });
 }

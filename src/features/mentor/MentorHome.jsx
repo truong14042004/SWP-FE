@@ -231,7 +231,7 @@ export function MentorHome({ session, onSignOut }) {
 
   /* Skill prerequisites */
   const handleSavePrerequisite = (prerequisite) => runCatalogAction(() => saveSkillPrerequisite(session, prerequisite));
-  const handleDeletePrerequisite = (prerequisite) => runCatalogAction(() => deleteSkillPrerequisite(session, prerequisite.skillId, prerequisite.prerequisiteSkillId));
+  const handleDeletePrerequisite = (prerequisite) => runCatalogAction(() => deleteSkillPrerequisite(session, prerequisite.id));
 
   /* Career roles */
   const handleLoadCareerRole = (id) => getCareerRole(session, id);
