@@ -71,7 +71,7 @@ const VIEW_META = {
   students:           { title: 'Sinh viên',           sub: 'Danh sách học viên bạn đang đồng hành' },
   'skill-verifications': { title: 'Duyệt kỹ năng',    sub: 'Hàng chờ xác thực minh chứng kỹ năng' },
   'roadmap-approvals':   { title: 'Duyệt lộ trình',   sub: 'Hàng chờ duyệt khung lộ trình AI đề xuất' },
-  'roadmap-reviews':  { title: 'Duyệt lộ trình',       sub: 'Hàng chờ duyệt tiến độ module học viên' },
+  'roadmap-reviews':  { title: 'Duyệt tiến độ',         sub: 'Hàng chờ duyệt tiến độ module học viên' },
   feedback:           { title: 'Lịch sử feedback',    sub: 'Các phản hồi bạn đã gửi' },
 };
 
@@ -179,7 +179,7 @@ export function CounselorHome({ session, onSignOut }) {
     { id: 'students',          label: 'Sinh viên',        icon: ICONS.students, badge: students.length || null },
     { id: 'skill-verifications', label: 'Duyệt kỹ năng',  icon: ICONS.skillVerify, badge: skillQueueCount || null },
     { id: 'roadmap-approvals', label: 'Duyệt lộ trình',   icon: ICONS.approval, badge: roadmapApprovalCount || null },
-    { id: 'roadmap-reviews',   label: 'Duyệt lộ trình',   icon: ICONS.roadmap,  badge: pendingReviewCount || null },
+    { id: 'roadmap-reviews',   label: 'Duyệt tiến độ',    icon: ICONS.roadmap,  badge: pendingReviewCount || null },
     { id: 'feedback',          label: 'Lịch sử feedback', icon: ICONS.feedback, badge: feedbacks.length || null },
   ];
 
