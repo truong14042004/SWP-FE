@@ -1508,3 +1508,111 @@
     margin: 0 auto;
   }
 }
+
+/* --- Learning resources: toolbar, group view, pagination --- */
+.resource-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+}
+.resource-toolbar input,
+.resource-toolbar select {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--ink-muted-16, rgba(0, 0, 0, 0.12));
+  border-radius: 10px;
+  background: #fff;
+  font-size: 14px;
+}
+.resource-toolbar .resource-search {
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+.resource-view-toggle {
+  margin-left: auto;
+  display: inline-flex;
+  border: 1px solid var(--ink-muted-16, rgba(0, 0, 0, 0.12));
+  border-radius: 10px;
+  overflow: hidden;
+}
+.resource-view-toggle button {
+  border: 0;
+  background: transparent;
+  padding: 0 14px;
+  height: 38px;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--ink-muted-48, rgba(0, 0, 0, 0.55));
+}
+.resource-view-toggle button.is-active {
+  background: var(--primary, #0066cc);
+  color: #fff;
+}
+
+.resource-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.resource-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.resource-group-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--ink-muted-08, rgba(0, 0, 0, 0.06));
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted-48, rgba(0, 0, 0, 0.55));
+}
+
+.resource-quick-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-right: 6px;
+}
+.resource-action-chip {
+  border: 1px solid var(--ink-muted-16, rgba(0, 0, 0, 0.12));
+  background: #fff;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.resource-action-chip:hover {
+  border-color: var(--primary, #0066cc);
+  color: var(--primary, #0066cc);
+}
+.resource-action-chip:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.resource-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+@media (max-width: 833px) {
+  .resource-view-toggle {
+    margin-left: 0;
+  }
+}

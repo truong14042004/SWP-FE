@@ -55,6 +55,36 @@ function normalizeStatus(status = '') {
   return status.toLowerCase().replace(/[\s_]+/g, '');
 }
 
+// Display-only label maps. Values gửi BE giữ nguyên — chỉ map để hiển thị.
+const STATUS_LABELS = {
+  met: 'Đạt',
+  achieved: 'Đạt',
+  weak: 'Yếu',
+  missing: 'Thiếu',
+  notstarted: 'Chưa bắt đầu',
+  inprogress: 'Đang học',
+  completed: 'Hoàn thành',
+  verified: 'Đã xác minh',
+  draft: 'Nháp',
+};
+
+function statusLabel(status) {
+  if (!status) return status;
+  return STATUS_LABELS[normalizeStatus(status)] || status;
+}
+
+const LEVEL_LABELS = {
+  Beginner: 'Cơ bản',
+  Intermediate: 'Trung cấp',
+  Advanced: 'Nâng cao',
+  Expert: 'Chuyên gia',
+  Verified: 'Đã xác minh',
+};
+
+function levelLabel(level) {
+  return LEVEL_LABELS[level] || level || '—';
+}
+
 function isAchievedStatus(status) {
   const s = normalizeStatus(status);
   return s === 'met' || s === 'achieved';
@@ -95,9 +125,9 @@ function renderStars(rating = 0) {
 const TABS = [
   { id: 'profile', label: 'Hồ sơ' },
   { id: 'skills', label: 'Kỹ năng' },
-  { id: 'skillgap', label: 'Skill Gap' },
-  { id: 'roadmap', label: 'Roadmap' },
-  { id: 'feedback', label: 'Feedback' },
+  { id: 'skillgap', label: 'Khoảng cách kỹ năng' },
+  { id: 'roadmap', label: 'Lộ trình' },
+  { id: 'feedback', label: 'Phản hồi' },
 ];
 
 export function CounselorStudentDetail({
@@ -187,6 +217,11 @@ export function CounselorStudentDetail({
   }
 
   async function handleUnverify(skill) {
+    const confirmed = window.confirm(
+      `Bạn chắc chắn muốn thu hồi xác minh kỹ năng "${skill.skillName}"? Sinh viên sẽ mất trạng thái đã xác minh cho kỹ năng này.`,
+    );
+    if (!confirmed) return;
+
     setUnverifyingId(skill.id);
     try {
       const updated = await unverifyStudentSkill(session, skill.id);
@@ -578,7 +613,7 @@ function SkillsTab({ skills, skillsByCategory, session, onVerify, onUnverify, on
                   skill.level?.toLowerCase() || 'beginner'
                 }`}
               >
-                {skill.level}
+                {levelLabel(skill.level)}
               </span>
               {skill.verificationStatus === 'PendingVerification' && (
                 <span className="counselor-skill-vstatus pending">Chờ xác thực</span>
@@ -672,7 +707,7 @@ function SkillGapTab({ latest, history, selected, stats, loadingDetail, onSelect
               <div className="counselor-gap-ring-inner">
                 <div>
                   <div className="counselor-gap-ring-value">{matchPercent}%</div>
-                  <div className="counselor-gap-ring-label">Match</div>
+                  <div className="counselor-gap-ring-label">Độ khớp</div>
                 </div>
               </div>
             </div>
@@ -725,8 +760,8 @@ function SkillGapTab({ latest, history, selected, stats, loadingDetail, onSelect
                           {item.skillName}
                         </div>
                         <div className="counselor-gap-item-levels">
-                          Hiện tại: <strong>{item.currentLevel || '—'}</strong>
-                          {' → '}Yêu cầu: <strong>{item.requiredLevel}</strong>
+                          Hiện tại: <strong>{item.currentLevel ? levelLabel(item.currentLevel) : '—'}</strong>
+                          {' → '}Yêu cầu: <strong>{levelLabel(item.requiredLevel)}</strong>
                         </div>
                         {item.recommendation && (
                           <div className="counselor-gap-item-recommendation">
@@ -735,7 +770,7 @@ function SkillGapTab({ latest, history, selected, stats, loadingDetail, onSelect
                         )}
                       </div>
                       <span className={`counselor-gap-status ${cls}`}>
-                        {item.status}
+                        {statusLabel(item.status)}
                       </span>
                     </motion.div>
                   );
@@ -802,7 +837,7 @@ function RoadmapTab({ roadmap, topLevelNodes, totalHours }) {
       <header className="counselor-roadmap-head">
         <h3>{roadmap.title || 'Lộ trình học tập'}</h3>
         <p>
-          Trạng thái: {roadmap.status || 'Draft'} · {progress}% hoàn thành
+          Trạng thái: {statusLabel(roadmap.status) || 'Nháp'} · {progress}% hoàn thành
           {totalHours > 0 ? ` · Dự kiến ${totalHours} giờ` : ''}
         </p>
       </header>
@@ -860,7 +895,7 @@ function RoadmapNode({ node }) {
         {node.description && <p>{node.description}</p>}
       </div>
       <span className={`counselor-roadmap-node-badge ${statusClass}`}>
-        {node.status}
+        {statusLabel(node.status)}
       </span>
     </motion.div>
   );

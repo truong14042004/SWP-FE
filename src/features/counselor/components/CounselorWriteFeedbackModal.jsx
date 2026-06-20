@@ -94,34 +94,15 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
     setErrors((prev) => ({ ...prev, link: null }));
   }
 
-  function validate() {
-    const next = {};
-
-    if (!form.feedbackText.trim()) {
-      next.feedbackText = 'Vui lòng nhập nội dung feedback';
-    } else if (form.feedbackText.trim().length < 50) {
-      next.feedbackText = 'Feedback phải có ít nhất 50 ký tự';
-    }
-
-    if (form.rating !== 0 && (form.rating < 1 || form.rating > 5)) {
-      next.rating = 'Đánh giá phải từ 1 đến 5 sao';
-    }
-
-    if (form.feedbackType === 'roadmap' && !form.roadmapId) {
-      next.link = 'Sinh viên chưa có roadmap để liên kết';
-    }
-    if (form.feedbackType === 'skillgap' && !form.skillGapReportId) {
-      next.link = 'Sinh viên chưa có báo cáo skill gap để liên kết';
-    }
-
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  }
-
   async function handleSubmit(e) {
     e.preventDefault();
 
-    if (!validate()) {
+    const validationErrors = validateCounselorFeedbackForm(form, {
+      roadmapAvailable: !!roadmap,
+      skillGapAvailable: skillGapReports.length > 0,
+    });
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) {
       toast.error('Vui lòng kiểm tra lại thông tin');
       return;
     }
@@ -319,7 +300,7 @@ export function CounselorWriteFeedbackModal({ session, student, onClose, onSubmi
               />
               <div className="counselor-form-row">
                 <span className="counselor-form-hint">
-                  {form.feedbackText.length}/50 ký tự tối thiểu
+                  {form.feedbackText.trim().length}/50 ký tự tối thiểu
                 </span>
                 {errors.feedbackText && (
                   <span className="counselor-form-error">

@@ -372,27 +372,10 @@ export function AuthPage({ onAuthenticated, onBackHome, initialMode = 'login' })
           </ul>
 
           <div className="auth-brand-chips">
-            {['Student', 'Counselor', 'Mentor', 'Admin'].map((r) => (
-              <button
-                type="button"
-                key={r}
-                className="auth-chip"
-                style={{ cursor: 'pointer' }}
-                onClick={() => {
-                  const credentials = {
-                    Student: { username: 'student1', password: 'secret123' },
-                    Counselor: { username: 'counselor1', password: 'secret123' },
-                    Mentor: { username: 'mentor1', password: 'secret123' },
-                    Admin: { username: 'admin1', password: 'secret123' }
-                  };
-                  setLoginForm(credentials[r]);
-                  setMode('login');
-                  setStatus('idle');
-                  setMessage('');
-                }}
-              >
+            {['Sinh viên', 'Cố vấn', 'Mentor', 'Quản trị'].map((r) => (
+              <span key={r} className="auth-chip">
                 {r}
-              </button>
+              </span>
             ))}
           </div>
 

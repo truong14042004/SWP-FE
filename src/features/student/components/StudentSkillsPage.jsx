@@ -561,15 +561,15 @@ function focusSkillForm() {
 
           <div className="skills-hero-metrics" aria-label="Skills summary">
             <div>
-              <span>My skills</span>
+              <span>Kỹ năng của tôi</span>
               <strong><CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={stats.totalUser} /></strong>
             </div>
             <div>
-              <span>Average</span>
+              <span>Trung bình</span>
               <strong><CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={stats.average} />%</strong>
             </div>
             <div>
-              <span>Verified</span>
+              <span>Đã xác minh</span>
               <strong><CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={stats.verified} /></strong>
             </div>
           </div>
@@ -999,7 +999,7 @@ function SkillGapPanel({
     <section className="skill-gap-panel">
       <div className="skill-gap-head">
         <div>
-          <span className="skill-gap-eyebrow">Skill gap analysis</span>
+          <span className="skill-gap-eyebrow">Phân tích khoảng cách kỹ năng</span>
           <h2>Phân tích khoảng cách kỹ năng với yêu cầu thực tế</h2>
           <p>
             Hệ thống dùng vai trò mục tiêu trong hồ sơ để so sánh với kỹ năng hiện tại của bạn.

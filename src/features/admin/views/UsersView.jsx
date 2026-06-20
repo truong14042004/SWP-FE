@@ -11,9 +11,9 @@ import {
 const ROLES = ['Student', 'Admin', 'AcademicCounselor', 'IndustryMentor'];
 
 const ROLE_LABELS = {
-  Student: 'Student',
-  Admin: 'Admin',
-  AcademicCounselor: 'Counselor',
+  Student: 'Học viên',
+  Admin: 'Quản trị viên',
+  AcademicCounselor: 'Tư vấn viên',
   IndustryMentor: 'Mentor',
 };
 
@@ -132,9 +132,9 @@ export function UsersView({
   return (
     <section className="admin-section">
       <SectionTitle
-        eyebrow="People"
-        title="Users"
-        subtitle="Accounts, roles, and access"
+        eyebrow="Con người"
+        title="Người dùng"
+        subtitle="Tài khoản, vai trò và quyền truy cập"
         action={
           <button
             type="button"
@@ -144,23 +144,23 @@ export function UsersView({
               setShowForm(true);
             }}
           >
-            New user
+            Thêm người dùng
           </button>
         }
       />
 
       <KpiRow>
-        <KpiTile label="Total" value={users.length} sub="all accounts" />
-        <KpiTile label="Active" value={activeCount} tone="active" sub={`${Math.round((activeCount / Math.max(users.length, 1)) * 100)}% of total`} />
-        <KpiTile label="Inactive" value={inactiveCount} tone="muted" sub="includes soft-deleted" />
-        <KpiTile label="Email verified" value={verifiedCount} sub={`${users.length - verifiedCount} unverified`} />
+        <KpiTile label="Tổng số" value={users.length} sub="tất cả tài khoản" />
+        <KpiTile label="Đang hoạt động" value={activeCount} tone="active" sub={`${Math.round((activeCount / Math.max(users.length, 1)) * 100)}% tổng số`} />
+        <KpiTile label="Ngừng hoạt động" value={inactiveCount} tone="muted" sub="gồm cả đã xóa mềm" />
+        <KpiTile label="Đã xác minh email" value={verifiedCount} sub={`${users.length - verifiedCount} chưa xác minh`} />
       </KpiRow>
 
       {showForm && (
         <div className="form-card">
           <header className="form-card-header">
-            <h3>{editingId ? 'Edit user' : 'Create new user'}</h3>
-            <button type="button" className="icon-close" onClick={resetForm} aria-label="Close form">
+            <h3>{editingId ? 'Sửa người dùng' : 'Tạo người dùng mới'}</h3>
+            <button type="button" className="icon-close" onClick={resetForm} aria-label="Đóng biểu mẫu">
               ✕
             </button>
           </header>
@@ -177,20 +177,20 @@ export function UsersView({
                 }}
               />
               <label>
-                <span>Avatar</span>
+                <span>Ảnh đại diện</span>
                 <input
                   name="avatarFile"
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   onChange={updateField}
                 />
-                <small>{form.avatarFile ? form.avatarFile.name : 'JPG, PNG, WebP, GIF — max 5 MB'}</small>
+                <small>{form.avatarFile ? form.avatarFile.name : 'JPG, PNG, WebP, GIF — tối đa 5 MB'}</small>
               </label>
             </div>
 
             <div className="field-row">
               <label>
-                <span>Full name</span>
+                <span>Họ và tên</span>
                 <input name="fullName" value={form.fullName} onChange={updateField} required />
               </label>
               <label>
@@ -198,22 +198,22 @@ export function UsersView({
                 <input name="email" type="email" value={form.email} onChange={updateField} required />
               </label>
               <label>
-                <span>Username</span>
+                <span>Tên đăng nhập</span>
                 <input name="username" value={form.username} onChange={updateField} required />
               </label>
               <label>
-                <span>{editingId ? 'New password' : 'Password'}</span>
+                <span>{editingId ? 'Mật khẩu mới' : 'Mật khẩu'}</span>
                 <input
                   name="password"
                   type="password"
                   value={form.password}
                   onChange={updateField}
                   required={!editingId}
-                  placeholder={editingId ? 'Leave empty to keep current' : ''}
+                  placeholder={editingId ? 'Để trống để giữ mật khẩu hiện tại' : ''}
                 />
               </label>
               <label>
-                <span>Role</span>
+                <span>Vai trò</span>
                 <select name="role" value={form.role} onChange={updateField}>
                   {ROLES.map((role) => (
                     <option key={role} value={role}>
@@ -230,7 +230,7 @@ export function UsersView({
                     checked={form.isEmailVerified}
                     onChange={updateField}
                   />
-                  <span>Email verified</span>
+                  <span>Email đã xác minh</span>
                 </label>
                 <label className="check-row">
                   <input
@@ -239,17 +239,17 @@ export function UsersView({
                     checked={form.isActive}
                     onChange={updateField}
                   />
-                  <span>Active account</span>
+                  <span>Tài khoản hoạt động</span>
                 </label>
               </div>
             </div>
 
             <div className="button-row">
               <button className="pill-button" type="submit" disabled={saving}>
-                {saving ? 'Saving…' : editingId ? 'Save changes' : 'Create user'}
+                {saving ? 'Đang lưu…' : editingId ? 'Lưu thay đổi' : 'Tạo người dùng'}
               </button>
               <button type="button" className="btn-secondary" onClick={resetForm}>
-                Cancel
+                Hủy
               </button>
             </div>
           </form>
@@ -259,8 +259,8 @@ export function UsersView({
       <div className="data-table-wrap">
         <header className="data-table-toolbar">
           <h3>
-            Accounts
-            <span className="count-badge">{filteredUsers.length} shown</span>
+            Tài khoản
+            <span className="count-badge">{filteredUsers.length} hiển thị</span>
           </h3>
           <div className="filter-row">
             <input
@@ -269,20 +269,20 @@ export function UsersView({
               placeholder="Tìm theo tên, email, username..."
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              aria-label="Search users"
+              aria-label="Tìm người dùng"
             />
-            <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)} aria-label="Filter role">
-              <option value="All">All roles</option>
+            <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)} aria-label="Lọc theo vai trò">
+              <option value="All">Tất cả vai trò</option>
               {ROLES.map((role) => (
                 <option key={role} value={role}>
                   {ROLE_LABELS[role] || role}
                 </option>
               ))}
             </select>
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filter status">
-              <option value="All">All status</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Lọc theo trạng thái">
+              <option value="All">Tất cả trạng thái</option>
+              <option value="Active">Hoạt động</option>
+              <option value="Inactive">Ngừng</option>
             </select>
           </div>
         </header>
@@ -291,11 +291,11 @@ export function UsersView({
           <table className="data-table">
             <thead>
               <tr>
-                <th>User</th>
-                <th>Role</th>
+                <th>Người dùng</th>
+                <th>Vai trò</th>
                 <th>Email</th>
-                <th>Status</th>
-                <th>Joined</th>
+                <th>Trạng thái</th>
+                <th>Ngày tham gia</th>
                 <th></th>
               </tr>
             </thead>
@@ -321,21 +321,21 @@ export function UsersView({
                   <td>{formatDate(user.createdAt)}</td>
                   <td className="table-actions">
                     <button type="button" className="btn-secondary" onClick={() => editUser(user)}>
-                      Edit
+                      Sửa
                     </button>
                     <button type="button" className="btn-secondary" onClick={() => onToggleStatus(user)}>
-                      {user.isActive ? 'Disable' : 'Enable'}
+                      {user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}
                     </button>
                     <button
                       type="button"
                       className="btn-secondary danger-action"
                       onClick={() => {
-                        if (window.confirm('Are you sure you want to delete this account?')) {
+                        if (window.confirm('Bạn có chắc muốn xóa tài khoản này?')) {
                           onDeleteUser(user);
                         }
                       }}
                     >
-                      Delete
+                      Xóa
                     </button>
                   </td>
                 </tr>
@@ -343,7 +343,7 @@ export function UsersView({
               {!filteredUsers.length && (
                 <tr>
                   <td colSpan={6}>
-                    <p className="empty-state">No users match the current filters.</p>
+                    <p className="empty-state">Không có người dùng nào khớp bộ lọc hiện tại.</p>
                   </td>
                 </tr>
               )}
@@ -368,7 +368,7 @@ function AvatarPreview({ user, large }) {
     <img
       className={className}
       src={avatarSrc}
-      alt={user?.fullName ? `${user.fullName} avatar` : 'User avatar'}
+      alt={user?.fullName ? `Ảnh đại diện ${user.fullName}` : 'Ảnh đại diện người dùng'}
       onError={(event) => {
         event.currentTarget.replaceWith(
           Object.assign(document.createElement('span'), {

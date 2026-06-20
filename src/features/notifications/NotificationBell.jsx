@@ -47,7 +47,9 @@ export function NotificationBell({ session, onNavigate }) {
           setUnreadCount(result?.unreadCount || 0);
         }
       } catch {
-        // silent fail
+        if (!cancelled) {
+          toast.error('Không tải được thông báo.');
+        }
       }
     }
 
@@ -134,7 +136,7 @@ export function NotificationBell({ session, onNavigate }) {
         );
         setUnreadCount((count) => Math.max(0, count - 1));
       } catch {
-        // ignore
+        toast.error('Không đánh dấu được thông báo đã đọc.');
       }
     }
 
@@ -152,7 +154,7 @@ export function NotificationBell({ session, onNavigate }) {
       setItems((current) => current.map((item) => ({ ...item, isRead: true })));
       setUnreadCount(0);
     } catch {
-      // ignore
+      toast.error('Không đánh dấu được tất cả thông báo đã đọc.');
     }
   }
 

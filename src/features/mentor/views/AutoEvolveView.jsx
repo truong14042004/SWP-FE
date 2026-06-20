@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { getCareerRoles, getPendingProposals, generateProposals, approveProposal, rejectProposal } from '../api/industryMentorApi';
 import { SectionTitle } from '../../admin/components/DashboardPrimitives';
 
@@ -40,7 +41,7 @@ export function AutoEvolveView({ session }) {
       // Reload proposals sau khi sinh xong
       const res = await getPendingProposals(session);
       setProposals(res);
-      alert('Đã sinh đề xuất thành công!');
+      toast.success('Đã sinh đề xuất thành công.');
     } catch (err) {
       setError(err.message || 'Lỗi khi sinh đề xuất.');
     } finally {
@@ -53,8 +54,9 @@ export function AutoEvolveView({ session }) {
     try {
       await approveProposal(session, id);
       setProposals(current => current.filter(p => p.id !== id));
+      toast.success('Đã duyệt đề xuất.');
     } catch (err) {
-      alert(err.message || 'Lỗi khi duyệt.');
+      toast.error(err.message || 'Lỗi khi duyệt.');
     }
   }
 
@@ -63,8 +65,9 @@ export function AutoEvolveView({ session }) {
     try {
       await rejectProposal(session, id);
       setProposals(current => current.filter(p => p.id !== id));
+      toast.success('Đã từ chối đề xuất.');
     } catch (err) {
-      alert(err.message || 'Lỗi khi từ chối.');
+      toast.error(err.message || 'Lỗi khi từ chối.');
     }
   }
 
@@ -79,10 +82,10 @@ export function AutoEvolveView({ session }) {
 
   const formatChange = (p) => {
     if (p.actionType === 'UpdatePriority') {
-      return `Priority: ${p.currentPriority ?? 'N/A'} ➡️ ${p.proposedPriority}`;
+      return `Priority: ${p.currentPriority ?? 'N/A'} → ${p.proposedPriority}`;
     }
     if (p.actionType === 'UpdateWeight') {
-      return `Weight: ${p.currentWeight ?? 'N/A'} ➡️ ${p.proposedWeight}`;
+      return `Weight: ${p.currentWeight ?? 'N/A'} → ${p.proposedWeight}`;
     }
     if (p.actionType === 'AddSkill') {
       return `Thêm vào lộ trình (Priority: ${p.proposedPriority}, Weight: ${p.proposedWeight})`;

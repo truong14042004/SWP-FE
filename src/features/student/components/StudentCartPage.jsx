@@ -32,9 +32,14 @@ export function StudentCartPage({ session }) {
     let cancelled = false;
     async function load() {
       try {
-        const mineData = await getMySubscriptions(session).catch(() => []);
+        const mineData = await getMySubscriptions(session);
         if (!cancelled) {
           setHistory(Array.isArray(mineData) ? mineData : []);
+        }
+      } catch (requestError) {
+        if (!cancelled) {
+          setHistory([]);
+          toast.error(requestError?.message || 'Không tải được lịch sử đơn hàng.');
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -114,8 +119,8 @@ export function StudentCartPage({ session }) {
                     <div>
                       <strong style={{ fontSize: '16px', fontWeight: '600' }}>{item.planName}</strong>
                       <small style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--student-muted, #6e6e73)', marginTop: '4px' }}>
-                        <Calendar size={13} /> Created: {new Date(item.createdAt).toLocaleString('vi-VN')}
-                        {item.provider && <> · Provider: {item.provider}</>}
+                        <Calendar size={13} /> Tạo lúc: {new Date(item.createdAt).toLocaleString('vi-VN')}
+                        {item.provider && <> · Nhà cung cấp: {item.provider}</>}
                       </small>
                     </div>
                     <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>

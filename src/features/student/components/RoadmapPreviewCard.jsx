@@ -51,7 +51,7 @@ export function RoadmapPreviewCard({ session, roadmap, onApplied }) {
       <div className="ai-roadmap-stats">
         <div>
           <strong>{nodeCount}</strong>
-          <small>module</small>
+          <small>mô-đun</small>
         </div>
         <div>
           <strong>{hours || '—'}</strong>
@@ -60,7 +60,7 @@ export function RoadmapPreviewCard({ session, roadmap, onApplied }) {
         {roadmap.careerRoleHint && (
           <div>
             <strong>{roadmap.careerRoleHint}</strong>
-            <small>career role</small>
+            <small>định hướng nghề nghiệp</small>
           </div>
         )}
       </div>

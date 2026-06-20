@@ -17,7 +17,7 @@ import { RoadmapPreviewCard } from './RoadmapPreviewCard';
 const QUICK_PROMPTS = [
   { id: 'roadmap', icon: Map, label: 'Tạo lộ trình', question: 'Dựa trên hồ sơ của tôi, hãy tạo một lộ trình học tập 3 tháng để đạt mục tiêu nghề nghiệp.' },
   { id: 'gap', icon: BarChart3, label: 'Phân tích kỹ năng', question: 'Kỹ năng nào của tôi đang yếu nhất và tôi cần tập trung cải thiện như thế nào?' },
-  { id: 'project', icon: Lightbulb, label: 'Gợi ý dự án', question: 'Gợi ý 3 dỹ án thực hành phù hợp với level và mục tiêu của tôi.' },
+  { id: 'project', icon: Lightbulb, label: 'Gợi ý dự án', question: 'Gợi ý 3 dự án thực hành phù hợp với level và mục tiêu của tôi.' },
   { id: 'interview', icon: Target, label: 'Chuẩn bị phỏng vấn', question: 'Tôi cần làm gì để chuẩn bị cho phỏng vấn vị trí mong muốn?' },
 ];
 
@@ -674,8 +674,8 @@ function ChatMessage({ message, userInitials, session, onApplied }) {
 
         {!isUser && (message.model || message.tokensUsed) && (
           <div className="mentor-message-meta">
-            {message.model && <span>Model: {message.model}</span>}
-            {message.tokensUsed !== undefined && <span>Tokens: {message.tokensUsed}</span>}
+            {message.model && <span>Mô hình: {message.model}</span>}
+            {message.tokensUsed !== undefined && <span>Token: {message.tokensUsed}</span>}
           </div>
         )}
       </div>

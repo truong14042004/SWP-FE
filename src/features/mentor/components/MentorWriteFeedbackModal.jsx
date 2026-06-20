@@ -4,10 +4,10 @@ import { Dialog, DialogContent } from '@/components/animate-ui/components/radix/
 import { validateMentorFeedbackForm } from '../../feedbackValidation';
 
 const READINESS_OPTIONS = [
-  { value: 'NotReady', label: 'Not Ready', hint: 'Cần học thêm nền tảng' },
-  { value: 'NeedsImprovement', label: 'Needs Improvement', hint: 'Có cơ bản, cần cải thiện' },
-  { value: 'Ready', label: 'Ready', hint: 'Sẵn sàng đi làm' },
-  { value: 'Excellent', label: 'Excellent', hint: 'Vượt mong đợi' },
+  { value: 'NotReady', label: 'Chưa sẵn sàng', hint: 'Cần học thêm nền tảng' },
+  { value: 'NeedsImprovement', label: 'Cần cải thiện', hint: 'Có cơ bản, cần cải thiện' },
+  { value: 'Ready', label: 'Sẵn sàng', hint: 'Sẵn sàng đi làm' },
+  { value: 'Excellent', label: 'Xuất sắc', hint: 'Vượt mong đợi' },
 ];
 
 export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }) {
@@ -48,7 +48,7 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
       return;
     }
     if (!comment.trim()) {
-      setError('Comment là bắt buộc');
+      setError('Nhận xét tổng quan là bắt buộc');
       return;
     }
 
@@ -126,11 +126,11 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
                   required
                 />
                 {errors.comment && <p className="imentor-form-error">{errors.comment}</p>}
-                <p className="imentor-hint">{comment.trim().length}/50 ky tu toi thieu</p>
+                <p className="imentor-hint">{comment.trim().length}/50 ký tự tối thiểu</p>
               </div>
 
               <div className="imentor-form-row">
-                <label>Overall rating</label>
+                <label>Đánh giá tổng thể</label>
                 <div className="imentor-rating">
                   {[1, 2, 3, 4, 5].map((n) => (
                     <button
@@ -148,7 +148,7 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
               </div>
 
               <div className="imentor-form-row">
-                <label htmlFor="imentor-portfolio-quality">Portfolio quality</label>
+                <label htmlFor="imentor-portfolio-quality">Chất lượng portfolio</label>
                 <p className="imentor-hint">Cấu trúc, trình bày, story telling.</p>
                 <textarea
                   id="imentor-portfolio-quality"
@@ -160,7 +160,7 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
               </div>
 
               <div className="imentor-form-row">
-                <label htmlFor="imentor-tech-skills">Technical skills assessment</label>
+                <label htmlFor="imentor-tech-skills">Đánh giá kỹ năng kỹ thuật</label>
                 <p className="imentor-hint">
                   Đánh giá kỹ năng kỹ thuật dựa trên repo, code quality, kiến trúc.
                 </p>
@@ -174,7 +174,7 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
               </div>
 
               <div className="imentor-form-row">
-                <label htmlFor="imentor-project-quality">Project quality</label>
+                <label htmlFor="imentor-project-quality">Chất lượng dự án</label>
                 <p className="imentor-hint">Scope, độ hoàn thiện, độ phức tạp.</p>
                 <textarea
                   id="imentor-project-quality"
@@ -186,7 +186,7 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
               </div>
 
               <div className="imentor-form-row">
-                <label htmlFor="imentor-recommendations">Recommendations</label>
+                <label htmlFor="imentor-recommendations">Khuyến nghị</label>
                 <p className="imentor-hint">3-5 hành động cụ thể trong 1-2 tháng tới.</p>
                 <textarea
                   id="imentor-recommendations"
@@ -198,7 +198,7 @@ export function MentorWriteFeedbackModal({ session, student, onClose, onSubmit }
               </div>
 
               <div className="imentor-form-row">
-                <label>Job readiness level</label>
+                <label>Mức độ sẵn sàng đi làm</label>
                 <div className="imentor-readiness-grid">
                   {READINESS_OPTIONS.map((opt) => (
                     <button

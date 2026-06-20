@@ -209,7 +209,7 @@ export function RoadmapReviewQueue({ session, role }) {
         transition={{ type: 'spring', stiffness: 260, damping: 22 }}
       >
         <div>
-          <span className="review-queue-eyebrow">Roadmap reviews</span>
+          <span className="review-queue-eyebrow">Duyệt roadmap</span>
           <h1>Yêu cầu review từ sinh viên</h1>
           <p>Duyệt yêu cầu xác minh module trong roadmap của sinh viên.</p>
         </div>
@@ -379,7 +379,7 @@ export function RoadmapReviewQueue({ session, role }) {
 
                 {item.evidenceUrl && (
                   <div className="review-queue-evidence">
-                    <small>Evidence</small>
+                    <small>Minh chứng</small>
                     {item.evidenceType === 'GitRepository' ? (
                       <a href={item.evidenceUrl} target="_blank" rel="noreferrer">
                         🔗 {item.evidenceUrl}

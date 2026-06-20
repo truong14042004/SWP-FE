@@ -205,7 +205,7 @@ export function OverviewView({ stats, session }) {
           return next;
         });
       } catch (requestError) {
-        if (!cancelled) setError(requestError?.message || 'Could not load daily stats.');
+        if (!cancelled) setError(requestError?.message || 'Không thể tải dữ liệu thống kê theo ngày.');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -264,7 +264,7 @@ export function OverviewView({ stats, session }) {
   }
 
   if (!stats) {
-    return <p className="empty-state">No stats available yet.</p>;
+    return <p className="empty-state">Chưa có số liệu thống kê.</p>;
   }
 
   const users         = stats.users         || {};
@@ -283,8 +283,8 @@ export function OverviewView({ stats, session }) {
   return (
     <section className="admin-section">
       <SectionTitle
-        eyebrow="Overview"
-        title={`Daily activity — ${rangeLabel}`}
+        eyebrow="Tổng quan"
+        title={`Hoạt động hằng ngày — ${rangeLabel}`}
         subtitle={
           loading
             ? 'Đang tải dữ liệu…'
@@ -366,27 +366,27 @@ export function OverviewView({ stats, session }) {
 
       <div className="chart-grid">
         <DailyAreaCard
-          title={`New users — ${rangeLabel}`}
+          title={`Người dùng mới — ${rangeLabel}`}
           series={dailySeries}
           dataKey="newUsers"
-          legend="New users"
+          legend="Người dùng mới"
           color={ACTION_BLUE}
           fill={ACTION_BLUE_SOFT}
         />
 
         <DailyLineCard
-          title={`New subscriptions — ${rangeLabel}`}
+          title={`Lượt đăng ký mới — ${rangeLabel}`}
           series={dailySeries}
           dataKey="newSubscriptions"
-          legend="New subscriptions"
+          legend="Lượt đăng ký mới"
           color={SERIES_INK}
         />
 
         <DailyAreaCard
-          title={`Paid revenue — ${rangeLabel}`}
+          title={`Doanh thu — ${rangeLabel}`}
           series={dailySeries}
           dataKey="paidRevenue"
-          legend="Revenue"
+          legend="Doanh thu"
           color={ACTION_BLUE}
           fill={ACTION_BLUE_SOFT}
           tickFormatter={compactMoney}
@@ -394,10 +394,10 @@ export function OverviewView({ stats, session }) {
         />
 
         <DailyLineCard
-          title={`Learning resources — ${rangeLabel}`}
+          title={`Tài nguyên học tập — ${rangeLabel}`}
           series={dailySeries}
           dataKey="newResources"
-          legend="New resources"
+          legend="Tài nguyên mới"
           color={SERIES_ACCENT}
         />
       </div>
