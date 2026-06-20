@@ -16,6 +16,13 @@ const LEVEL_OPTIONS = [
   { value: 'Advanced', label: 'Nâng cao' },
 ];
 
+const PAGE_SIZE = 10;
+const UNASSIGNED_ROLE_KEY = '__none__';
+
+function levelLabel(value) {
+  return LEVEL_OPTIONS.find((option) => option.value === value)?.label || value || '—';
+}
+
 export function RequirementsView({
   requirements,
   careerRoles,
@@ -31,9 +38,11 @@ export function RequirementsView({
   const [formError, setFormError] = useState('');
   const [deletingId, setDeletingId] = useState('');
 
-  // Bộ lọc
+  // Bộ lọc + chế độ xem
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('');
+  const [viewMode, setViewMode] = useState('grouped'); // 'grouped' | 'list'
+  const [page, setPage] = useState(1);
 
   function updateField(event) {
     const { name, value } = event.target;
@@ -55,11 +64,49 @@ export function RequirementsView({
     });
   }, [requirements, search, filterRole]);
 
+  // Nhóm theo định hướng nghề, mỗi nhóm sắp theo ưu tiên rồi tên kỹ năng
+  const groupedRequirements = useMemo(() => {
+    const groups = new Map();
+    filteredRequirements.forEach((item) => {
+      const key = item.careerRoleName || UNASSIGNED_ROLE_KEY;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          careerRoleName: item.careerRoleName || 'Không có định hướng',
+          items: [],
+        });
+      }
+      groups.get(key).items.push(item);
+    });
+    const result = Array.from(groups.values());
+    result.forEach((group) => {
+      group.items.sort((a, b) => {
+        const priorityA = a.priority ?? 0;
+        const priorityB = b.priority ?? 0;
+        if (priorityA !== priorityB) return priorityA - priorityB;
+        return (a.skillName || '').localeCompare(b.skillName || '');
+      });
+    });
+    return result.sort((a, b) => {
+      if (a.key === UNASSIGNED_ROLE_KEY) return 1;
+      if (b.key === UNASSIGNED_ROLE_KEY) return -1;
+      return a.careerRoleName.localeCompare(b.careerRoleName);
+    });
+  }, [filteredRequirements]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRequirements.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedRequirements = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE;
+    return filteredRequirements.slice(start, start + PAGE_SIZE);
+  }, [filteredRequirements, safePage]);
+
   const hasActiveFilter = Boolean(search) || Boolean(filterRole);
 
   function resetFilters() {
     setSearch('');
     setFilterRole('');
+    setPage(1);
   }
 
   async function edit(requirement) {
@@ -126,6 +173,22 @@ export function RequirementsView({
     } finally {
       setDeletingId('');
     }
+  }
+
+  function renderRowActions(item) {
+    return (
+      <td className="table-actions">
+        <button type="button" className="btn-secondary" onClick={() => edit(item)}>Sửa</button>
+        <button
+          type="button"
+          className="btn-secondary danger-action"
+          onClick={() => handleDelete(item)}
+          disabled={deletingId === item.id}
+        >
+          {deletingId === item.id ? 'Đang xóa...' : 'Xóa'}
+        </button>
+      </td>
+    );
   }
 
   return (
@@ -206,9 +269,9 @@ export function RequirementsView({
           className="resource-search"
           placeholder="Tìm theo kỹ năng hoặc định hướng..."
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={(event) => { setSearch(event.target.value); setPage(1); }}
         />
-        <select value={filterRole} onChange={(event) => setFilterRole(event.target.value)}>
+        <select value={filterRole} onChange={(event) => { setFilterRole(event.target.value); setPage(1); }}>
           <option value="">Tất cả định hướng</option>
           {careerRoles.map((role) => (
             <option key={role.id} value={role.name}>{role.name}</option>
@@ -217,53 +280,115 @@ export function RequirementsView({
         {hasActiveFilter && (
           <button type="button" className="btn-secondary" onClick={resetFilters}>Xóa lọc</button>
         )}
-      </div>
 
-      <div className="data-table-wrap">
-        <div className="scroll-x">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Định hướng nghề</th>
-                <th>Kỹ năng</th>
-                <th>Cấp độ</th>
-                <th>Ưu tiên · Trọng số</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRequirements.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.careerRoleName}</td>
-                  <td>{item.skillName}</td>
-                  <td>{item.requiredLevel}</td>
-                  <td>{item.priority} · {item.weight}</td>
-                  <td className="table-actions">
-                    <button type="button" className="btn-secondary" onClick={() => edit(item)}>Sửa</button>
-                    <button
-                      type="button"
-                      className="btn-secondary danger-action"
-                      onClick={() => handleDelete(item)}
-                      disabled={deletingId === item.id}
-                    >
-                      {deletingId === item.id ? 'Đang xóa...' : 'Xóa'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {!filteredRequirements.length && (
-                <tr>
-                  <td colSpan={5}>
-                    <p className="empty-state">
-                      {requirements.length ? 'Không có yêu cầu nào khớp bộ lọc.' : 'Chưa có yêu cầu nào.'}
-                    </p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div className="resource-view-toggle">
+          <button
+            type="button"
+            className={viewMode === 'grouped' ? 'is-active' : ''}
+            onClick={() => setViewMode('grouped')}
+          >
+            Theo nhóm
+          </button>
+          <button
+            type="button"
+            className={viewMode === 'list' ? 'is-active' : ''}
+            onClick={() => setViewMode('list')}
+          >
+            Danh sách
+          </button>
         </div>
       </div>
+
+      {!filteredRequirements.length ? (
+        <p className="empty-state">
+          {requirements.length ? 'Không có yêu cầu nào khớp bộ lọc.' : 'Chưa có yêu cầu nào.'}
+        </p>
+      ) : viewMode === 'grouped' ? (
+        <div className="resource-groups">
+          {groupedRequirements.map((group) => (
+            <div key={group.key} className="resource-group">
+              <h4 className="resource-group-title">
+                {group.careerRoleName} <span className="resource-group-count">{group.items.length}</span>
+              </h4>
+              <div className="data-table-wrap">
+                <div className="scroll-x">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Kỹ năng</th>
+                        <th>Cấp độ</th>
+                        <th>Ưu tiên · Trọng số</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.items.map((item) => (
+                        <tr key={item.id}>
+                          <td>{item.skillName}</td>
+                          <td>{levelLabel(item.requiredLevel)}</td>
+                          <td>{item.priority} · {item.weight}</td>
+                          {renderRowActions(item)}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <>
+          <div className="data-table-wrap">
+            <div className="scroll-x">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Định hướng nghề</th>
+                    <th>Kỹ năng</th>
+                    <th>Cấp độ</th>
+                    <th>Ưu tiên · Trọng số</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedRequirements.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.careerRoleName}</td>
+                      <td>{item.skillName}</td>
+                      <td>{levelLabel(item.requiredLevel)}</td>
+                      <td>{item.priority} · {item.weight}</td>
+                      {renderRowActions(item)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="resource-pagination">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={safePage <= 1}
+              >
+                Trước
+              </button>
+              <span>Trang {safePage}/{totalPages}</span>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                disabled={safePage >= totalPages}
+              >
+                Sau
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </section>
   );
 }

@@ -17,6 +17,9 @@ const defaultSkillCategories = [
   'QA',
 ];
 
+const PAGE_SIZE = 10;
+const NO_CATEGORY_KEY = '__none__';
+
 export function SkillsView({ skills, onLoadSkill, onSaveSkill, onDeleteSkill }) {
   const [form, setForm] = useState(emptySkill);
   const [editingId, setEditingId] = useState('');
@@ -25,9 +28,11 @@ export function SkillsView({ skills, onLoadSkill, onSaveSkill, onDeleteSkill }) 
   const [formError, setFormError] = useState('');
   const [deletingId, setDeletingId] = useState('');
 
-  // Bộ lọc
+  // Bộ lọc + chế độ xem
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [viewMode, setViewMode] = useState('grouped'); // 'grouped' | 'list'
+  const [page, setPage] = useState(1);
 
   const categoryOptions = Array.from(
     new Set([
@@ -56,11 +61,60 @@ export function SkillsView({ skills, onLoadSkill, onSaveSkill, onDeleteSkill }) 
     });
   }, [skills, search, filterCategory]);
 
+  // Nhóm theo danh mục, mỗi nhóm sắp theo tên
+  const groupedSkills = useMemo(() => {
+    const groups = new Map();
+    filteredSkills.forEach((skill) => {
+      const key = skill.category || NO_CATEGORY_KEY;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          categoryName: skill.category || 'Không có danh mục',
+          items: [],
+        });
+      }
+      groups.get(key).items.push(skill);
+    });
+    const result = Array.from(groups.values());
+    result.forEach((group) => {
+      group.items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    });
+    return result.sort((a, b) => {
+      if (a.key === NO_CATEGORY_KEY) return 1;
+      if (b.key === NO_CATEGORY_KEY) return -1;
+      return a.categoryName.localeCompare(b.categoryName);
+    });
+  }, [filteredSkills]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSkills.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedSkills = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE;
+    return filteredSkills.slice(start, start + PAGE_SIZE);
+  }, [filteredSkills, safePage]);
+
   const hasActiveFilter = Boolean(search) || Boolean(filterCategory);
 
   function resetFilters() {
     setSearch('');
     setFilterCategory('');
+    setPage(1);
+  }
+
+  function renderRowActions(skill) {
+    return (
+      <td className="table-actions">
+        <button type="button" className="btn-secondary" onClick={() => edit(skill)}>Sửa</button>
+        <button
+          type="button"
+          className="btn-secondary danger-action"
+          onClick={() => handleDelete(skill)}
+          disabled={deletingId === skill.id}
+        >
+          {deletingId === skill.id ? 'Đang xóa...' : 'Xóa'}
+        </button>
+      </td>
+    );
   }
 
   async function edit(skill) {
@@ -184,9 +238,9 @@ export function SkillsView({ skills, onLoadSkill, onSaveSkill, onDeleteSkill }) 
           className="resource-search"
           placeholder="Tìm theo tên hoặc danh mục..."
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={(event) => { setSearch(event.target.value); setPage(1); }}
         />
-        <select value={filterCategory} onChange={(event) => setFilterCategory(event.target.value)}>
+        <select value={filterCategory} onChange={(event) => { setFilterCategory(event.target.value); setPage(1); }}>
           <option value="">Tất cả danh mục</option>
           {categoryOptions.map((category) => (
             <option key={category} value={category}>{category}</option>
@@ -195,54 +249,116 @@ export function SkillsView({ skills, onLoadSkill, onSaveSkill, onDeleteSkill }) 
         {hasActiveFilter && (
           <button type="button" className="btn-secondary" onClick={resetFilters}>Xóa lọc</button>
         )}
-      </div>
 
-      <div className="data-table-wrap">
-        <div className="scroll-x">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Tên</th>
-                <th>Danh mục</th>
-                <th>Trạng thái</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSkills.map((skill) => (
-                <tr key={skill.id}>
-                  <td>
-                    <strong>{skill.name}</strong>
-                    <span>{skill.description || 'Chưa có mô tả'}</span>
-                  </td>
-                  <td>{skill.category}</td>
-                  <td><StatusPill active={skill.isActive} /></td>
-                  <td className="table-actions">
-                    <button type="button" className="btn-secondary" onClick={() => edit(skill)}>Sửa</button>
-                    <button
-                      type="button"
-                      className="btn-secondary danger-action"
-                      onClick={() => handleDelete(skill)}
-                      disabled={deletingId === skill.id}
-                    >
-                      {deletingId === skill.id ? 'Đang xóa...' : 'Xóa'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {!filteredSkills.length && (
-                <tr>
-                  <td colSpan={4}>
-                    <p className="empty-state">
-                      {skills.length ? 'Không có kỹ năng nào khớp bộ lọc.' : 'Chưa có kỹ năng nào.'}
-                    </p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div className="resource-view-toggle">
+          <button
+            type="button"
+            className={viewMode === 'grouped' ? 'is-active' : ''}
+            onClick={() => setViewMode('grouped')}
+          >
+            Theo nhóm
+          </button>
+          <button
+            type="button"
+            className={viewMode === 'list' ? 'is-active' : ''}
+            onClick={() => setViewMode('list')}
+          >
+            Danh sách
+          </button>
         </div>
       </div>
+
+      {!filteredSkills.length ? (
+        <p className="empty-state">
+          {skills.length ? 'Không có kỹ năng nào khớp bộ lọc.' : 'Chưa có kỹ năng nào.'}
+        </p>
+      ) : viewMode === 'grouped' ? (
+        <div className="resource-groups">
+          {groupedSkills.map((group) => (
+            <div key={group.key} className="resource-group">
+              <h4 className="resource-group-title">
+                {group.categoryName} <span className="resource-group-count">{group.items.length}</span>
+              </h4>
+              <div className="data-table-wrap">
+                <div className="scroll-x">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Tên</th>
+                        <th>Mô tả</th>
+                        <th>Trạng thái</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.items.map((skill) => (
+                        <tr key={skill.id}>
+                          <td><strong>{skill.name}</strong></td>
+                          <td>{skill.description || 'Chưa có mô tả'}</td>
+                          <td><StatusPill active={skill.isActive} /></td>
+                          {renderRowActions(skill)}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <>
+          <div className="data-table-wrap">
+            <div className="scroll-x">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Tên</th>
+                    <th>Danh mục</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedSkills.map((skill) => (
+                    <tr key={skill.id}>
+                      <td>
+                        <strong>{skill.name}</strong>
+                        <span>{skill.description || 'Chưa có mô tả'}</span>
+                      </td>
+                      <td>{skill.category || '—'}</td>
+                      <td><StatusPill active={skill.isActive} /></td>
+                      {renderRowActions(skill)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="resource-pagination">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={safePage <= 1}
+              >
+                Trước
+              </button>
+              <span>Trang {safePage}/{totalPages}</span>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                disabled={safePage >= totalPages}
+              >
+                Sau
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </section>
   );
 }
