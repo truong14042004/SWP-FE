@@ -961,6 +961,7 @@ function getSkillGapItems(report) {
     report.gaps,
     report.skillGaps,
     report.items,
+    report.Items,
     report.details,
     report.missingSkills,
     report.skillGapDetails,
@@ -969,6 +970,32 @@ function getSkillGapItems(report) {
   const list = possibleLists.find(Array.isArray);
 
   return list || [];
+}
+
+// Chuẩn hóa độ ưu tiên về thang số (nhỏ = khẩn cấp hơn).
+function getItemPriority(item) {
+  const raw = item?.priority ?? item?.Priority;
+  const num = Number(raw);
+  return Number.isFinite(num) && num > 0 ? num : 99;
+}
+
+// FR3.3: trọng số trạng thái để xếp "Missing" (thiếu hẳn) lên trước "Weak"/"NotVerified".
+function getStatusWeight(item) {
+  const status = String(item?.status || item?.Status || '').toLowerCase();
+  if (status.includes('missing')) return 0;
+  if (status.includes('weak')) return 1;
+  if (status.includes('notverified') || status.includes('not verified')) return 2;
+  return 3;
+}
+
+// Danh sách kỹ năng thiếu, sắp xếp theo ưu tiên học khẩn cấp.
+function getUrgentSkillGapItems(report) {
+  return [...getSkillGapItems(report)].sort((a, b) => {
+    const pa = getItemPriority(a);
+    const pb = getItemPriority(b);
+    if (pa !== pb) return pa - pb;
+    return getStatusWeight(a) - getStatusWeight(b);
+  });
 }
 
 function getReportScore(report) {
@@ -982,6 +1009,104 @@ function getReportScore(report) {
   );
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// FR3.3: xuất báo cáo skill gap ra PDF qua hộp thoại in của trình duyệt
+// (chọn "Save as PDF"). Không cần thư viện ngoài.
+function exportSkillGapPdf(report, profile) {
+  const items = getUrgentSkillGapItems(report);
+  const score = Number(getReportScore(report) || 0);
+  const roleName =
+    report?.careerRoleName ||
+    report?.CareerRoleName ||
+    profile?.targetRoleName ||
+    'Chưa xác định';
+  const generatedAt = new Date().toLocaleString('vi-VN');
+
+  const rows = items
+    .map((item, index) => {
+      const name =
+        item.skillName || item.SkillName || item.name || item.title || `Kỹ năng #${index + 1}`;
+      const current =
+        item.currentLevel || item.CurrentLevel || item.userLevel || item.level || 'Chưa có';
+      const required =
+        item.requiredLevel || item.RequiredLevel || item.targetLevel || item.expectedLevel || 'N/A';
+      const recommendation =
+        item.recommendation || item.Recommendation || item.description || item.note || '—';
+      const priority = getItemPriority(item);
+      const priorityLabel = priority <= 2 ? 'Khẩn cấp' : priority === 3 ? 'Cao' : 'Trung bình';
+      return `
+        <tr>
+          <td style="text-align:center">${index + 1}</td>
+          <td><span class="badge ${priority <= 2 ? 'urgent' : ''}">${priorityLabel}</span></td>
+          <td><strong>${escapeHtml(name)}</strong></td>
+          <td style="text-align:center">${escapeHtml(current)}</td>
+          <td style="text-align:center">${escapeHtml(required)}</td>
+          <td>${escapeHtml(recommendation)}</td>
+        </tr>`;
+    })
+    .join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8" />
+<title>Bao cao Skill Gap - ${escapeHtml(roleName)}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; color: #1f2937; margin: 32px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: #6b7280; font-size: 13px; margin-bottom: 18px; }
+  .score { display: inline-block; padding: 10px 18px; border-radius: 10px;
+    background: #eef2ff; color: #4338ca; font-weight: 700; font-size: 18px; margin-bottom: 18px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { border: 1px solid #e5e7eb; padding: 8px 10px; vertical-align: top; }
+  th { background: #f9fafb; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px;
+    background: #f3f4f6; color: #374151; }
+  .badge.urgent { background: #fee2e2; color: #b91c1c; }
+  .empty { color: #6b7280; font-style: italic; }
+  footer { margin-top: 22px; font-size: 11px; color: #9ca3af; }
+  @media print { body { margin: 12mm; } }
+</style></head>
+<body>
+  <h1>Báo cáo khoảng cách kỹ năng (Skill Gap)</h1>
+  <div class="sub">
+    Vai trò mục tiêu: <strong>${escapeHtml(roleName)}</strong>${
+    profile?.fullName ? ` &middot; Sinh viên: ${escapeHtml(profile.fullName)}` : ''
+  }<br/>Xuất lúc: ${escapeHtml(generatedAt)}
+  </div>
+  <div class="score">Điểm phù hợp: ${Math.round(score)}%</div>
+  <h2 style="font-size:15px">Danh sách ưu tiên học khẩn cấp (${items.length} kỹ năng)</h2>
+  ${
+    items.length > 0
+      ? `<table>
+    <thead><tr>
+      <th style="width:36px">#</th><th style="width:90px">Ưu tiên</th>
+      <th>Kỹ năng</th><th style="width:80px">Hiện tại</th>
+      <th style="width:80px">Yêu cầu</th><th>Đề xuất</th>
+    </tr></thead>
+    <tbody>${rows}</tbody></table>`
+      : '<p class="empty">Không có kỹ năng nào còn thiếu. Bạn đã đáp ứng yêu cầu của vai trò.</p>'
+  }
+  <footer>CareerMap &middot; Báo cáo được tạo tự động.</footer>
+  <script>window.onload = function(){ window.print(); }</script>
+</body></html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) {
+    toast.error('Trình duyệt chặn cửa sổ in. Vui lòng cho phép pop-up rồi thử lại.');
+    return;
+  }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+
 function SkillGapPanel({
   profile,
   report,
@@ -989,7 +1114,7 @@ function SkillGapPanel({
   analyzing,
   onAnalyze,
 }) {
-  const items = getSkillGapItems(report);
+  const items = getUrgentSkillGapItems(report);
   const score = Number(getReportScore(report) || 0);
   const targetRoleId = profile?.targetRoleId;
   const targetRoleName = profile?.targetRoleName;
@@ -1016,6 +1141,17 @@ function SkillGapPanel({
           >
             {analyzing ? 'Đang phân tích...' : 'Phân tích lại'}
           </Button>
+          {report && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => exportSkillGapPdf(report, profile)}
+              tapScale={0.96}
+              hoverScale={1.04}
+            >
+              Xuất PDF
+            </Button>
+          )}
         </div>
       </div>
 
@@ -1073,26 +1209,35 @@ function SkillGapPanel({
 
           {items.length > 0 && (
             <div className="skill-gap-list">
-              {items.map((item, index) => (
-                <article key={item.id || index} className="skill-gap-item">
-                  <div>
-                    <span>{item.skillCategory || item.category || 'Skill'}</span>
-                    <h3>{item.skillName || item.name || item.title || `Kỹ năng #${index + 1}`}</h3>
-                    <p>{item.description || item.recommendation || item.note || 'Chưa có mô tả.'}</p>
-                  </div>
+              {items.map((item, index) => {
+                const priority = getItemPriority(item);
+                const priorityLabel =
+                  priority <= 2 ? 'Khẩn cấp' : priority === 3 ? 'Ưu tiên cao' : 'Trung bình';
+                return (
+                  <article key={item.id || index} className="skill-gap-item">
+                    <div>
+                      <span>
+                        {item.skillCategory || item.category || 'Skill'}
+                        {' · '}
+                        <b className={priority <= 2 ? 'skill-gap-urgent' : ''}>{priorityLabel}</b>
+                      </span>
+                      <h3>{item.skillName || item.SkillName || item.name || item.title || `Kỹ năng #${index + 1}`}</h3>
+                      <p>{item.recommendation || item.Recommendation || item.description || item.note || 'Chưa có mô tả.'}</p>
+                    </div>
 
-                  <div className="skill-gap-levels">
-                    <small>
-                      Hiện tại:{' '}
-                      <b>{item.currentLevel || item.userLevel || item.level || 'Chưa có'}</b>
-                    </small>
-                    <small>
-                      Yêu cầu:{' '}
-                      <b>{item.requiredLevel || item.targetLevel || item.expectedLevel || 'N/A'}</b>
-                    </small>
-                  </div>
-                </article>
-              ))}
+                    <div className="skill-gap-levels">
+                      <small>
+                        Hiện tại:{' '}
+                        <b>{item.currentLevel || item.CurrentLevel || item.userLevel || item.level || 'Chưa có'}</b>
+                      </small>
+                      <small>
+                        Yêu cầu:{' '}
+                        <b>{item.requiredLevel || item.RequiredLevel || item.targetLevel || item.expectedLevel || 'N/A'}</b>
+                      </small>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </div>

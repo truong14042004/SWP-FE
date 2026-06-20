@@ -1221,3 +1221,15 @@
   line-height: 1.45;
 }
 .user-skill-reject-reason strong { font-weight: 600; }
+
+/* FR3.3: nhóm nút phân tích + xuất PDF cạnh nhau, badge ưu tiên khẩn cấp */
+.skill-gap-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.skill-gap-urgent {
+    color: #b3261e;
+    font-weight: 600;
+}
