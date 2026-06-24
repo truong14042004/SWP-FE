@@ -9,12 +9,19 @@ import {
 } from '../components/DashboardPrimitives';
 
 const TABS = [
-  { id: 'transactions', label: 'Transactions' },
-  { id: 'subscriptions', label: 'Subscriptions' },
-  { id: 'invoices', label: 'Invoices' },
+  { id: 'transactions', label: 'Giao dịch' },
+  { id: 'subscriptions', label: 'Gói đăng ký' },
+  { id: 'invoices', label: 'Hóa đơn' },
 ];
 
 const STATUS_OPTIONS = ['Paid', 'Failed', 'Pending', 'Created'];
+
+const STATUS_LABELS = {
+  Paid: 'Đã thanh toán',
+  Failed: 'Thất bại',
+  Pending: 'Đang chờ',
+  Created: 'Đã khởi tạo',
+};
 
 function paymentTone(status) {
   switch (status?.toLowerCase()) {
@@ -56,19 +63,19 @@ export function PaymentsView({
   return (
     <section className="admin-section">
       <SectionTitle
-        eyebrow="Finance"
-        title="Payments"
-        subtitle={`${payments.length} transactions · ${subscriptions.length} subscriptions · ${invoices.length} invoices`}
+        eyebrow="Tài chính"
+        title="Thanh toán"
+        subtitle={`${payments.length} giao dịch · ${subscriptions.length} gói đăng ký · ${invoices.length} hóa đơn`}
       />
 
       <KpiRow>
-        <KpiTile label="Lifetime revenue" value={formatMoney(paymentStats.totalRevenue || 0)} sub="Paid only" />
-        <KpiTile label="This month" value={formatMoney(paymentStats.monthlyRevenue || 0)} sub="Current month" tone="active" />
-        <KpiTile label="Paid" value={paidCount} sub={`${pendingCount} pending`} />
-        <KpiTile label="Failed" value={failedCount} tone={failedCount ? 'warning' : 'muted'} sub="Needs review" />
+        <KpiTile label="Doanh thu trọn đời" value={formatMoney(paymentStats.totalRevenue || 0)} sub="Chỉ tính đã thanh toán" />
+        <KpiTile label="Tháng này" value={formatMoney(paymentStats.monthlyRevenue || 0)} sub="Tháng hiện tại" tone="active" />
+        <KpiTile label="Đã thanh toán" value={paidCount} sub={`${pendingCount} đang chờ`} />
+        <KpiTile label="Thất bại" value={failedCount} tone={failedCount ? 'warning' : 'muted'} sub="Cần xem xét" />
       </KpiRow>
 
-      <div className="segmented" role="tablist" aria-label="Payment views">
+      <div className="segmented" role="tablist" aria-label="Chế độ xem thanh toán">
         {TABS.map((item) => (
           <button
             key={item.id}
@@ -90,11 +97,11 @@ export function PaymentsView({
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Customer</th>
-                    <th>Plan</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Created</th>
+                    <th>Khách hàng</th>
+                    <th>Gói</th>
+                    <th>Số tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -111,14 +118,14 @@ export function PaymentsView({
                       <td>{formatDate(payment.createdAt)}</td>
                       <td className="table-actions">
                         <button type="button" className="btn-secondary" onClick={() => onSelectPayment(payment.id)}>
-                          View
+                          Xem
                         </button>
                       </td>
                     </tr>
                   ))}
                   {!payments.length && (
                     <tr>
-                      <td colSpan={6}><p className="empty-state">No transactions yet.</p></td>
+                      <td colSpan={6}><p className="empty-state">Chưa có giao dịch nào.</p></td>
                     </tr>
                   )}
                 </tbody>
@@ -126,7 +133,7 @@ export function PaymentsView({
             </div>
           </div>
 
-          <SurfaceCard title="Payment detail">
+          <SurfaceCard title="Chi tiết thanh toán">
             {selectedPayment ? (
               <div className="detail-stack">
                 <strong>{selectedPayment.planName}</strong>
@@ -135,12 +142,12 @@ export function PaymentsView({
                 <div>
                   <StatusPill label={selectedPayment.status} tone={paymentTone(selectedPayment.status)} />
                 </div>
-                <span>Provider: {selectedPayment.provider}</span>
-                <span>Transaction: {selectedPayment.providerTransactionId || '-'}</span>
-                <span>Paid at: {selectedPayment.paidAt ? formatDate(selectedPayment.paidAt) : '-'}</span>
+                <span>Nhà cung cấp: {selectedPayment.provider}</span>
+                <span>Mã giao dịch: {selectedPayment.providerTransactionId || '-'}</span>
+                <span>Thanh toán lúc: {selectedPayment.paidAt ? formatDate(selectedPayment.paidAt) : '-'}</span>
                 {selectedPayment.checkoutUrl && (
                   <a className="text-link" href={selectedPayment.checkoutUrl} target="_blank" rel="noreferrer">
-                    Open checkout →
+                    Mở trang thanh toán →
                   </a>
                 )}
 
@@ -155,12 +162,12 @@ export function PaymentsView({
                     className="pill-button"
                     onClick={() => onUpdatePaymentStatus(selectedPayment.id, nextStatus)}
                   >
-                    Update
+                    Cập nhật
                   </button>
                 </div>
               </div>
             ) : (
-              <p className="empty-state">Select a transaction to inspect.</p>
+              <p className="empty-state">Chọn một giao dịch để xem chi tiết.</p>
             )}
           </SurfaceCard>
         </div>
@@ -172,12 +179,12 @@ export function PaymentsView({
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>User</th>
-                  <th>Plan</th>
-                  <th>Status</th>
-                  <th>Started</th>
-                  <th>Expired</th>
-                  <th>Provider</th>
+                  <th>Người dùng</th>
+                  <th>Gói</th>
+                  <th>Trạng thái</th>
+                  <th>Bắt đầu</th>
+                  <th>Hết hạn</th>
+                  <th>Nhà cung cấp</th>
                 </tr>
               </thead>
               <tbody>
@@ -195,7 +202,7 @@ export function PaymentsView({
                   </tr>
                 ))}
                 {!subscriptions.length && (
-                  <tr><td colSpan={6}><p className="empty-state">No subscriptions yet.</p></td></tr>
+                  <tr><td colSpan={6}><p className="empty-state">Chưa có gói đăng ký nào.</p></td></tr>
                 )}
               </tbody>
             </table>
@@ -209,10 +216,10 @@ export function PaymentsView({
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>User</th>
-                  <th>Invoice</th>
-                  <th>Amount</th>
-                  <th>Issued</th>
+                  <th>Người dùng</th>
+                  <th>Hóa đơn</th>
+                  <th>Số tiền</th>
+                  <th>Ngày phát hành</th>
                   <th>PDF</th>
                 </tr>
               </thead>
@@ -228,13 +235,13 @@ export function PaymentsView({
                     <td>{formatDate(invoice.issuedAt)}</td>
                     <td>
                       {invoice.pdfUrl ? (
-                        <a className="text-link" href={invoice.pdfUrl} target="_blank" rel="noreferrer">Open →</a>
+                        <a className="text-link" href={invoice.pdfUrl} target="_blank" rel="noreferrer">Mở →</a>
                       ) : '-'}
                     </td>
                   </tr>
                 ))}
                 {!invoices.length && (
-                  <tr><td colSpan={5}><p className="empty-state">No invoices issued.</p></td></tr>
+                  <tr><td colSpan={5}><p className="empty-state">Chưa có hóa đơn nào.</p></td></tr>
                 )}
               </tbody>
             </table>

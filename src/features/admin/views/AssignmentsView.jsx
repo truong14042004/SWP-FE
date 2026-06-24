@@ -64,45 +64,45 @@ export function AssignmentsView({ assignments = [], users = [], onCreate, onDele
   return (
     <section className="admin-section">
       <SectionTitle
-        eyebrow="Mentorship"
-        title="Counselor assignments"
-        subtitle={`${assignments.length} total · ${activeCount} active`}
+        eyebrow="Cố vấn"
+        title="Phân công tư vấn viên"
+        subtitle={`${assignments.length} tổng · ${activeCount} đang hoạt động`}
         action={
           <button type="button" className="pill-button" onClick={() => { reset(); setShowForm(true); }}>
-            New assignment
+            Thêm phân công
           </button>
         }
       />
 
       <KpiRow>
-        <KpiTile label="Active" value={activeCount} tone="active" sub="currently paired" />
-        <KpiTile label="Inactive" value={inactiveCount} tone="muted" sub="ended pairings" />
-        <KpiTile label="Counselors engaged" value={distinctCounselors} sub={`${counselors.length} on staff`} />
-        <KpiTile label="Students assigned" value={new Set(assignments.filter((a) => a.status === 'Active').map((a) => a.studentId)).size} sub={`${students.length} active students`} />
+        <KpiTile label="Đang hoạt động" value={activeCount} tone="active" sub="đang được ghép" />
+        <KpiTile label="Ngừng hoạt động" value={inactiveCount} tone="muted" sub="đã kết thúc" />
+        <KpiTile label="Tư vấn viên đang phụ trách" value={distinctCounselors} sub={`${counselors.length} trong đội ngũ`} />
+        <KpiTile label="Học viên được phân công" value={new Set(assignments.filter((a) => a.status === 'Active').map((a) => a.studentId)).size} sub={`${students.length} học viên hoạt động`} />
       </KpiRow>
 
       {showForm && (
         <div className="form-card">
           <header className="form-card-header">
-            <h3>New assignment</h3>
-            <button type="button" className="icon-close" onClick={reset} aria-label="Close form">✕</button>
+            <h3>Thêm phân công</h3>
+            <button type="button" className="icon-close" onClick={reset} aria-label="Đóng biểu mẫu">✕</button>
           </header>
 
           <form className="field-stack" onSubmit={submit}>
             <div className="field-row">
               <label>
-                <span>Counselor</span>
+                <span>Tư vấn viên</span>
                 <select name="counselorId" value={form.counselorId} onChange={updateField} required>
-                  <option value="">Select counselor</option>
+                  <option value="">Chọn tư vấn viên</option>
                   {counselors.map((user) => (
                     <option key={user.id} value={user.id}>{user.fullName} · {user.email}</option>
                   ))}
                 </select>
               </label>
               <label>
-                <span>Student</span>
+                <span>Học viên</span>
                 <select name="studentId" value={form.studentId} onChange={updateField} required>
-                  <option value="">Select student</option>
+                  <option value="">Chọn học viên</option>
                   {students.map((user) => (
                     <option key={user.id} value={user.id}>{user.fullName} · {user.email}</option>
                   ))}
@@ -110,14 +110,14 @@ export function AssignmentsView({ assignments = [], users = [], onCreate, onDele
               </label>
             </div>
             <label>
-              <span>Note</span>
-              <textarea name="note" value={form.note} onChange={updateField} rows={3} placeholder="Optional context for the pairing." />
+              <span>Ghi chú</span>
+              <textarea name="note" value={form.note} onChange={updateField} rows={3} placeholder="Bối cảnh tùy chọn cho việc ghép cặp." />
             </label>
             <div className="button-row">
               <button className="pill-button" type="submit" disabled={saving}>
-                {saving ? 'Saving…' : 'Create assignment'}
+                {saving ? 'Đang lưu…' : 'Tạo phân công'}
               </button>
-              <button type="button" className="btn-secondary" onClick={reset}>Cancel</button>
+              <button type="button" className="btn-secondary" onClick={reset}>Hủy</button>
             </div>
           </form>
         </div>
@@ -126,14 +126,14 @@ export function AssignmentsView({ assignments = [], users = [], onCreate, onDele
       <div className="data-table-wrap">
         <header className="data-table-toolbar">
           <h3>
-            Pairings
-            <span className="count-badge">{filtered.length} shown</span>
+            Ghép cặp
+            <span className="count-badge">{filtered.length} hiển thị</span>
           </h3>
           <div className="filter-row">
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filter status">
-              <option value="All">All statuses</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Lọc theo trạng thái">
+              <option value="All">Tất cả trạng thái</option>
+              <option value="Active">Hoạt động</option>
+              <option value="Inactive">Ngừng</option>
             </select>
           </div>
         </header>
@@ -142,11 +142,11 @@ export function AssignmentsView({ assignments = [], users = [], onCreate, onDele
           <table className="data-table">
             <thead>
               <tr>
-                <th>Counselor</th>
-                <th>Student</th>
-                <th>Assigned by</th>
-                <th>Status</th>
-                <th>Created</th>
+                <th>Tư vấn viên</th>
+                <th>Học viên</th>
+                <th>Người phân công</th>
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
                 <th></th>
               </tr>
             </thead>
@@ -166,16 +166,26 @@ export function AssignmentsView({ assignments = [], users = [], onCreate, onDele
                   <td>{formatDate(item.createdAt)}</td>
                   <td className="table-actions">
                     {item.status === 'Active' && (
-                      <button type="button" className="btn-secondary danger-action" onClick={() => onDelete(item)}>End</button>
+                      <button
+                        type="button"
+                        className="btn-secondary danger-action"
+                        onClick={() => {
+                          if (window.confirm(`Bạn có chắc muốn kết thúc phân công giữa "${item.counselorName}" và "${item.studentName}"?`)) {
+                            onDelete(item);
+                          }
+                        }}
+                      >
+                        Kết thúc
+                      </button>
                     )}
                     {item.status === 'Inactive' && onEnable && (
-                      <button type="button" className="btn-secondary" onClick={() => onEnable(item)}>Enable</button>
+                      <button type="button" className="btn-secondary" onClick={() => onEnable(item)}>Kích hoạt</button>
                     )}
                   </td>
                 </tr>
               ))}
               {!filtered.length && (
-                <tr><td colSpan={6}><p className="empty-state">No assignments match the filter.</p></td></tr>
+                <tr><td colSpan={6}><p className="empty-state">Không có phân công nào khớp bộ lọc.</p></td></tr>
               )}
             </tbody>
           </table>

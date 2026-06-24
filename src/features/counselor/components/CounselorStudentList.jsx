@@ -229,11 +229,11 @@ export function CounselorStudentList({
 
                   <dl className="counselor-card-meta">
                     <div className="counselor-card-meta-row">
-                      <span>Career goal</span>
+                      <span>Định hướng</span>
                       <strong>{student.targetRoleName || 'Chưa chọn'}</strong>
                     </div>
                     <div className="counselor-card-meta-row">
-                      <span>Match</span>
+                      <span>Độ khớp</span>
                       <strong
                         className={`counselor-score-pill counselor-score-pill--${getMatchScoreClass(
                           student.latestMatchScore,

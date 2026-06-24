@@ -50,6 +50,10 @@ export function PaymentResultPage({ type, session, onLogin, onHome }) {
 
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
+
+      if (isMounted) {
+        setStatus('timeout');
+      }
     }
 
     verifySubscription();
@@ -62,7 +66,7 @@ export function PaymentResultPage({ type, session, onLogin, onHome }) {
   if (!session) {
     return (
       <PaymentShell
-        eyebrow="Payment session"
+        eyebrow="Phiên thanh toán"
         title="Bạn cần đăng nhập lại"
         description="Phiên đăng nhập không còn trong trình duyệt này. Đăng nhập lại để kiểm tra trạng thái gói."
       >
@@ -76,7 +80,7 @@ export function PaymentResultPage({ type, session, onLogin, onHome }) {
   if (type === 'cancel') {
     return (
       <PaymentShell
-        eyebrow="Payment cancelled"
+        eyebrow="Thanh toán đã hủy"
         title="Thanh toán đã bị hủy"
         description="Gói chưa được kích hoạt. Bạn có thể quay lại trang chủ và chọn thanh toán lại bất cứ lúc nào."
       >
@@ -90,26 +94,30 @@ export function PaymentResultPage({ type, session, onLogin, onHome }) {
 
   const title = status === 'confirmed'
     ? 'Thanh toán thành công'
-    : status === 'pending'
-      ? 'Đang xác nhận thanh toán'
-      : status === 'error'
-        ? 'Chưa kiểm tra được thanh toán'
-        : 'Đang kiểm tra gói của bạn';
+    : status === 'timeout'
+      ? 'Quá thời gian xác nhận'
+      : status === 'pending'
+        ? 'Đang xác nhận thanh toán'
+        : status === 'error'
+          ? 'Chưa kiểm tra được thanh toán'
+          : 'Đang kiểm tra gói của bạn';
 
   const description = status === 'confirmed'
     ? `Gói ${activeSubscription?.planName || 'mới'} đã được kích hoạt cho tài khoản.`
-    : status === 'pending'
-      ? 'PayOS đã chuyển bạn về hệ thống. CareerMap đang chờ webhook xác nhận để kích hoạt gói.'
-      : status === 'error'
-        ? error
-        : 'CareerMap đang đồng bộ trạng thái thanh toán từ server.';
+    : status === 'timeout'
+      ? 'Quá thời gian xác nhận, vui lòng kiểm tra lại sau.'
+      : status === 'pending'
+        ? 'PayOS đã chuyển bạn về hệ thống. CareerMap đang chờ webhook xác nhận để kích hoạt gói.'
+        : status === 'error'
+          ? error
+          : 'CareerMap đang đồng bộ trạng thái thanh toán từ server.';
 
   return (
-    <PaymentShell eyebrow="Payment result" title={title} description={description}>
+    <PaymentShell eyebrow="Kết quả thanh toán" title={title} description={description}>
       <PaymentMeta query={query} />
       {latestSubscription && (
         <div className="payment-summary">
-          <span>Latest subscription</span>
+          <span>Gói gần nhất</span>
           <strong>{latestSubscription.planName}</strong>
           <small>
             {latestSubscription.status}
@@ -157,9 +165,9 @@ function PaymentMeta({ query }) {
 
   return (
     <dl className="payment-meta">
-      {orderCode && <><dt>Order code</dt><dd>{orderCode}</dd></>}
-      {code && <><dt>Code</dt><dd>{code}</dd></>}
-      {status && <><dt>Status</dt><dd>{status}</dd></>}
+      {orderCode && <><dt>Mã đơn hàng</dt><dd>{orderCode}</dd></>}
+      {code && <><dt>Mã</dt><dd>{code}</dd></>}
+      {status && <><dt>Trạng thái</dt><dd>{status}</dd></>}
     </dl>
   );
 }

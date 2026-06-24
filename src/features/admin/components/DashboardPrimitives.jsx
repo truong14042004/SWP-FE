@@ -52,14 +52,14 @@ export function StatusPill({ active, label, tone }) {
   const variant = tone || (active ? 'active' : 'inactive');
   return (
     <span className={`status-pill ${variant}`}>
-      {label || (active ? 'Active' : 'Inactive')}
+      {label || (active ? 'Hoạt động' : 'Ngừng')}
     </span>
   );
 }
 
 export function StatusRows({ items }) {
   if (!items?.length) {
-    return <p className="empty-state">No data yet.</p>;
+    return <p className="empty-state">Chưa có dữ liệu.</p>;
   }
   return (
     <div className="status-rows">
@@ -75,7 +75,7 @@ export function StatusRows({ items }) {
 
 export function RankedList({ items = [], labelKey = 'name', valueKey = 'count' }) {
   if (!items.length) {
-    return <p className="empty-state">No data yet.</p>;
+    return <p className="empty-state">Chưa có dữ liệu.</p>;
   }
   return (
     <ol className="ranked-list">
@@ -90,7 +90,7 @@ export function RankedList({ items = [], labelKey = 'name', valueKey = 'count' }
   );
 }
 
-export function EmptyState({ children = 'Nothing here yet.' }) {
+export function EmptyState({ children = 'Chưa có gì ở đây.' }) {
   return <p className="empty-state">{children}</p>;
 }
 

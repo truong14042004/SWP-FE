@@ -372,27 +372,10 @@ export function AuthPage({ onAuthenticated, onBackHome, initialMode = 'login' })
           </ul>
 
           <div className="auth-brand-chips">
-            {['Student', 'Counselor', 'Mentor', 'Admin'].map((r) => (
-              <button
-                type="button"
-                key={r}
-                className="auth-chip"
-                style={{ cursor: 'pointer' }}
-                onClick={() => {
-                  const credentials = {
-                    Student: { username: 'student1', password: 'secret123' },
-                    Counselor: { username: 'counselor1', password: 'secret123' },
-                    Mentor: { username: 'mentor1', password: 'secret123' },
-                    Admin: { username: 'admin1', password: 'secret123' }
-                  };
-                  setLoginForm(credentials[r]);
-                  setMode('login');
-                  setStatus('idle');
-                  setMessage('');
-                }}
-              >
+            {['Sinh viên', 'Cố vấn', 'Mentor', 'Quản trị'].map((r) => (
+              <span key={r} className="auth-chip">
                 {r}
-              </button>
+              </span>
             ))}
           </div>
 
@@ -530,7 +513,7 @@ export function AuthPage({ onAuthenticated, onBackHome, initialMode = 'login' })
                       placeholder="your_username"
                       minLength={3}
                       maxLength={32}
-                      pattern="[A-Za-z0-9._-]{3,32}"
+                      pattern="[A-Za-z0-9._\\-]{3,32}"
                       title="Tên đăng nhập chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang."
                       autoComplete="username"
                       required
@@ -551,7 +534,7 @@ export function AuthPage({ onAuthenticated, onBackHome, initialMode = 'login' })
                         onChange={field(setRegForm)}
                         placeholder="you@gmail.com"
                         maxLength={256}
-                        pattern="[a-zA-Z0-9]([a-zA-Z0-9._%+-]{0,62}[a-zA-Z0-9])?@gmail\.com"
+                        pattern="[a-zA-Z0-9]([a-zA-Z0-9._%+\\-]{0,62}[a-zA-Z0-9])?@gmail\.com"
                         title="Chỉ chấp nhận địa chỉ Gmail, ví dụ name@gmail.com."
                         autoComplete="email"
                         required

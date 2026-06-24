@@ -66,16 +66,16 @@ export function PlansView({ plans, onLoadPlan, onSavePlan, onDeletePlan }) {
   return (
     <section className="admin-section">
       <SectionTitle
-        eyebrow="Catalog"
-        title="Subscription plans"
-        subtitle={`${plans.length} plans defined`}
+        eyebrow="Danh mục"
+        title="Gói dịch vụ"
+        subtitle={`Đã thiết lập ${plans.length} gói`}
         action={
           <button
             type="button"
             className="pill-button"
             onClick={() => { resetForm(); setShowForm(true); }}
           >
-            New plan
+            Thêm gói
           </button>
         }
       />
@@ -83,60 +83,60 @@ export function PlansView({ plans, onLoadPlan, onSavePlan, onDeletePlan }) {
       {showForm && (
         <div className="form-card">
           <header className="form-card-header">
-            <h3>{editingPlanId ? 'Edit plan' : 'Create new plan'}</h3>
-            <button type="button" className="icon-close" onClick={resetForm} aria-label="Close form">✕</button>
+            <h3>{editingPlanId ? 'Sửa gói' : 'Tạo gói mới'}</h3>
+            <button type="button" className="icon-close" onClick={resetForm} aria-label="Đóng biểu mẫu">✕</button>
           </header>
 
           <form className="field-stack" onSubmit={submitPlan}>
             <div className="field-row three">
               <label>
-                <span>Plan name</span>
+                <span>Tên gói</span>
                 <input name="name" value={planForm.name} onChange={updatePlanField} required />
               </label>
               <label>
-                <span>Price</span>
+                <span>Giá</span>
                 <input name="price" type="number" min="0" value={planForm.price} onChange={updatePlanField} required />
               </label>
               <label>
-                <span>Currency</span>
+                <span>Đơn vị tiền tệ</span>
                 <input name="currency" value={planForm.currency} onChange={updatePlanField} required />
               </label>
             </div>
             <div className="field-row three">
               <label>
-                <span>Billing cycle</span>
+                <span>Chu kỳ thanh toán</span>
                 <select name="billingCycle" value={planForm.billingCycle} onChange={updatePlanField}>
-                  <option value="Free">Free</option>
-                  <option value="Monthly">Monthly</option>
-                  <option value="Yearly">Yearly</option>
+                  <option value="Free">Miễn phí</option>
+                  <option value="Monthly">Hàng tháng</option>
+                  <option value="Yearly">Hàng năm</option>
                 </select>
               </label>
               <label>
-                <span>Mentor review limit (-1 = unlimited)</span>
+                <span>Giới hạn lượt mentor đánh giá (-1 = không giới hạn)</span>
                 <input name="mentorReviewLimit" type="number" min="-1" value={planForm.mentorReviewLimit} onChange={updatePlanField} required />
               </label>
               <label>
-                <span>AI chat limit (-1 = unlimited)</span>
+                <span>Giới hạn lượt chat AI (-1 = không giới hạn)</span>
                 <input name="aiChatLimit" type="number" min="-1" value={planForm.aiChatLimit} onChange={updatePlanField} required />
               </label>
             </div>
             <label>
-              <span>Description</span>
+              <span>Mô tả</span>
               <textarea name="description" value={planForm.description} onChange={updatePlanField} rows={2} />
             </label>
             <label>
-              <span>Features (one per line)</span>
+              <span>Tính năng (mỗi dòng một mục)</span>
               <textarea name="features" value={planForm.features} onChange={updatePlanField} rows={4} />
             </label>
             <label className="check-row">
               <input name="isActive" type="checkbox" checked={planForm.isActive} onChange={updatePlanField} />
-              <span>Active (available for purchase)</span>
+              <span>Đang hoạt động (có thể mua)</span>
             </label>
             <div className="button-row">
               <button className="pill-button" type="submit" disabled={saving}>
-                {saving ? 'Saving…' : editingPlanId ? 'Save changes' : 'Create plan'}
+                {saving ? 'Đang lưu…' : editingPlanId ? 'Lưu thay đổi' : 'Tạo gói'}
               </button>
-              <button type="button" className="btn-secondary" onClick={resetForm}>Cancel</button>
+              <button type="button" className="btn-secondary" onClick={resetForm}>Hủy</button>
             </div>
           </form>
         </div>
@@ -148,7 +148,7 @@ export function PlansView({ plans, onLoadPlan, onSavePlan, onDeletePlan }) {
             <header className="plan-card-head">
               <div>
                 <h3>{plan.name}</h3>
-                <p>{plan.description || 'No description'}</p>
+                <p>{plan.description || 'Không có mô tả'}</p>
               </div>
               <StatusPill active={plan.isActive} />
             </header>
@@ -160,10 +160,10 @@ export function PlansView({ plans, onLoadPlan, onSavePlan, onDeletePlan }) {
 
             <div className="plan-card-meta" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <div>
-                <strong>Mentor reviews:</strong> {plan.mentorReviewLimit === -1 ? 'Unlimited' : plan.mentorReviewLimit}
+                <strong>Lượt mentor đánh giá:</strong> {plan.mentorReviewLimit === -1 ? 'Không giới hạn' : plan.mentorReviewLimit}
               </div>
               <div>
-                <strong>AI Chat limit:</strong> {plan.aiChatLimit === -1 ? 'Unlimited' : plan.aiChatLimit}
+                <strong>Giới hạn chat AI:</strong> {plan.aiChatLimit === -1 ? 'Không giới hạn' : plan.aiChatLimit}
               </div>
             </div>
 
@@ -176,13 +176,23 @@ export function PlansView({ plans, onLoadPlan, onSavePlan, onDeletePlan }) {
             )}
 
             <div className="button-row">
-              <button type="button" className="btn-secondary" onClick={() => editPlan(plan)}>Edit</button>
-              <button type="button" className="btn-secondary danger-action" onClick={() => onDeletePlan(plan)}>Delete</button>
+              <button type="button" className="btn-secondary" onClick={() => editPlan(plan)}>Sửa</button>
+              <button
+                type="button"
+                className="btn-secondary danger-action"
+                onClick={() => {
+                  if (window.confirm(`Bạn có chắc muốn xóa gói "${plan.name}"? Việc này có thể ảnh hưởng đến những người dùng đang sử dụng gói này.`)) {
+                    onDeletePlan(plan);
+                  }
+                }}
+              >
+                Xóa
+              </button>
             </div>
           </article>
         ))}
         {!plans.length && (
-          <p className="empty-state">No plans defined yet.</p>
+          <p className="empty-state">Chưa có gói dịch vụ nào.</p>
         )}
       </div>
     </section>

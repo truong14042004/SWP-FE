@@ -17,6 +17,17 @@ function average(values) {
   return nums.reduce((a, b) => a + b, 0) / nums.length;
 }
 
+const READINESS_LABELS = {
+  NotReady: 'Chưa sẵn sàng',
+  NeedsImprovement: 'Cần cải thiện',
+  Ready: 'Sẵn sàng',
+  Excellent: 'Xuất sắc',
+};
+
+function readinessLabel(value) {
+  return READINESS_LABELS[value] || value;
+}
+
 export function MentorOverview({
   reviewQueue,
   feedbacks,
@@ -65,7 +76,7 @@ export function MentorOverview({
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 260, damping: 22 }}
       >
-        <p className="imentor-hero-eyebrow">Industry Mentor</p>
+        <p className="imentor-hero-eyebrow">Mentor doanh nghiệp</p>
         <h1 className="imentor-hero-title">
           Chào {mentorName.split(' ').find(w => /^[A-Za-zÀ-ỹ]/.test(w) && !/^\d+$/.test(w)) || mentorName}, sẵn sàng review portfolio?
         </h1>
@@ -82,7 +93,7 @@ export function MentorOverview({
         animate="show"
       >
         <motion.div className="imentor-stat" variants={statVariants}>
-          <span className="imentor-stat-label">Queue</span>
+          <span className="imentor-stat-label">Hàng chờ</span>
           <span className="imentor-stat-value">
             {loading ? '—' : <CountingNumber number={stats.queueSize} />}
           </span>
@@ -100,10 +111,10 @@ export function MentorOverview({
           <span className="imentor-stat-value">
             {loading ? '—' : <CountingNumber number={stats.studentsReviewed} />}
           </span>
-          <span className="imentor-stat-hint">Unique students</span>
+          <span className="imentor-stat-hint">Sinh viên đã review</span>
         </motion.div>
         <motion.div className="imentor-stat" variants={statVariants}>
-          <span className="imentor-stat-label">Avg rating</span>
+          <span className="imentor-stat-label">Rating trung bình</span>
           <span className="imentor-stat-value">
             {loading || stats.avgRating == null ? (
               '—'
@@ -271,7 +282,7 @@ function FeedbackPreview({ feedback, onClick }) {
           )}
           {feedback.jobReadinessLevel && (
             <span className={`imentor-feedback-readiness ${readinessClass}`}>
-              {feedback.jobReadinessLevel}
+              {readinessLabel(feedback.jobReadinessLevel)}
             </span>
           )}
         </div>

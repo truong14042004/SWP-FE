@@ -95,7 +95,7 @@ export function AdminDashboard({ session, onSignOut }) {
   async function handleToggleUserStatus(user) {
     await runAction(
       () => updateUserStatus(session, user.id, !user.isActive),
-      user.isActive ? 'User has been deactivated.' : 'User has been activated.',
+      user.isActive ? 'Đã vô hiệu hóa người dùng.' : 'Đã kích hoạt người dùng.',
     );
   }
 
@@ -105,7 +105,7 @@ export function AdminDashboard({ session, onSignOut }) {
     try {
       const savedUser = await saveAdminUser(session, user, id);
       setSelectedUser(savedUser);
-      setNotice(id ? 'User updated.' : 'User created.');
+      setNotice(id ? 'Đã cập nhật người dùng.' : 'Đã tạo người dùng.');
       await refresh();
       return savedUser;
     } catch (requestError) {
@@ -120,7 +120,7 @@ export function AdminDashboard({ session, onSignOut }) {
     try {
       const updatedUser = await uploadAdminUserAvatar(session, userId, file);
       setSelectedUser(updatedUser);
-      setNotice('Avatar uploaded.');
+      setNotice('Đã tải lên ảnh đại diện.');
       await refresh();
       return updatedUser;
     } catch (requestError) {
@@ -133,7 +133,7 @@ export function AdminDashboard({ session, onSignOut }) {
     await runAction(async () => {
       await deleteAdminUser(session, user.id);
       setSelectedUser(null);
-    }, 'User has been permanently deleted.');
+    }, 'Đã xóa vĩnh viễn người dùng.');
   }
 
   async function handleSelectPayment(id) {
@@ -146,33 +146,33 @@ export function AdminDashboard({ session, onSignOut }) {
     await runAction(async () => {
       const updated = await updatePaymentStatus(session, id, status);
       setSelectedPayment(updated);
-    }, 'Payment status updated.');
+    }, 'Đã cập nhật trạng thái thanh toán.');
   }
 
   async function handleSavePlan(plan, id) {
     await runAction(
       () => saveSubscriptionPlan(session, plan, id),
-      id ? 'Plan updated.' : 'Plan created.',
+      id ? 'Đã cập nhật gói.' : 'Đã tạo gói.',
     );
   }
 
   async function handleDeletePlan(plan) {
     await runAction(
       () => deleteSubscriptionPlan(session, plan.id),
-      'Plan removed or disabled.',
+      'Đã xóa hoặc vô hiệu hóa gói.',
     );
   }
 
   function handleLoadPlan(id) { return getSubscriptionPlan(session, id); }
 
   async function handleCreateAssignment(payload) {
-    await runAction(() => createCounselorAssignment(session, payload), 'Assignment created.');
+    await runAction(() => createCounselorAssignment(session, payload), 'Đã tạo phân công.');
   }
   async function handleDeleteAssignment(assignment) {
-    await runAction(() => deleteCounselorAssignment(session, assignment.id), 'Assignment ended.');
+    await runAction(() => deleteCounselorAssignment(session, assignment.id), 'Đã kết thúc phân công.');
   }
   async function handleEnableAssignment(assignment) {
-    await runAction(() => enableCounselorAssignment(session, assignment.id), 'Assignment re-activated.');
+    await runAction(() => enableCounselorAssignment(session, assignment.id), 'Đã kích hoạt lại phân công.');
   }
 
   function renderSection() {
@@ -239,7 +239,7 @@ export function AdminDashboard({ session, onSignOut }) {
     >
       {error && <div className="notice error">{error}</div>}
       {notice && <div className="notice success">{notice}</div>}
-      {loading && !data && <div className="empty-state">Loading dashboard…</div>}
+      {loading && !data && <div className="empty-state">Đang tải bảng điều khiển…</div>}
       {!loading && renderSection()}
     </AdminLayout>
   );

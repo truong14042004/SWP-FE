@@ -90,11 +90,11 @@ const NAV_ICONS = {
  * — the parent only acts as a folder.
  */
 const MANAGEMENT_SECTIONS = [
-  { id: 'users',        label: 'Users' },
-  { id: 'assignments',  label: 'Assignments' },
-  { id: 'payments',     label: 'Payments' },
-  { id: 'plans',        label: 'Plans' },
-  { id: 'marketPulse',  label: 'Market pulse' },
+  { id: 'users',        label: 'Người dùng' },
+  { id: 'assignments',  label: 'Phân công' },
+  { id: 'payments',     label: 'Thanh toán' },
+  { id: 'plans',        label: 'Gói dịch vụ' },
+  { id: 'marketPulse',  label: 'Market Pulse' },
 ];
 
 const MANAGEMENT_IDS = new Set(MANAGEMENT_SECTIONS.map((s) => s.id));
@@ -104,17 +104,17 @@ const MANAGEMENT_IDS = new Set(MANAGEMENT_SECTIONS.map((s) => s.id));
  * switch statement; the visual structure is decided here.
  */
 export const adminSections = [
-  { id: 'overview', label: 'Overview' },
+  { id: 'overview', label: 'Tổng quan' },
   ...MANAGEMENT_SECTIONS,
 ];
 
 const SECTION_LABELS = {
-  overview:     { title: 'Overview',           sub: 'Platform health at a glance' },
-  users:        { title: 'Users',              sub: 'Accounts, roles, and access' },
-  assignments:  { title: 'Counselor assignments', sub: 'Match counselors with students' },
-  payments:     { title: 'Payments',           sub: 'Transactions, subscriptions, invoices' },
-  plans:        { title: 'Subscription plans', sub: 'Pricing and feature limits' },
-  marketPulse:  { title: 'Market pulse',        sub: 'Job market trends from scraped postings' },
+  overview:     { title: 'Tổng quan',           sub: 'Tình trạng nền tảng tổng thể' },
+  users:        { title: 'Người dùng',          sub: 'Tài khoản, vai trò và quyền truy cập' },
+  assignments:  { title: 'Phân công tư vấn viên', sub: 'Ghép tư vấn viên với học viên' },
+  payments:     { title: 'Thanh toán',          sub: 'Giao dịch, gói đăng ký, hóa đơn' },
+  plans:        { title: 'Gói dịch vụ',          sub: 'Giá và giới hạn tính năng' },
+  marketPulse:  { title: 'Market Pulse',        sub: 'Xu hướng thị trường việc làm từ tin tuyển dụng' },
 };
 
 const MGMT_OPEN_STORAGE_KEY = 'admin.sidebar.mgmtOpen';
@@ -167,16 +167,16 @@ export function AdminLayout({ session, activeSection, onSectionChange, onRefresh
 
   return (
     <main className="admin-shell">
-      <aside className="admin-rail" aria-label="Admin navigation">
+      <aside className="admin-rail" aria-label="Điều hướng quản trị">
         <div className="admin-rail-brand">
           <span className="admin-rail-mark">CM</span>
           <div className="admin-rail-brand-text">
             <strong>CareerMap</strong>
-            <small>Admin Console</small>
+            <small>Bảng quản trị</small>
           </div>
         </div>
 
-        <nav className="admin-rail-nav" aria-label="Admin sections">
+        <nav className="admin-rail-nav" aria-label="Danh mục quản trị">
           {/* Overview parent — its label routes to the overview, the chevron toggles the children. */}
           <div className={`admin-rail-parent${activeSection === 'overview' ? ' active' : ''}`}>
             <button
@@ -186,7 +186,7 @@ export function AdminLayout({ session, activeSection, onSectionChange, onRefresh
               aria-current={activeSection === 'overview' ? 'page' : undefined}
             >
               {NAV_ICONS.overview}
-              <span className="admin-rail-nav-label">Overview</span>
+              <span className="admin-rail-nav-label">Tổng quan</span>
             </button>
             <button
               type="button"
@@ -242,7 +242,7 @@ export function AdminLayout({ session, activeSection, onSectionChange, onRefresh
             </div>
           </div>
           <button type="button" className="admin-rail-signout" onClick={onSignOut}>
-            Sign out
+            Đăng xuất
           </button>
         </div>
       </aside>
@@ -257,7 +257,7 @@ export function AdminLayout({ session, activeSection, onSectionChange, onRefresh
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
               <path d="M11.5 7a4.5 4.5 0 11-1.32-3.18M11.5 2v3h-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Refresh
+            Làm mới
           </button>
         </header>
         <div className="admin-content">{children}</div>

@@ -128,7 +128,7 @@ export function StudentSubscriptionPage({ session }) {
   return (
     <section className="student-subscription anim-stagger">
       <header className="student-subscription-hero anim-fade-up">
-        <span className="student-eyebrow">Subscription</span>
+        <span className="student-eyebrow">Gói đăng ký</span>
         <h1>Chọn gói phù hợp với bạn</h1>
         <p>
           Mở khóa thêm lượt review từ Industry Mentor, ưu tiên hỗ trợ và các tính

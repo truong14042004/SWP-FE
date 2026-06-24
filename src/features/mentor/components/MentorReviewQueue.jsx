@@ -23,7 +23,7 @@ export function MentorReviewQueue({
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 260, damping: 22 }}
       >
-        <p className="imentor-hero-eyebrow">Review Queue</p>
+        <p className="imentor-hero-eyebrow">Hàng chờ review</p>
         <h1 className="imentor-hero-title">
           {reviewQueue.length} sinh viên đang chờ review
         </h1>
@@ -37,7 +37,7 @@ export function MentorReviewQueue({
         <div className="imentor-loading">Đang tải review queue...</div>
       ) : reviewQueue.length === 0 ? (
         <div className="imentor-empty">
-          <p className="imentor-empty-title">Queue trống</p>
+          <p className="imentor-empty-title">Hàng chờ trống</p>
           <p className="imentor-empty-hint">
             Hiện chưa có sinh viên nào publish portfolio. Quay lại sau nhé.
           </p>
@@ -75,7 +75,7 @@ export function MentorReviewQueue({
 
                 {s.portfolioTitle && (
                   <div className="imentor-card-portfolio">
-                    <span className="imentor-card-portfolio-label">Portfolio</span>
+                    <span className="imentor-card-portfolio-label">Hồ sơ</span>
                     <p className="imentor-card-portfolio-title">{s.portfolioTitle}</p>
                   </div>
                 )}

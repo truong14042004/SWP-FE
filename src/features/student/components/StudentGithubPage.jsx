@@ -437,23 +437,23 @@ export function StudentGithubPage({ session }) {
       <header className="github-hero anim-fade-up">
         <div className="github-hero-copy">
           <span className={connected ? 'github-status-pill connected' : 'github-status-pill disconnected'}>
-            {connected ? 'Connected workspace' : 'Not connected'}
+            {connected ? 'Đã kết nối' : 'Chưa kết nối'}
           </span>
-          <span className="github-eyebrow">GitHub Integration</span>
+          <span className="github-eyebrow">Tích hợp GitHub</span>
           <h1>Tích hợp GitHub</h1>
           <p>Đồng bộ repository để AI đánh giá năng lực lập trình của bạn.</p>
 
           <div className="github-hero-metrics" aria-label="GitHub summary">
             <div>
-              <span>Repositories</span>
+              <span>Repository</span>
               <strong>{stats.total}</strong>
             </div>
             <div>
-              <span>Analyzed</span>
+              <span>Đã phân tích</span>
               <strong>{stats.analyzed}</strong>
             </div>
             <div>
-              <span>Average score</span>
+              <span>Điểm trung bình</span>
               <strong>{stats.average}/100</strong>
             </div>
           </div>
@@ -557,7 +557,7 @@ export function StudentGithubPage({ session }) {
 
       <section className="github-stats-grid">
         <article>
-          <span>Repositories</span>
+          <span>Repository</span>
           <strong>{stats.total}</strong>
           <small>đã đồng bộ</small>
         </article>
@@ -571,13 +571,13 @@ export function StudentGithubPage({ session }) {
         <article>
           <span>Điểm trung bình</span>
           <strong>{stats.average}/100</strong>
-          <small>AI quality score</small>
+          <small>điểm chất lượng AI</small>
         </article>
 
         <article>
           <span>Ngôn ngữ</span>
           <strong>{stats.languages}</strong>
-          <small>main languages</small>
+          <small>ngôn ngữ chính</small>
         </article>
       </section>
 
@@ -736,7 +736,7 @@ function RepositoryCard({
       )}
 
       <div className="github-quality-box">
-        <span>{analyzed ? 'Quality Score' : 'Trạng thái'}</span>
+        <span>{analyzed ? 'Điểm chất lượng' : 'Trạng thái'}</span>
 
         {analyzed ? (
           <div className="github-quality-line">
@@ -763,7 +763,7 @@ function RepositoryCard({
         <>
           <div className="github-analysis-grid">
             <div className="github-score-card anim-hover-lift">
-              <span>Portfolio readiness</span>
+              <span>Mức sẵn sàng portfolio</span>
               <strong>{readinessScore}/100</strong>
               <div className="github-quality-line">
                 <span style={{ width: `${readinessScore}%` }} />
@@ -771,7 +771,7 @@ function RepositoryCard({
             </div>
 
             <div className="github-score-card anim-hover-lift">
-              <span>Total files</span>
+              <span>Tổng số file</span>
               <strong>{techData.totalFiles ?? analyzedFiles.length ?? 0}</strong>
               <small>{techData.defaultBranch ? `Branch: ${techData.defaultBranch}` : 'Chưa có branch'}</small>
             </div>
@@ -816,9 +816,9 @@ function RepositoryCard({
 
           {(findings.length > 0 || risks.length > 0 || missingPieces.length > 0) && (
             <div className="github-analysis-columns">
-              <GithubList title="Findings" items={findings} />
-              <GithubList title="Risks" items={risks} />
-              <GithubList title="Missing" items={missingPieces} />
+              <GithubList title="Phát hiện" items={findings} />
+              <GithubList title="Rủi ro" items={risks} />
+              <GithubList title="Còn thiếu" items={missingPieces} />
             </div>
           )}
 
@@ -826,7 +826,7 @@ function RepositoryCard({
             <div className="github-evidence-panel anim-hover-lift">
               {analyzedFiles.length > 0 && (
                 <div>
-                  <span>Files reviewed</span>
+                  <span>File đã xem xét</span>
                   <div className="github-file-list">
                     {Array.from(new Set(analyzedFiles))
                       .map((file) => (
@@ -840,7 +840,7 @@ function RepositoryCard({
 
               {recentCommits.length > 0 && (
                 <div>
-                  <span>Recent commits</span>
+                  <span>Commit gần đây</span>
                   <div className="github-commit-list">
                     {recentCommits.slice(0, 3).map((commit) => (
                       <small key={commit.Sha || commit.sha}>
@@ -850,29 +850,6 @@ function RepositoryCard({
                   </div>
                 </div>
               )}
-            </div>
-          )}
-
-          {talentProfile && (
-            <div className="github-evidence-panel anim-hover-lift" style={{ marginTop: '14px', background: 'linear-gradient(to right, rgba(59,130,246,0.05), rgba(139,92,246,0.05))', borderColor: 'rgba(59,130,246,0.1)' }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <small style={{ color: '#3b82f6', fontWeight: 600 }}>Hồ sơ Năng lực Khám phá (AI)</small>
-                {[
-                  { label: 'Tư duy Logic', score: talentProfile.logicalThinkingScore, color: '#3b82f6' },
-                  { label: 'Kiến trúc Hệ thống', score: talentProfile.systemArchitectureScore, color: '#10b981' },
-                  { label: 'Cảm quan Thiết kế', score: talentProfile.visualDesignScore, color: '#8b5cf6' },
-                ].map(axis => (
-                  <div key={axis.label}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '2px', color: '#4b5563' }}>
-                      <span>{axis.label}</span>
-                      <strong>{axis.score}/10</strong>
-                    </div>
-                    <div style={{ height: '4px', background: 'rgba(0,0,0,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${axis.score * 10}%`, background: axis.color, borderRadius: '2px' }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
         </>

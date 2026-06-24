@@ -35,18 +35,6 @@ export function getStudentSkills(session, studentId) {
   return authorizedRequest(`/api/industry-mentor/students/${studentId}/skills`, session);
 }
 
-export function verifyStudentSkill(session, userSkillId) {
-  return authorizedRequest(`/api/industry-mentor/user-skills/${userSkillId}/verify`, session, {
-    method: 'POST',
-  });
-}
-
-export function unverifyStudentSkill(session, userSkillId) {
-  return authorizedRequest(`/api/industry-mentor/user-skills/${userSkillId}/unverify`, session, {
-    method: 'POST',
-  });
-}
-
 export function getSignedUrl(session, objectName) {
   return authorizedRequest(`/api/storage/signed-url?objectName=${encodeURIComponent(objectName)}`, session);
 }
@@ -112,6 +100,10 @@ export function getLearningResource(session, id) {
   return authorizedRequest(`/api/industry-mentor/learning-resources/${id}`, session);
 }
 
+export function getLearningResourceSignedUrl(session, id) {
+  return authorizedRequest(`/api/storage/learning-resources/${id}/signed-url`, session);
+}
+
 export function saveLearningResource(session, resource, id) {
   const formData = new FormData();
   const formKeys = {
@@ -173,8 +165,8 @@ export function saveSkillPrerequisite(session, prerequisite) {
   });
 }
 
-export function deleteSkillPrerequisite(session, skillId, prerequisiteSkillId) {
-  return authorizedRequest(`/api/industry-mentor/skill-prerequisites/${skillId}/${prerequisiteSkillId}`, session, {
+export function deleteSkillPrerequisite(session, id) {
+  return authorizedRequest(`/api/industry-mentor/skill-prerequisites/${id}`, session, {
     method: 'DELETE',
   });
 }

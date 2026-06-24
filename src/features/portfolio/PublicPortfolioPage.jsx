@@ -103,7 +103,7 @@ export function PublicPortfolioPage({ slug, onHome }) {
       <div className="portfolio-preview-hero">
         <div>
           <span>Portfolio</span>
-          <h2>{portfolio.title || 'Untitled portfolio'}</h2>
+          <h2>{portfolio.title || 'Portfolio chưa đặt tên'}</h2>
           <p>{portfolio.bio || ''}</p>
         </div>
       </div>
@@ -147,7 +147,7 @@ export function PublicPortfolioPage({ slug, onHome }) {
       )}
 
       <footer className="portfolio-public-footer">
-        <button type="button" onClick={onHome}>Về SWP Career</button>
+        <button type="button" onClick={onHome}>Về CareerMap</button>
       </footer>
     </main>
   );

@@ -31,6 +31,7 @@ import {
   createStudentProfile,
   getCareerRoles,
   getStudentProfile,
+  importStudentAvatarFromUrl,
   updateStudentProfile,
   uploadStudentAvatar,
   uploadStudentCv,
@@ -65,22 +66,22 @@ const STUDENT_SECTIONS = [
 
 const SECTION_META = {
   overview: {
-    eyebrow: 'Student dashboard',
+    eyebrow: 'Bảng điều khiển sinh viên',
     title: 'Tổng quan tiến độ học tập',
     subtitle: 'Theo dõi mức độ sẵn sàng, kỹ năng còn thiếu và các việc cần ưu tiên cho vai trò',
   },
   roadmap: {
-    eyebrow: 'Career roadmap',
+    eyebrow: 'Lộ trình nghề nghiệp',
     title: 'Lộ trình nghề nghiệp cá nhân',
     subtitle: 'Các mốc học tập được sắp xếp theo thứ tự ưu tiên cho vai trò',
   },
   skills: {
-    eyebrow: 'Skill gap analysis',
+    eyebrow: 'Phân tích kỹ năng còn thiếu',
     title: 'Kỹ năng và khóa học đề xuất',
     subtitle: 'Tập trung vào nhóm kỹ năng còn thiếu hoặc cần cải thiện cho vai trò',
   },
   mentors: {
-    eyebrow: 'Mentor sessions',
+    eyebrow: 'Phiên tư vấn mentor',
     title: 'Lịch hẹn tư vấn sắp tới',
     subtitle: 'Chuẩn bị trước nội dung cần hỏi mentor để rút ngắn thời gian đạt mục tiêu',
   },
@@ -90,7 +91,7 @@ const SECTION_META = {
     subtitle: 'Cập nhật kỹ năng đang được nhà tuyển dụng IT săn lùng nhiều nhất',
   },
   community: {
-    eyebrow: 'Mentor community',
+    eyebrow: 'Cộng đồng mentor',
     title: 'Cộng đồng mentor và hoạt động mới',
     subtitle: 'Cập nhật thảo luận, tài nguyên và lời khuyên liên quan đến vai trò',
   },
@@ -211,10 +212,10 @@ function resolveAvatarSrc(avatarUrl, userId) {
 
 const DEFAULT_DASHBOARD_OVERVIEW = {
   metrics: [
-    { label: 'Match score', value: '0%', caption: 'Chưa có báo cáo skill gap', tone: 'primary' },
+    { label: 'Điểm phù hợp', value: '0%', caption: 'Chưa có báo cáo skill gap', tone: 'primary' },
     { label: 'Kỹ năng của tôi', value: '0', caption: 'Chưa thêm kỹ năng', tone: 'success' },
     { label: 'Tiến độ roadmap', value: '0%', caption: 'Chưa có lộ trình', tone: 'warning' },
-    { label: 'GitHub repos', value: '0', caption: 'Chưa đồng bộ GitHub', tone: 'info' },
+    { label: 'Kho GitHub', value: '0', caption: 'Chưa đồng bộ GitHub', tone: 'info' },
   ],
   score: 0,
   scoreStats: {
@@ -558,7 +559,7 @@ function buildDashboardOverview({
   return {
     metrics: [
       {
-        label: 'Match score',
+        label: 'Điểm phù hợp',
         value: `${matchScore}%`,
         caption: skillGap ? 'Từ báo cáo skill gap mới nhất' : 'Tính từ kỹ năng hiện tại',
         tone: 'primary',
@@ -576,7 +577,7 @@ function buildDashboardOverview({
         tone: 'warning',
       },
       {
-        label: 'GitHub repos',
+        label: 'Kho GitHub',
         value: `${repos.length}`,
         caption: repos.length ? 'Repository đã đồng bộ' : 'Chưa đồng bộ GitHub',
         tone: 'info',
@@ -755,13 +756,15 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     }
   }
 
-  function navigateStudentSection(sectionId) {
+  function navigateStudentSection(sectionId, query = '') {
     if (sectionId === activeSection && sectionId === 'overview') {
       loadDashboardOverview();
     }
 
     setActiveSection(sectionId);
-    window.history.replaceState({}, '', `#${sectionId}`);
+    // query là phần truy vấn tùy chọn (vd "?id=...") để deep-link tới đúng mục
+    // bên trong section. StudentRoadmapPage đọc id từ hash để mở đúng roadmap.
+    window.history.replaceState({}, '', `#${sectionId}${query || ''}`);
   }
   function handleNotificationNavigate(target) {
   const normalizedTarget = String(target || '').trim();
@@ -777,7 +780,13 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
     ? rawSection
     : 'roadmap';
 
-  navigateStudentSection(sectionId);
+  // Giữ lại phần query (?id=...) nếu notification có deep-link.
+  const queryIndex = normalizedTarget.search(/[?&]/);
+  const query = queryIndex >= 0
+    ? `?${normalizedTarget.slice(queryIndex + 1)}`
+    : '';
+
+  navigateStudentSection(sectionId, query);
 }
 
   async function loadProfile() {
@@ -972,7 +981,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
         <button type="button" className="student-brand" onClick={onNavigateHome}>
           <span className="student-brand-mark">SWP</span>
           <div className="student-brand-copy">
-            <strong>Career Compass</strong>
+            <strong>CareerMap</strong>
             <span>Chào mừng {firstName} quay trở lại</span>
           </div>
         </button>
@@ -1172,7 +1181,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
               >
                 <div className="student-panel-heading">
-                  <span>Readiness</span>
+                  <span>Mức độ sẵn sàng</span>
                   <h2>Độ phù hợp</h2>
                   <p>Mức độ sẵn sàng hiện tại cho vai trò {targetRoleName}</p>
                 </div>
@@ -1185,7 +1194,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                     <strong>
                       <CountingNumber as="b" style={{ fontWeight: 'inherit', display: 'inline' }} number={dashboardOverview.score} />%
                     </strong>
-                    <span>Match score</span>
+                    <span>Điểm phù hợp</span>
                   </div>
                 </div>
 
@@ -1218,7 +1227,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
               >
                 <div className="student-panel-heading horizontal">
                   <div>
-                    <span>Roadmap</span>
+                    <span>Lộ trình</span>
                     <h2>Lộ trình 4 giai đoạn</h2>
                   </div>
                   <button type="button" onClick={() => navigateStudentSection('roadmap')}>Xem chi tiết</button>
@@ -1264,7 +1273,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
               <article className="student-gap-panel">
                 <div className="student-panel-heading horizontal">
                   <div>
-                    <span>Skill gap</span>
+                    <span>Kỹ năng còn thiếu</span>
                     <h2>Kỹ năng cần tập trung</h2>
                   </div>
                 </div>
@@ -1409,7 +1418,7 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
               <aside className="student-right-rail">
                 <article className="student-side-card">
                   <div className="student-panel-heading">
-                    <span>Learning queue</span>
+                    <span>Hàng đợi học tập</span>
                     <h2>Khóa học ưu tiên</h2>
                   </div>
                   <div className="student-compact-list">
@@ -1424,7 +1433,13 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                     ) : (
                       <Fades inView={false} delay={100} holdDelay={60}>
                         {dashboardOverview.learningQueue.map((item) => (
-                          <button key={item.title} type="button" className="student-compact-item">
+                          <button
+                            key={item.title}
+                            type="button"
+                            className="student-compact-item"
+                            onClick={() => navigateStudentSection('skills')}
+                            aria-label={`Xem gợi ý kỹ năng cho ${item.title}`}
+                          >
                             <div>
                               <strong>{item.title}</strong>
                               <small>{item.duration}</small>
@@ -1434,23 +1449,6 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                         ))}
                       </Fades>
                     )}
-
-                  {dashboardOverview.learningQueue.map((item) => (
-  <button
-    key={item.title}
-    type="button"
-    className="student-compact-item"
-    onClick={() => navigateStudentSection('skills')}
-    aria-label={`Xem gợi ý kỹ năng cho ${item.title}`}
-  >
-    <div>
-      <strong>{item.title}</strong>
-      <small>{item.duration}</small>
-    </div>
-    <span>{item.level}</span>
-  </button>
-))}
- b9f2a76 (feat: update dashboard and add skill)
                   </div>
                 </article>
 
@@ -1472,7 +1470,20 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                     ) : (
                       <Fades inView={false} delay={100} holdDelay={60}>
                         {dashboardOverview.communityItems.map((item) => (
-                          <button key={item.title} type="button" className="student-compact-item">
+                          <button
+                            key={item.title}
+                            type="button"
+                            className="student-compact-item"
+                            onClick={() => {
+                              if (item.url && /^https?:\/\//i.test(item.url)) {
+                                window.open(item.url, '_blank', 'noopener,noreferrer');
+                                return;
+                              }
+
+                              navigateStudentSection('github');
+                            }}
+                            aria-label={`Mở repository ${item.title}`}
+                          >
                             <div>
                               <strong>{item.title}</strong>
                               <small>{item.meta}</small>
@@ -1482,31 +1493,6 @@ const [activeSection, setActiveSection] = useState(getInitialStudentSection);
                         ))}
                       </Fades>
                     )}
-
-
-                    {dashboardOverview.communityItems.map((item) => (
-  <button
-    key={item.title}
-    type="button"
-    className="student-compact-item"
-    onClick={() => {
-      if (item.url && /^https?:\/\//i.test(item.url)) {
-        window.open(item.url, '_blank', 'noopener,noreferrer');
-        return;
-      }
-
-      navigateStudentSection('github');
-    }}
-    aria-label={`Mở repository ${item.title}`}
-  >
-    <div>
-      <strong>{item.title}</strong>
-      <small>{item.meta}</small>
-    </div>
-    <span>→</span>
-  </button>
-))}
- b9f2a76 (feat: update dashboard and add skill)
                   </div>
                 </article>
               </aside>

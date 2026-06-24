@@ -11,8 +11,6 @@ import {
   getStudentMentorFeedbacks,
   getStudentQuota,
   getStudentSkills,
-  verifyStudentSkill,
-  unverifyStudentSkill,
   getSignedUrl,
 } from '../api/industryMentorApi';
 
@@ -68,8 +66,6 @@ export function MentorStudentDetail({
   const [feedbacks, setFeedbacks] = useState([]);
   const [quota, setQuota] = useState(null);
   const [skills, setSkills] = useState([]);
-  const [verifyingSkillId, setVerifyingSkillId] = useState(null);
-  const [skillError, setSkillError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -110,32 +106,6 @@ export function MentorStudentDetail({
       cancelled = true;
     };
   }, [session, studentId]);
-
-  async function handleVerify(skill) {
-    setVerifyingSkillId(skill.id);
-    setSkillError('');
-    try {
-      const updated = await verifyStudentSkill(session, skill.id);
-      setSkills((prev) => prev.map((s) => (s.id === skill.id ? updated : s)));
-    } catch (e) {
-      setSkillError(e?.message || 'Không xác minh được kỹ năng.');
-    } finally {
-      setVerifyingSkillId(null);
-    }
-  }
-
-  async function handleUnverify(skill) {
-    setVerifyingSkillId(skill.id);
-    setSkillError('');
-    try {
-      const updated = await unverifyStudentSkill(session, skill.id);
-      setSkills((prev) => prev.map((s) => (s.id === skill.id ? updated : s)));
-    } catch (e) {
-      setSkillError(e?.message || 'Không rút lại xác minh được.');
-    } finally {
-      setVerifyingSkillId(null);
-    }
-  }
 
   const quotaClass =
     !quota || quota.remaining > 1
@@ -273,11 +243,6 @@ export function MentorStudentDetail({
                 {activeTab === 'skills' && (
                   <SkillsPanel
                     skills={skills}
-                    currentMentorId={currentMentorId}
-                    onVerify={handleVerify}
-                    onUnverify={handleUnverify}
-                    verifyingSkillId={verifyingSkillId}
-                    errorMessage={skillError}
                     session={session}
                   />
                 )}
@@ -540,10 +505,6 @@ function FeedbackItem({ feedback }) {
 function SkillsPanel({
   skills,
   currentMentorId,
-  onVerify,
-  onUnverify,
-  verifyingSkillId,
-  errorMessage,
   session,
 }) {
   if (skills.length === 0) {
@@ -551,7 +512,7 @@ function SkillsPanel({
       <div className="imentor-empty">
         <p className="imentor-empty-title">Sinh viên chưa khai báo kỹ năng</p>
         <p className="imentor-empty-hint">
-          Sinh viên cần thêm kỹ năng vào hồ sơ trước khi mentor có thể xác minh.
+          Sinh viên cần thêm kỹ năng vào hồ sơ trước khi xem được tại đây.
         </p>
       </div>
     );
@@ -572,18 +533,8 @@ function SkillsPanel({
         Kỹ năng đã khai báo ({skills.length})
       </h3>
       <p className="imentor-card-meta">
-        Xác minh kỹ năng giúp sinh viên có credential đáng tin cậy trước nhà tuyển dụng.
-        Bạn chỉ rút lại được xác minh do chính bạn cấp.
+        Kỹ năng được cố vấn học tập xác minh. Mentor xem để tham khảo khi chấm node thực hành.
       </p>
-
-      {errorMessage && (
-        <div
-          className="imentor-empty"
-          style={{ marginTop: 12, marginBottom: 12, padding: 12 }}
-        >
-          <p className="imentor-empty-hint">{errorMessage}</p>
-        </div>
-      )}
 
       {categories.map((category) => (
         <div key={category} className="mentor-skill-group">
@@ -594,12 +545,6 @@ function SkillsPanel({
                 key={skill.id}
                 skill={skill}
                 currentMentorId={currentMentorId}
-                onVerify={onVerify}
-                onUnverify={onUnverify}
-                isBusy={verifyingSkillId === skill.id}
-                isOtherBusy={
-                  verifyingSkillId !== null && verifyingSkillId !== skill.id
-                }
                 session={session}
               />
             ))}
@@ -613,16 +558,10 @@ function SkillsPanel({
 function SkillRow({
   skill,
   currentMentorId,
-  onVerify,
-  onUnverify,
-  isBusy,
-  isOtherBusy,
   session,
 }) {
   const verifiedByMe =
     skill.isVerified && skill.verifiedByUserId === currentMentorId;
-  const verifiedByOther =
-    skill.isVerified && skill.verifiedByUserId !== currentMentorId;
   const [downloading, setDownloading] = useState(false);
 
   const getObjectNameFromUrl = (url) => {
@@ -687,34 +626,6 @@ function SkillRow({
           >
             {downloading ? 'Đang tải...' : 'Xem evidence →'}
           </a>
-        )}
-      </div>
-
-      <div className="mentor-skill-row-actions">
-        {!skill.isVerified && (
-          <button
-            type="button"
-            className="imentor-btn-primary"
-            disabled={isBusy || isOtherBusy}
-            onClick={() => onVerify(skill)}
-          >
-            {isBusy ? 'Đang xác minh...' : 'Xác minh'}
-          </button>
-        )}
-
-        {verifiedByMe && (
-          <button
-            type="button"
-            className="imentor-btn-secondary"
-            disabled={isBusy || isOtherBusy}
-            onClick={() => onUnverify(skill)}
-          >
-            {isBusy ? 'Đang rút...' : 'Rút lại xác minh'}
-          </button>
-        )}
-
-        {verifiedByOther && (
-          <span className="mentor-skill-locked">Đã được người khác xác minh</span>
         )}
       </div>
     </motion.article>

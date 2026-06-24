@@ -11,6 +11,17 @@ import {
 
 const LEVEL_OPTIONS = ['Beginner', 'Intermediate', 'Advanced', 'Verified'];
 
+const LEVEL_LABELS = {
+  Beginner: 'Cơ bản',
+  Intermediate: 'Trung cấp',
+  Advanced: 'Nâng cao',
+  Verified: 'Đã xác minh',
+};
+
+function levelLabel(level) {
+  return LEVEL_LABELS[level] || level || '—';
+}
+
 function getInitials(name = '') {
   return (
     name
@@ -145,7 +156,7 @@ export function SkillVerificationQueue({ session }) {
                 <span className="cv-queue-skill-cat">{item.skillCategory}</span>
               </div>
               <div className="cv-queue-meta">
-                <span className="counselor-skill-level">{item.level}</span>
+                <span className="counselor-skill-level">{levelLabel(item.level)}</span>
                 {item.evidenceType && (
                   <span className="cv-queue-evidence-type">{item.evidenceType}</span>
                 )}
@@ -246,7 +257,7 @@ export function VerifyLevelModal({ skillName, currentLevel, onCancel, onConfirm 
           <span>Mức độ xác thực</span>
           <select value={level} onChange={(e) => setLevel(e.target.value)}>
             {LEVEL_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>{opt}</option>
+              <option key={opt} value={opt}>{levelLabel(opt)}</option>
             ))}
           </select>
         </label>

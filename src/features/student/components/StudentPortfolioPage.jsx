@@ -281,6 +281,11 @@ export function StudentPortfolioPage({ session }) {
   }
 
   function removeProject(localId) {
+    const confirmed = window.confirm(
+      'Bạn chắc chắn muốn xóa dự án này khỏi portfolio? Thay đổi sẽ được lưu khi bạn bấm lưu portfolio.',
+    );
+    if (!confirmed) return;
+
     setForm((current) => ({
       ...current,
       projects: current.projects.filter((project) => project.localId !== localId),

@@ -1,6 +1,17 @@
 import { Fades } from '@/components/animate-ui/primitives/effects/fade';
 import { motion } from 'motion/react';
 
+const READINESS_LABELS = {
+  NotReady: 'Chưa sẵn sàng',
+  NeedsImprovement: 'Cần cải thiện',
+  Ready: 'Sẵn sàng',
+  Excellent: 'Xuất sắc',
+};
+
+function readinessLabel(value) {
+  return READINESS_LABELS[value] || value;
+}
+
 export function MentorFeedbackHistory({ feedbacks, reviewQueue, onSelectStudent }) {
   return (
     <>
@@ -59,7 +70,7 @@ export function MentorFeedbackHistory({ feedbacks, reviewQueue, onSelectStudent 
                       )}
                       {f.jobReadinessLevel && (
                         <span className={`imentor-feedback-readiness ${readinessClass}`}>
-                          {f.jobReadinessLevel}
+                          {readinessLabel(f.jobReadinessLevel)}
                         </span>
                       )}
                     </div>
@@ -74,7 +85,7 @@ export function MentorFeedbackHistory({ feedbacks, reviewQueue, onSelectStudent 
                       {f.portfolioQualityFeedback && (
                         <div className="imentor-feedback-field">
                           <div className="imentor-feedback-field-label">
-                            Portfolio quality
+                            Chất lượng portfolio
                           </div>
                           <div className="imentor-feedback-field-value">
                             {f.portfolioQualityFeedback}
@@ -84,7 +95,7 @@ export function MentorFeedbackHistory({ feedbacks, reviewQueue, onSelectStudent 
                       {f.technicalSkillsAssessment && (
                         <div className="imentor-feedback-field">
                           <div className="imentor-feedback-field-label">
-                            Technical skills
+                            Kỹ năng kỹ thuật
                           </div>
                           <div className="imentor-feedback-field-value">
                             {f.technicalSkillsAssessment}
@@ -94,7 +105,7 @@ export function MentorFeedbackHistory({ feedbacks, reviewQueue, onSelectStudent 
                       {f.projectQualityFeedback && (
                         <div className="imentor-feedback-field">
                           <div className="imentor-feedback-field-label">
-                            Project quality
+                            Chất lượng dự án
                           </div>
                           <div className="imentor-feedback-field-value">
                             {f.projectQualityFeedback}
@@ -104,7 +115,7 @@ export function MentorFeedbackHistory({ feedbacks, reviewQueue, onSelectStudent 
                       {f.recommendations && (
                         <div className="imentor-feedback-field">
                           <div className="imentor-feedback-field-label">
-                            Recommendations
+                            Đề xuất cải thiện
                           </div>
                           <div className="imentor-feedback-field-value">
                             {f.recommendations}

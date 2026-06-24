@@ -73,11 +73,18 @@ function renderStars(rating = 0) {
 }
 
 function getFeedbackTypeBadges(fb) {
-  const types = [];
-  if (fb.roadmapId) types.push('R');
-  if (fb.skillGapReportId) types.push('SG');
-  if (types.length === 0) return null;
-  return types.join('+');
+  const hasRoadmap = !!fb.roadmapId;
+  const hasSkillGap = !!fb.skillGapReportId;
+  if (hasRoadmap && hasSkillGap) {
+    return { label: 'Lộ trình + KN', title: 'Liên kết lộ trình và báo cáo khoảng cách kỹ năng' };
+  }
+  if (hasRoadmap) {
+    return { label: 'Lộ trình', title: 'Liên kết lộ trình học tập' };
+  }
+  if (hasSkillGap) {
+    return { label: 'Khoảng cách KN', title: 'Liên kết báo cáo khoảng cách kỹ năng' };
+  }
+  return null;
 }
 
 export function CounselorFeedbackHistory({
@@ -145,7 +152,7 @@ export function CounselorFeedbackHistory({
               <tr>
                 <th>Ngày</th>
                 <th>Sinh viên</th>
-                <th>Rating</th>
+                <th>Đánh giá</th>
                 <th>Loại</th>
                 <th>Nội dung</th>
                 <th aria-label="Hành động" />
@@ -188,8 +195,8 @@ export function CounselorFeedbackHistory({
                         </td>
                         <td>
                           {typeBadge ? (
-                            <span className="counselor-feedback-type-badge">
-                              {typeBadge}
+                            <span className="counselor-feedback-type-badge" title={typeBadge.title}>
+                              {typeBadge.label}
                             </span>
                           ) : (
                             '—'

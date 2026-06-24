@@ -25,6 +25,7 @@ import {
   saveSkill,
   deleteSkill,
   getLearningResource,
+  getLearningResourceSignedUrl,
   saveLearningResource,
   deleteLearningResource,
   getRoleSkillRequirement,
@@ -212,28 +213,34 @@ export function MentorHome({ session, onSignOut }) {
     }
   }
 
+  async function saveCatalogAction(action) {
+    await action();
+    await refreshCatalog();
+  }
+
   /* Skills */
   const handleLoadSkill = (id) => getSkill(session, id);
-  const handleSaveSkill = (skill, id) => runCatalogAction(() => saveSkill(session, skill, id));
+  const handleSaveSkill = (skill, id) => saveCatalogAction(() => saveSkill(session, skill, id));
   const handleDeleteSkill = (skill) => runCatalogAction(() => deleteSkill(session, skill.id));
 
   /* Learning resources */
   const handleLoadResource = (id) => getLearningResource(session, id);
-  const handleSaveResource = (resource, id) => runCatalogAction(() => saveLearningResource(session, resource, id));
+  const handleOpenResource = (resource) => getLearningResourceSignedUrl(session, resource.id);
+  const handleSaveResource = (resource, id) => saveCatalogAction(() => saveLearningResource(session, resource, id));
   const handleDeleteResource = (resource) => runCatalogAction(() => deleteLearningResource(session, resource.id));
 
   /* Role skill requirements */
   const handleLoadRequirement = (id) => getRoleSkillRequirement(session, id);
-  const handleSaveRequirement = (requirement, id) => runCatalogAction(() => saveRoleSkillRequirement(session, requirement, id));
+  const handleSaveRequirement = (requirement, id) => saveCatalogAction(() => saveRoleSkillRequirement(session, requirement, id));
   const handleDeleteRequirement = (requirement) => runCatalogAction(() => deleteRoleSkillRequirement(session, requirement.id));
 
   /* Skill prerequisites */
-  const handleSavePrerequisite = (prerequisite) => runCatalogAction(() => saveSkillPrerequisite(session, prerequisite));
-  const handleDeletePrerequisite = (prerequisite) => runCatalogAction(() => deleteSkillPrerequisite(session, prerequisite.skillId, prerequisite.prerequisiteSkillId));
+  const handleSavePrerequisite = (prerequisite) => saveCatalogAction(() => saveSkillPrerequisite(session, prerequisite));
+  const handleDeletePrerequisite = (prerequisite) => runCatalogAction(() => deleteSkillPrerequisite(session, prerequisite.id));
 
   /* Career roles */
   const handleLoadCareerRole = (id) => getCareerRole(session, id);
-  const handleSaveCareerRole = (careerRole, id) => runCatalogAction(() => saveCareerRole(session, careerRole, id));
+  const handleSaveCareerRole = (careerRole, id) => saveCatalogAction(() => saveCareerRole(session, careerRole, id));
   const handleDeleteCareerRole = (careerRole) => runCatalogAction(() => deleteCareerRole(session, careerRole));
 
   function handleNavigate(view, studentId = null) {
@@ -445,6 +452,7 @@ export function MentorHome({ session, onSignOut }) {
                 resources={catalog.learningResources}
                 skills={catalog.skills}
                 onLoadResource={handleLoadResource}
+                onOpenResource={handleOpenResource}
                 onSaveResource={handleSaveResource}
                 onDeleteResource={handleDeleteResource}
               />
