@@ -1688,15 +1688,6 @@ function ResourceButton({
 
           {resource.url ? (
             <>
-              <div className="roadmap-resource-frame-wrap">
-                <iframe
-                  className="roadmap-resource-frame"
-                  src={resource.url}
-                  title={label}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              </div>
 
               <div className="roadmap-resource-panel-actions">
                 <a
