@@ -1767,20 +1767,30 @@ const canDownload =
             </a>
           )}
 
-          {canDownload && (
-            <button
-              type="button"
-              className="roadmap-resource-download-link"
-              onClick={(event) => {
-                event.stopPropagation();
-                onDownloadResource?.(resource);
-              }}
-              disabled={downloadBusy}
-            >
-              <Download size={14} aria-hidden="true" />
-              {downloadBusy ? 'Đang tải...' : getDownloadButtonLabel(resource)}
-            </button>
-          )}
+          {resource.url ? (
+            <>
+
+              <div className="roadmap-resource-panel-actions">
+                <a
+                  href={resource.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="roadmap-resource-open-link"
+                >
+                  Mở link gốc
+                </a>
+
+                {onToggleCheck && (
+                  <button
+                    type="button"
+                    className="roadmap-resource-complete-btn"
+                    onClick={onToggleCheck}
+                    disabled={busy}
+                  >
+                    {checked ? 'Bỏ hoàn thành' : 'Đã học xong, chuyển bài tiếp theo'}
+                  </button>
+                )}
+              </div>
 
           {onToggleCheck && (
             <button
