@@ -1,7 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { toast } from 'react-toastify';
-import { Check, Circle, Clock3, Compass, LoaderCircle, Pin, RefreshCw, ChevronDown, ExternalLink } from 'lucide-react';
+import {
+  Check,
+  Circle,
+  Clock3,
+  Compass,
+  LoaderCircle,
+  Pin,
+  RefreshCw,
+  ChevronDown,
+  ExternalLink,
+  Download,
+} from 'lucide-react';
 import '../../../styles/roadmap.css';
 import { CountingNumber } from '@/components/animate-ui/primitives/texts/counting-number';
 import { Button } from '@/components/animate-ui/components/buttons/button';
@@ -15,6 +26,7 @@ import {
   unmarkLessonCompleted,
   updateRoadmapNodeStatus,
   regenerateRoadmap,
+  downloadLearningResourceFile,
 } from '../roadmapApi';
 import { getCareerRoles } from '../studentApi';
 import { getLatestSkillGap } from '../skillsApi';
@@ -532,6 +544,7 @@ const [regeneratingId, setRegeneratingId] = useState('');
 const [togglingLessonKey, setTogglingLessonKey] = useState('');
 const [celebrationOpen, setCelebrationOpen] = useState(false);
 const completionSeenRef = useRef({});
+const [downloadingResourceId, setDownloadingResourceId] = useState('');
   useEffect(() => {
     loadRoadmaps();
     loadFormReferences();
@@ -553,7 +566,6 @@ const completionSeenRef = useRef({});
   }
 
   const roadmapNodes = useMemo(() => getRoadmapNodes(roadmap), [roadmap]);
-  const RoadmapStatusIcon = getStatusMeta(roadmap?.status).Icon;
   const flatNodes = useMemo(() => flattenNodes(roadmapNodes), [roadmapNodes]);
 
   const totalHours = useMemo(() => {
@@ -716,7 +728,22 @@ async function handleToggleLesson(nodeId, lessonId, nextChecked) {
     setTogglingLessonKey('');
   }
 }
+async function handleDownloadResource(resource) {
+  if (!resource?.id) {
+    toast.error('Không tìm thấy tài nguyên để tải.');
+    return;
+  }
 
+  setDownloadingResourceId(resource.id);
+
+  try {
+    await downloadLearningResourceFile(session, resource);
+  } catch (error) {
+    toast.error(error.message || 'Không tải được tệp.');
+  } finally {
+    setDownloadingResourceId('');
+  }
+}
 async function loadReviewRequestsForRoadmap(roadmapData) {
   const nodes = flattenNodes(getRoadmapNodes(roadmapData)).filter((node) => node?.id);
   const nodeIds = Array.from(new Set(nodes.map((node) => node.id)));
@@ -1173,6 +1200,8 @@ async function handleCancelReviewRequest(node, request) {
                           lessonProgressByNodeId={lessonProgressByNodeId}
                           onToggleLesson={handleToggleLesson}
                           togglingLessonKey={togglingLessonKey}
+                                          onDownloadResource={handleDownloadResource}
+downloadingResourceId={downloadingResourceId}
                         />
                       ))}
                     </Fades>
@@ -1240,6 +1269,8 @@ function RoadmapNodeCard({
   lessonProgressByNodeId = {},
   onToggleLesson,
   togglingLessonKey = '',
+  onDownloadResource,
+  downloadingResourceId = '',
 }) {
   const displayStatus = getDisplayNodeStatus(node, roadmapStatus);
   const statusMeta = getStatusMeta(displayStatus);
@@ -1504,35 +1535,37 @@ function RoadmapNodeCard({
 
   return (
     <ResourceButton
-      key={resourceId || resource.title}
-      resource={resource}
-      checked={checked}
-      busy={isToggling}
-      expanded={expanded}
-      onToggleOpen={() => {
-        setOpenResourceKey((current) => current === openKey ? '' : openKey);
-      }}
-      onToggleCheck={
-        resourceId && node?.id && onToggleLesson
-          ? async () => {
-              const nextChecked = !checked;
-              const ok = await onToggleLesson(node.id, resourceId, nextChecked);
+  key={resourceId || resource.title}
+  resource={resource}
+  checked={checked}
+  busy={isToggling}
+  expanded={expanded}
+  onToggleOpen={() => {
+    setOpenResourceKey((current) => current === openKey ? '' : openKey);
+  }}
+  onDownloadResource={onDownloadResource}
+  downloadBusy={downloadingResourceId === resourceId}
+  onToggleCheck={
+    resourceId && node?.id && onToggleLesson
+      ? async () => {
+          const nextChecked = !checked;
+          const ok = await onToggleLesson(node.id, resourceId, nextChecked);
 
-              if (ok === false) return;
+          if (ok === false) return;
 
-              if (nextChecked) {
-                const nextResource = resources
-                  .slice(resourceIndex + 1)
-                  .find((item) => item.id && !lessonChecks.checkedSet.has(item.id));
+          if (nextChecked) {
+            const nextResource = resources
+              .slice(resourceIndex + 1)
+              .find((item) => item.id && !lessonChecks.checkedSet.has(item.id));
 
-                setOpenResourceKey(nextResource ? getResourceOpenKey(nextResource) : '');
-              } else {
-                setOpenResourceKey(openKey);
-              }
-            }
-          : undefined
-      }
-    />
+            setOpenResourceKey(nextResource ? getResourceOpenKey(nextResource) : '');
+          } else {
+            setOpenResourceKey(openKey);
+          }
+        }
+      : undefined
+  }
+/>
   );
 })}
             </div>
@@ -1542,22 +1575,24 @@ function RoadmapNodeCard({
         {children.length > 0 && (
           <div className="roadmap-children">
             {children.map((child, childIndex) => (
-              <RoadmapNodeCard
-                key={child.id || `${child.title}-${childIndex}`}
-                node={child}
-                index={childIndex}
-                level={level + 1}
-                roadmapStatus={roadmapStatus}
-                updatingNodeId={updatingNodeId}
-                onStatusChange={onStatusChange}
-                onRequestReview={onRequestReview}
-                onCancelReviewRequest={onCancelReviewRequest}
-                reviewRequestsByNodeId={reviewRequestsByNodeId}
-                cancelingReviewRequestId={cancelingReviewRequestId}
-                lessonProgressByNodeId={lessonProgressByNodeId}
-                onToggleLesson={onToggleLesson}
-                togglingLessonKey={togglingLessonKey}
-              />
+            <RoadmapNodeCard
+  key={child.id || `${child.title}-${childIndex}`}
+  node={child}
+  index={childIndex}
+  level={level + 1}
+  roadmapStatus={roadmapStatus}
+  updatingNodeId={updatingNodeId}
+  onStatusChange={onStatusChange}
+  onRequestReview={onRequestReview}
+  onCancelReviewRequest={onCancelReviewRequest}
+  reviewRequestsByNodeId={reviewRequestsByNodeId}
+  cancelingReviewRequestId={cancelingReviewRequestId}
+  lessonProgressByNodeId={lessonProgressByNodeId}
+  onToggleLesson={onToggleLesson}
+  togglingLessonKey={togglingLessonKey}
+  onDownloadResource={onDownloadResource}
+  downloadingResourceId={downloadingResourceId}
+/>
             ))}
           </div>
         )}
@@ -1614,6 +1649,30 @@ function formatDifficulty(diff) {
   return diff;
 }
 
+function isFileResource(resource) {
+  const sourceType = String(resource?.sourceType || '').toLowerCase();
+  const contentType = String(resource?.contentType || '').toLowerCase();
+
+  return (
+    sourceType === 'file' ||
+    Boolean(contentType) ||
+    Boolean(resource?.fileSize) ||
+    Boolean(resource?.fileName)
+  );
+}
+
+function getDownloadButtonLabel(resource) {
+  const contentType = String(resource?.contentType || '').toLowerCase();
+
+  if (contentType === 'application/pdf') return 'Tải PDF';
+  if (contentType === 'application/zip' || contentType === 'application/x-zip-compressed') return 'Tải ZIP';
+  if (contentType.includes('word')) return 'Tải Word';
+  if (contentType.includes('excel') || contentType.includes('spreadsheet')) return 'Tải Excel';
+  if (contentType.includes('powerpoint') || contentType.includes('presentation')) return 'Tải PowerPoint';
+
+  return 'Tải tệp';
+}
+
 function ResourceButton({
   resource,
   checked = false,
@@ -1621,6 +1680,8 @@ function ResourceButton({
   expanded = false,
   onToggleOpen,
   onToggleCheck,
+  onDownloadResource,
+  downloadBusy = false,
 }) {
   const prefix = resource.lessonNumber ? `Bài ${resource.lessonNumber}: ` : '';
   const cleanedTitle = (resource.title || '').trim();
@@ -1632,6 +1693,11 @@ function ResourceButton({
     formatDifficulty(resource.difficulty),
     resource.estimatedHours ? `${resource.estimatedHours} giờ` : '',
   ].filter(Boolean);
+
+const canDownload =
+  Boolean(resource?.id) &&
+  Boolean(onDownloadResource) &&
+  isFileResource(resource);
 
   const checkbox = onToggleCheck ? (
     <label
@@ -1678,12 +1744,27 @@ function ResourceButton({
         </button>
       </div>
 
-      {expanded && (
-        <div className="roadmap-resource-panel">
-          {resource.description && (
-            <p className="roadmap-resource-description">
-              {resource.description}
-            </p>
+{expanded && (
+  <div className="roadmap-resource-panel">
+    {resource.description && (
+      <p className="roadmap-resource-description">
+        {resource.description}
+      </p>
+    )}
+
+    {(resource.url || canDownload || onToggleCheck) ? (
+      <>
+        <div className="roadmap-resource-panel-actions">
+          {resource.url && (
+            <a
+              href={resource.url}
+              target="_blank"
+              rel="noreferrer"
+              className="roadmap-resource-open-link"
+            >
+              <ExternalLink size={14} aria-hidden="true" />
+              Mở link gốc
+            </a>
           )}
 
           {resource.url ? (
@@ -1711,17 +1792,31 @@ function ResourceButton({
                 )}
               </div>
 
-              <small className="roadmap-resource-frame-note">
-                Nếu nội dung không hiển thị, website nguồn đang chặn nhúng. Hãy bấm “Mở link gốc”.
-              </small>
-            </>
-          ) : (
-            <div className="roadmap-resource-empty">
-              Tài liệu này chưa có đường dẫn học tập.
-            </div>
+          {onToggleCheck && (
+            <button
+              type="button"
+              className="roadmap-resource-complete-btn"
+              onClick={onToggleCheck}
+              disabled={busy}
+            >
+              {checked ? 'Bỏ hoàn thành' : 'Đã học xong, chuyển bài tiếp theo'}
+            </button>
           )}
         </div>
-      )}
+
+        {resource.url && (
+          <small className="roadmap-resource-frame-note">
+            Nếu nội dung không hiển thị, website nguồn đang chặn nhúng. Hãy bấm “Mở link gốc”.
+          </small>
+        )}
+      </>
+    ) : (
+      <div className="roadmap-resource-empty">
+        Tài liệu này chưa có đường dẫn học tập.
+      </div>
+    )}
+  </div>
+)}
     </div>
   );
 }

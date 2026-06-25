@@ -1455,10 +1455,17 @@
     margin-top: 2px;
 }
 
+/* ============================================================
+   LEARNING RESOURCE PANEL + DOWNLOAD BUTTON
+   ============================================================ */
+
 .roadmap-resource-row {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
+    width: 100%;
+    min-width: 0;
 }
 
 .roadmap-resource-main {
@@ -1466,6 +1473,7 @@
     align-items: stretch;
     gap: 10px;
     width: 100%;
+    min-width: 0;
 }
 
 .roadmap-resource-main .roadmap-resource {
@@ -1510,39 +1518,32 @@
     line-height: 1.5;
 }
 
-.roadmap-resource-frame-wrap {
-    width: 100%;
-    height: min(62vh, 620px);
-    overflow: hidden;
-    border: 1px solid var(--apple-hairline);
-    border-radius: 10px;
-    background: #f8fafc;
-}
-
-.roadmap-resource-frame {
-    width: 100%;
-    height: 100%;
-    border: 0;
-    background: #ffffff;
-}
-
 .roadmap-resource-panel-actions {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 12px;
     flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
 }
 
 .roadmap-resource-open-link,
+.roadmap-resource-download-link,
 .roadmap-resource-complete-btn {
-    min-height: 36px;
-    padding: 8px 14px;
+    min-height: 38px;
+    padding: 0 16px;
     border-radius: 999px;
-    font-size: 13px;
-    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
     text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .roadmap-resource-open-link {
@@ -1550,16 +1551,39 @@
     background: rgba(0, 102, 204, 0.08);
 }
 
-.roadmap-resource-complete-btn {
-    border: 0;
-    color: #ffffff;
-    background: #34c759;
-    cursor: pointer;
+.roadmap-resource-open-link:hover {
+    background: rgba(0, 102, 204, 0.14);
+    transform: translateY(-1px);
 }
 
+.roadmap-resource-download-link {
+    color: #1f7a3f;
+    background: rgba(52, 199, 89, 0.12);
+    border-color: rgba(52, 199, 89, 0.22);
+}
+
+.roadmap-resource-download-link:hover:not(:disabled) {
+    background: rgba(52, 199, 89, 0.18);
+    transform: translateY(-1px);
+}
+
+.roadmap-resource-complete-btn {
+    color: #ffffff;
+    background: #34c759;
+    border-color: #34c759;
+}
+
+.roadmap-resource-complete-btn:hover:not(:disabled) {
+    background: #2fb350;
+    border-color: #2fb350;
+    transform: translateY(-1px);
+}
+
+.roadmap-resource-download-link:disabled,
 .roadmap-resource-complete-btn:disabled {
     opacity: 0.6;
-    cursor: progress;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .roadmap-resource-frame-note {
@@ -1581,8 +1605,17 @@
     .roadmap-resource-panel {
         margin-left: 0;
     }
+}
 
-    .roadmap-resource-frame-wrap {
-        height: 70vh;
+@media (max-width: 640px) {
+    .roadmap-resource-panel-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .roadmap-resource-open-link,
+    .roadmap-resource-download-link,
+    .roadmap-resource-complete-btn {
+        width: 100%;
     }
 }
