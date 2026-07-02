@@ -1753,7 +1753,7 @@ const canDownload =
     )}
 
     {(resource.url || canDownload || onToggleCheck) ? (
-      <>
+      <div>
         <div className="roadmap-resource-panel-actions">
           {resource.url && (
             <a
@@ -1767,30 +1767,16 @@ const canDownload =
             </a>
           )}
 
-          {resource.url ? (
-            <>
-
-              <div className="roadmap-resource-panel-actions">
-                <a
-                  href={resource.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="roadmap-resource-open-link"
-                >
-                  Mở link gốc
-                </a>
-
-                {onToggleCheck && (
-                  <button
-                    type="button"
-                    className="roadmap-resource-complete-btn"
-                    onClick={onToggleCheck}
-                    disabled={busy}
-                  >
-                    {checked ? 'Bỏ hoàn thành' : 'Đã học xong, chuyển bài tiếp theo'}
-                  </button>
-                )}
-              </div>
+          {canDownload && (
+            <button
+              type="button"
+              className="roadmap-resource-download-btn"
+              onClick={() => onDownloadResource(resource)}
+              disabled={downloadBusy}
+            >
+              {downloadBusy ? 'Đang tải...' : getDownloadButtonLabel(resource)}
+            </button>
+          )}
 
           {onToggleCheck && (
             <button
@@ -1809,7 +1795,7 @@ const canDownload =
             Nếu nội dung không hiển thị, website nguồn đang chặn nhúng. Hãy bấm “Mở link gốc”.
           </small>
         )}
-      </>
+      </div>
     ) : (
       <div className="roadmap-resource-empty">
         Tài liệu này chưa có đường dẫn học tập.
